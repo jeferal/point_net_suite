@@ -7,6 +7,7 @@ import shutil
 import argparse
 from pathlib import Path
 from tqdm import tqdm
+import mlflow
 
 from torch.utils.data import DataLoader
 from point_net_suite.data_utils.metrics import compute_iou
@@ -36,6 +37,7 @@ def parse_args():
     parser.add_argument('--process_data', action='store_true', default=False, help='save data offline')
     parser.add_argument('--use_uniform_sample', action='store_true', default=False, help='use uniform sampiling')
     parser.add_argument('--remove_checkpoint', action='store_true', default=False, help='remove last checkpoint train progress')
+    parser.add_argument('--use_mlflow', action='store_true', default=False, help='Log train with mlflow')
     return parser.parse_args()
 
 
@@ -191,87 +193,115 @@ def main(args):
 
     '''TRANING'''
     log_string('Start training...')
-    for epoch in range(start_epoch, args.epoch):
-        log_string('Epoch %d (%d/%s):' % (global_epoch + 1, epoch + 1, args.epoch))
-        _train_loss = []
-        _mean_acc = []
-        _train_iou = []
-        classifier = classifier.train()
+    if args.use_mlflow:
+        # Export mlflow environment variables
+        os.environ['MLFLOW_TRACKING_URI'] = 'http://34.16.143.171:3389'
+        os.environ['MLFLOW_EXPERIMENT_NAME'] = 'pointnet_classification'
+        os.environ['MLFLOW_ENABLE_SYSTEM_METRICS_LOGGING'] = 'true'
+        mlflow.start_run()
 
-        scheduler.step()
-        for batch_id, (points, target) in tqdm(enumerate(trainDataLoader, 0), total=len(trainDataLoader), smoothing=0.9):
-            optimizer.zero_grad()
+    try:
+        # Train
+        for epoch in range(start_epoch, args.epoch):
+            log_string('Epoch %d (%d/%s):' % (global_epoch + 1, epoch + 1, args.epoch))
+            _train_loss = []
+            _mean_acc = []
+            _train_iou = []
+            classifier = classifier.train()
 
-            points = points.data.numpy()
-            points = DataAugmentator.random_point_dropout(points)
-            points[:, :, 0:3] = DataAugmentator.random_scale_point_cloud(points[:, :, 0:3])
-            points[:, :, 0:3] = DataAugmentator.shift_point_cloud(points[:, :, 0:3])
-            points = torch.Tensor(points)
-            points = points.transpose(2, 1)
+            scheduler.step()
+            for batch_id, (points, target) in tqdm(enumerate(trainDataLoader, 0), total=len(trainDataLoader), smoothing=0.9):
+                optimizer.zero_grad()
 
-            if not args.use_cpu:
-                points, target = points.cuda(), target.cuda()
+                points = points.data.numpy()
+                points = DataAugmentator.random_point_dropout(points)
+                points[:, :, 0:3] = DataAugmentator.random_scale_point_cloud(points[:, :, 0:3])
+                points[:, :, 0:3] = DataAugmentator.shift_point_cloud(points[:, :, 0:3])
+                points = torch.Tensor(points)
+                points = points.transpose(2, 1)
 
-            pred, crit_idxs, feat_trans = classifier(points)
+                if not args.use_cpu:
+                    points, target = points.cuda(), target.cuda()
 
-            loss = criterion(pred, target.long(), feat_trans)
-            pred_choice = pred.data.max(1)[1]
+                pred, crit_idxs, feat_trans = classifier(points)
+
+                loss = criterion(pred, target.long(), feat_trans)
+                pred_choice = pred.data.max(1)[1]
+                
+                loss.backward()
+                optimizer.step()
+
+                _train_loss.append(loss.item())
+
+                correct = pred_choice.eq(target.long().data).cpu().sum()
+                _mean_acc.append(correct.item() / float(points.size()[0]))
+
+                iou = compute_iou(target, pred_choice)
+                _train_iou.append(iou.item())
+
+                global_step += 1
+
+
+            mean_train_loss = np.mean(_train_loss)
+            mean_train_acc = np.mean(_mean_acc)
+            mean_train_iou = np.mean(_train_iou)
+
+            mlflow.log_metric("train_loss", mean_train_loss, step=epoch)
+            mlflow.log_metric("train_accuracy", mean_train_acc, step=epoch)
+            mlflow.log_metric("train_iou", mean_train_iou, step=epoch)
+
+            train_loss.append(mean_train_loss)
+            train_instance_acc = mean_train_acc
+            log_string('Train Instance Accuracy: %f' % train_instance_acc)
+            train_accuracy.append(train_instance_acc)
+            train_iou.append(mean_train_iou)
             
-            loss.backward()
-            optimizer.step()
+            # Test
+            with torch.no_grad():
+                instance_loss, instance_acc, mean_class_acc, instance_iou = evaluate_model(classifier.eval(), criterion, testDataLoader, num_class=num_class)
 
-            _train_loss.append(loss.item())
+                mlflow.log_metric("test_loss", instance_loss, step=epoch)
+                mlflow.log_metric("test_accuracy", instance_acc, step=epoch)
+                mlflow.log_metric("test_mean_class_accuracy", mean_class_acc, step=epoch)
+                mlflow.log_metric("test_iou", instance_iou, step=epoch)
 
-            correct = pred_choice.eq(target.long().data).cpu().sum()
-            _mean_acc.append(correct.item() / float(points.size()[0]))
+                test_loss.append(instance_loss)
+                test_accuracy.append(instance_acc)
+                test_mean_class_accuracy.append(mean_class_acc)
+                test_iou.append(instance_iou)
 
-            iou = compute_iou(target, pred_choice)
-            _train_iou.append(iou.item())
+                if (instance_acc >= best_instance_acc):
+                    best_instance_acc = instance_acc
+                    best_epoch = epoch + 1
 
-            global_step += 1
+                if (mean_class_acc >= best_class_acc):
+                    best_class_acc = mean_class_acc
+                log_string('Test Instance Accuracy: %f, Mean Class Accuracy: %f' % (instance_acc, mean_class_acc))
+                log_string('Best Instance Accuracy: %f, Mean Class Accuracy: %f' % (best_instance_acc, best_class_acc))
 
-        train_loss.append(np.mean(_train_loss))
-        train_instance_acc = np.mean(_mean_acc)
-        log_string('Train Instance Accuracy: %f' % train_instance_acc)
-        train_accuracy.append(train_instance_acc)
-        train_iou.append(np.mean(_train_iou))
-        
-
-        with torch.no_grad():
-            instance_loss, instance_acc, mean_class_acc, instance_iou = evaluate_model(classifier.eval(), criterion, testDataLoader, num_class=num_class)
-
-            test_loss.append(instance_loss)
-            test_accuracy.append(instance_acc)
-            test_mean_class_accuracy.append(mean_class_acc)
-            test_iou.append(instance_iou)
-
-            if (instance_acc >= best_instance_acc):
-                best_instance_acc = instance_acc
-                best_epoch = epoch + 1
-
-            if (mean_class_acc >= best_class_acc):
-                best_class_acc = mean_class_acc
-            log_string('Test Instance Accuracy: %f, Mean Class Accuracy: %f' % (instance_acc, mean_class_acc))
-            log_string('Best Instance Accuracy: %f, Mean Class Accuracy: %f' % (best_instance_acc, best_class_acc))
-
-            if (instance_acc >= best_instance_acc):
-                savepath = str(exp_dir) + '/best_model.pth'
-                log_string('Saving model at %s' % savepath)
-                state = {
-                    'epoch': best_epoch,
-                    'train_loss': train_loss,
-                    'train_accuracy': train_accuracy,
-                    'train_iou': train_iou,
-                    'test_loss': test_loss,
-                    'test_accuracy': test_accuracy,
-                    'test_mean_class_accuracy': test_mean_class_accuracy,
-                    'test_iou': test_iou,
-                    'model_state_dict': classifier.state_dict(),
-                    'optimizer_type': args.optimizer,
-                    'optimizer_state_dict': optimizer.state_dict(),
-                }
-                torch.save(state, savepath)
-            global_epoch += 1
+                if (instance_acc >= best_instance_acc):
+                    savepath = str(exp_dir) + '/best_model.pth'
+                    log_string('Saving model at %s' % savepath)
+                    state = {
+                        'epoch': best_epoch,
+                        'train_loss': train_loss,
+                        'train_accuracy': train_accuracy,
+                        'train_iou': train_iou,
+                        'test_loss': test_loss,
+                        'test_accuracy': test_accuracy,
+                        'test_mean_class_accuracy': test_mean_class_accuracy,
+                        'test_iou': test_iou,
+                        'model_state_dict': classifier.state_dict(),
+                        'optimizer_type': args.optimizer,
+                        'optimizer_state_dict': optimizer.state_dict(),
+                    }
+                    torch.save(state, savepath)
+                    mlflow.log_artifact(savepath)
+                global_epoch += 1
+    finally:
+        # End the MLflow run if use_mlflow is True
+        if args.use_mlflow:
+            mlflow.end_run()
 
     log_string('End of training...')
 
