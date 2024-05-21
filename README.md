@@ -1,4 +1,4 @@
-# The Point Net Suite App
+# The Point Net Suite
 
 ## Installation
 ```bash
