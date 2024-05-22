@@ -246,9 +246,10 @@ def main(args):
             mean_train_acc = np.mean(_mean_acc)
             mean_train_iou = np.mean(_train_iou)
 
-            mlflow.log_metric("train_loss", mean_train_loss, step=epoch)
-            mlflow.log_metric("train_accuracy", mean_train_acc, step=epoch)
-            mlflow.log_metric("train_iou", mean_train_iou, step=epoch)
+            if args.use_mlflow:
+                mlflow.log_metric("train_loss", mean_train_loss, step=epoch)
+                mlflow.log_metric("train_accuracy", mean_train_acc, step=epoch)
+                mlflow.log_metric("train_iou", mean_train_iou, step=epoch)
 
             train_loss.append(mean_train_loss)
             train_instance_acc = mean_train_acc
@@ -260,10 +261,11 @@ def main(args):
             with torch.no_grad():
                 instance_loss, instance_acc, mean_class_acc, instance_iou = evaluate_model(classifier.eval(), criterion, testDataLoader, num_class=num_class)
 
-                mlflow.log_metric("test_loss", instance_loss, step=epoch)
-                mlflow.log_metric("test_accuracy", instance_acc, step=epoch)
-                mlflow.log_metric("test_mean_class_accuracy", mean_class_acc, step=epoch)
-                mlflow.log_metric("test_iou", instance_iou, step=epoch)
+                if args.use_mlflow:
+                    mlflow.log_metric("test_loss", instance_loss, step=epoch)
+                    mlflow.log_metric("test_accuracy", instance_acc, step=epoch)
+                    mlflow.log_metric("test_mean_class_accuracy", mean_class_acc, step=epoch)
+                    mlflow.log_metric("test_iou", instance_iou, step=epoch)
 
                 test_loss.append(instance_loss)
                 test_accuracy.append(instance_acc)
@@ -296,7 +298,8 @@ def main(args):
                         'optimizer_state_dict': optimizer.state_dict(),
                     }
                     torch.save(state, savepath)
-                    mlflow.log_artifact(savepath)
+                    if args.use_mlflow:
+                        mlflow.log_artifact(savepath)
                 global_epoch += 1
     finally:
         # End the MLflow run if use_mlflow is True
