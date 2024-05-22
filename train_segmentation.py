@@ -17,7 +17,7 @@ from point_net_suite.data_utils.s3_dis_dataset import S3DIS
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 models_folder_dict = {'pointnet_sem_segmentation': 'models/Pointnet'}
-models_modules_dict = {'pointnet_sem_segmentation': 'pointnet_sem_segmentation'}
+models_modules_dict = {'pointnet_sem_segmentation': 'point_net_suite.models.pointnet_sem_segmentation'}
 
 CATEGORIES = {
     'ceiling'  : 0, 
@@ -81,7 +81,7 @@ def main(args):
     log_string('PARAMETER ...')
     log_string(args)
 
-    data_path = os.path.join(BASE_DIR, 'data\stanford_indoor3d')
+    data_path = os.path.join(BASE_DIR, 'data/stanford_indoor3d')
     num_classes = NUM_CLASSES
     num_epochs = args.epoch
     num_points = args.num_points
@@ -91,7 +91,6 @@ def main(args):
     TRAIN_DATASET = S3DIS(root=data_path, area_nums=args.train_area, npoints=num_points, r_prob=0.25)
     print("start loading test data ...")
     TEST_DATASET = S3DIS(root=data_path, area_nums=args.test_area, split='test', npoints=num_points)
-
     trainDataLoader = DataLoader(TRAIN_DATASET, batch_size=batch_size, shuffle=True)
     testDataLoader = DataLoader(TEST_DATASET, batch_size=batch_size, shuffle=False)
 
