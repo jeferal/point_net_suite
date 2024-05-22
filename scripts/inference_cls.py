@@ -3,6 +3,7 @@ import argparse
 import random
 import torch
 import numpy as np
+import time
 
 import open3d as o3d
 
@@ -35,11 +36,13 @@ def main(args):
     # Get the point cloud data from the sample
     # The critical idxs is a tensor that contains the indices of the points that are critical for the classification
     # The model is doing an inference here
+    start_time = time.time()
     pred, crit_idxs, _ = model(tensor)
+    inference_time = time.time() - start_time
     
     ground_truth = test_dataset.cat[label]
     prediction = test_dataset.cat[pred.data.max(1)[1]]
-    print(f"Ground truth: {ground_truth}, Prediction: {prediction}")
+    print(f"Ground truth: {ground_truth}, Prediction: {prediction}. Inference took {inference_time:.2f} seconds")
 
     # Create an Open3D point cloud object
     point_cloud = o3d.geometry.PointCloud()
