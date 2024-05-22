@@ -137,6 +137,9 @@ class ModelNetDataLoader(Dataset):
     def __getitem__(self, index):
         return self._get_item(index)
 
+    def get_class_name(self, index):
+        return self.cat[index]
+
 
 if __name__ == '__main__':
     data = ModelNetDataLoader('/data/modelnet40_normal_resampled/', split='train')
