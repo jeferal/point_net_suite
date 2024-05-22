@@ -213,9 +213,9 @@ def main(args):
             mean_train_accuracy = np.mean(_train_accuracy)
             mean_train_iou = np.mean(_train_iou)
             if args.use_mlflow:
-                mlflow.log_metric('train_loss', mean_train_loss)
-                mlflow.log_metric('train_accuracy', mean_train_accuracy)
-                mlflow.log_metric('train_iou', mean_train_iou)
+                mlflow.log_metric('train_loss', mean_train_loss, step=epoch)
+                mlflow.log_metric('train_accuracy', mean_train_accuracy, step=epoch)
+                mlflow.log_metric('train_iou', mean_train_iou, step=epoch)
             train_loss.append(mean_train_loss)
             train_accuracy.append(mean_train_accuracy)
             train_iou.append(mean_train_iou)
@@ -261,9 +261,9 @@ def main(args):
                 mean_test_iou = np.mean(_test_iou)
 
                 if args.use_mlflow:
-                    mlflow.log_metric('test_loss', mean_test_loss)
-                    mlflow.log_metric('test_accuracy', mean_test_accuracy)
-                    mlflow.log_metric('test_iou', mean_test_iou)
+                    mlflow.log_metric('test_loss', mean_test_loss, step=epoch)
+                    mlflow.log_metric('test_accuracy', mean_test_accuracy, step=epoch)
+                    mlflow.log_metric('test_iou', mean_test_iou, step=epoch)
 
                 test_loss.append(mean_test_loss)
                 test_accuracy.append(mean_test_accuracy)
@@ -290,9 +290,9 @@ def main(args):
                         'optimizer_type': args.optimizer,
                         'optimizer_state_dict': optimizer.state_dict(),
                     }
+                    torch.save(state, savepath)
                     if args.use_mlflow:
                         mlflow.log_artifact(savepath)
-                    torch.save(state, savepath)
 
                 global_epoch += 1
     finally:
