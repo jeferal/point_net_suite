@@ -2,6 +2,9 @@ import os
 import shutil
 from tqdm import tqdm
 
+import argparse
+
+
 def process_files(main_folder, class_dict):
     # Get list of subfolders
     subfolders = [f for f in os.listdir(main_folder) if os.path.isdir(os.path.join(main_folder, f))]
@@ -58,10 +61,14 @@ def process_files(main_folder, class_dict):
 
 if __name__ == "__main__":
     # Define the path to the main folder containing the subfolders
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    parent_dir = os.path.dirname(base_dir)
-    data_dir = '/data/stanford_indoor3d/Area_4/'
-    main_folder = parent_dir + data_dir
+    parser = argparse.ArgumentParser(description='Process the files in the Stanford Indoor 3D dataset')
+    # Argument that is the directory where the data is
+    parser.add_argument('data_dir', type=str, help='The directory where the Area is')
+    args = parser.parse_args()
+    data_dir = args.data_dir
+
+    main_folder = data_dir
+    print(f"The main folder is: {main_folder}")
 
     # Define the dictionary of class names and their corresponding identifiers
     class_dict = {
