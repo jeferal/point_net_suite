@@ -7,6 +7,7 @@ import shutil
 import argparse
 from pathlib import Path
 from tqdm import tqdm
+import mlflow
 
 from torch.utils.data import DataLoader
 
@@ -17,7 +18,7 @@ from point_net_suite.data_utils.s3_dis_dataset import S3DIS
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 models_folder_dict = {'pointnet_sem_segmentation': 'models/Pointnet'}
-models_modules_dict = {'pointnet_sem_segmentation': 'pointnet_sem_segmentation'}
+models_modules_dict = {'pointnet_sem_segmentation': 'point_net_suite.models.pointnet_sem_segmentation'}
 
 CATEGORIES = {
     'ceiling'  : 0, 
@@ -55,6 +56,7 @@ def parse_args():
     parser.add_argument('--train_area', type=int, nargs='+', default=[1, 2, 4], help='Which area to use for test, option: 1-3 [default: [1,2,4]]')
     parser.add_argument('--test_area', type=int, nargs='+', default=[3], help='Which area to use for test, option: 1-4 [default: [3]]')
     parser.add_argument('--remove_checkpoint', action='store_true', default=False, help='remove last checkpoint train progress')
+    parser.add_argument('--use_mlflow', action='store_true', default=False, help='Log train with mlflow')
 
     return parser.parse_args()
 
@@ -81,7 +83,7 @@ def main(args):
     log_string('PARAMETER ...')
     log_string(args)
 
-    data_path = os.path.join(BASE_DIR, 'data\stanford_indoor3d')
+    data_path = os.path.join(BASE_DIR, 'data/stanford_indoor3d')
     num_classes = NUM_CLASSES
     num_epochs = args.epoch
     num_points = args.num_points
@@ -91,7 +93,6 @@ def main(args):
     TRAIN_DATASET = S3DIS(root=data_path, area_nums=args.train_area, npoints=num_points, r_prob=0.25)
     print("start loading test data ...")
     TEST_DATASET = S3DIS(root=data_path, area_nums=args.test_area, split='test', npoints=num_points)
-
     trainDataLoader = DataLoader(TRAIN_DATASET, batch_size=batch_size, shuffle=True)
     testDataLoader = DataLoader(TEST_DATASET, batch_size=batch_size, shuffle=False)
 
@@ -161,113 +162,142 @@ def main(args):
 
     global_epoch = 0
 
-    for epoch in range(start_epoch, num_epochs):
-        log_string('Epoch %d (%d/%s):' % (global_epoch + 1, epoch + 1, args.epoch))
-        # Set the model in training mode
-        classifier = classifier.train()
-        _train_loss = []
-        _train_accuracy = []
-        _train_iou = []
-        for i, (points, targets) in tqdm(enumerate(trainDataLoader, 0), total=len(trainDataLoader), smoothing=0.9):
-            
-            if not args.use_cpu:
-                points, targets = points.transpose(2, 1).cuda(), targets.squeeze().cuda()
-            else:
-                points, targets = points.transpose(2, 1), targets.squeeze()
-            
-            # Zero gradients
-            optimizer.zero_grad()
-            
-            # get predicted class logits
-            preds, crit_idxs, feat_trans = classifier(points)
+    if args.use_mlflow:
+        # Export mlflow environment variables
+        os.environ['MLFLOW_TRACKING_URI'] = 'http://34.16.143.171:3389'
+        os.environ['MLFLOW_EXPERIMENT_NAME'] = 'pointnet_sem_segmentation'
+        os.environ['MLFLOW_ENABLE_SYSTEM_METRICS_LOGGING'] = 'true'
+        mlflow.start_run()
 
-            # get class predictions
-            pred_choice = torch.softmax(preds, dim=2).argmax(dim=2)
-
-            # get loss and perform backprop
-            loss = criterion(preds, targets, pred_choice) 
-            loss.backward()
-            optimizer.step()
-            scheduler.step() # update learning rate
-            
-            # get metrics
-            correct = pred_choice.eq(targets.data).cpu().sum()
-            accuracy = correct/float(batch_size*num_points)
-            iou = compute_iou(targets, pred_choice)
-
-            # update epoch loss and accuracy
-            _train_loss.append(loss.item())
-            _train_accuracy.append(accuracy)
-            _train_iou.append(iou.item())
-            
-        train_loss.append(np.mean(_train_loss))
-        train_accuracy.append(np.mean(_train_accuracy))
-        train_iou.append(np.mean(_train_iou))
-
-        print(f'Epoch: {epoch + 1} - Train Loss: {train_loss[-1]:.4f} ' \
-            + f'- Train Accuracy: {train_accuracy[-1]:.4f} ' \
-            + f'- Train IOU: {train_iou[-1]:.4f}')
-
-        
-        # get test results after each epoch
-        with torch.no_grad():
-
-            # Set model in evaluation mode
-            classifier = classifier.eval()
-
-            _test_loss = []
-            _test_accuracy = []
-            _test_iou = []
-            for i, (points, targets) in tqdm(enumerate(testDataLoader, 0), total=len(testDataLoader), smoothing=0.9):
+    try:
+        for epoch in range(start_epoch, num_epochs):
+            log_string('Epoch %d (%d/%s):' % (global_epoch + 1, epoch + 1, args.epoch))
+            # Set the model in training mode
+            classifier = classifier.train()
+            _train_loss = []
+            _train_accuracy = []
+            _train_iou = []
+            for i, (points, targets) in tqdm(enumerate(trainDataLoader, 0), total=len(trainDataLoader), smoothing=0.9):
                 
                 if not args.use_cpu:
                     points, targets = points.transpose(2, 1).cuda(), targets.squeeze().cuda()
                 else:
                     points, targets = points.transpose(2, 1), targets.squeeze()
-
+                
+                # Zero gradients
+                optimizer.zero_grad()
+                
+                # get predicted class logits
                 preds, crit_idxs, feat_trans = classifier(points)
+
+                # get class predictions
                 pred_choice = torch.softmax(preds, dim=2).argmax(dim=2)
 
+                # get loss and perform backprop
                 loss = criterion(preds, targets, pred_choice) 
-
+                loss.backward()
+                optimizer.step()
+                scheduler.step() # update learning rate
+                
                 # get metrics
                 correct = pred_choice.eq(targets.data).cpu().sum()
                 accuracy = correct/float(batch_size*num_points)
                 iou = compute_iou(targets, pred_choice)
 
-                # update epoch loss and accuracy
-                _test_loss.append(loss.item())
-                _test_accuracy.append(accuracy)
-                _test_iou.append(iou.item())
+                _train_loss.append(loss.item())
+                _train_accuracy.append(accuracy)
+                _train_iou.append(iou.item())
             
-            test_loss.append(np.mean(_test_loss))
-            test_accuracy.append(np.mean(_test_accuracy))
-            test_iou.append(np.mean(_test_iou))
-            print(f'Epoch: {epoch + 1} - Valid Loss: {test_loss[-1]:.4f} ' \
-                + f'- Valid Accuracy: {test_accuracy[-1]:.4f} ' \
-                + f'- Valid IOU: {test_iou[-1]:.4f}')
-            
-            # Save best models
-            if (test_iou[-1] >= best_iou):
-                best_iou = test_iou[-1]
-                best_epoch = epoch + 1
-                savepath = str(exp_dir) + '/best_model.pth'
-                log_string('Saving model at %s' % savepath)
-                state = {
-                    'epoch': best_epoch,
-                    'train_loss': train_loss,
-                    'train_accuracy': train_accuracy,
-                    'train_iou': train_iou,
-                    'test_loss': test_loss,
-                    'test_accuracy': test_accuracy,
-                    'test_iou': test_iou,
-                    'model_state_dict': classifier.state_dict(),
-                    'optimizer_type': args.optimizer,
-                    'optimizer_state_dict': optimizer.state_dict(),
-                }
-                torch.save(state, savepath)
+            # update epoch loss and accuracy
+            mean_train_loss = np.mean(_train_loss)
+            mean_train_accuracy = np.mean(_train_accuracy)
+            mean_train_iou = np.mean(_train_iou)
+            if args.use_mlflow:
+                mlflow.log_metric('train_loss', mean_train_loss, step=epoch)
+                mlflow.log_metric('train_accuracy', mean_train_accuracy, step=epoch)
+                mlflow.log_metric('train_iou', mean_train_iou, step=epoch)
+            train_loss.append(mean_train_loss)
+            train_accuracy.append(mean_train_accuracy)
+            train_iou.append(mean_train_iou)
 
-            global_epoch += 1            
+            print(f'Epoch: {epoch + 1} - Train Loss: {train_loss[-1]:.4f} ' \
+                + f'- Train Accuracy: {train_accuracy[-1]:.4f} ' \
+                + f'- Train IOU: {train_iou[-1]:.4f}')
+
+            
+            # get test results after each epoch
+            with torch.no_grad():
+
+                # Set model in evaluation mode
+                classifier = classifier.eval()
+
+                _test_loss = []
+                _test_accuracy = []
+                _test_iou = []
+                for i, (points, targets) in tqdm(enumerate(testDataLoader, 0), total=len(testDataLoader), smoothing=0.9):
+                    
+                    if not args.use_cpu:
+                        points, targets = points.transpose(2, 1).cuda(), targets.squeeze().cuda()
+                    else:
+                        points, targets = points.transpose(2, 1), targets.squeeze()
+
+                    preds, crit_idxs, feat_trans = classifier(points)
+                    pred_choice = torch.softmax(preds, dim=2).argmax(dim=2)
+
+                    loss = criterion(preds, targets, pred_choice) 
+
+                    # get metrics
+                    correct = pred_choice.eq(targets.data).cpu().sum()
+                    accuracy = correct/float(batch_size*num_points)
+                    iou = compute_iou(targets, pred_choice)
+
+                    # update epoch loss and accuracy
+                    _test_loss.append(loss.item())
+                    _test_accuracy.append(accuracy)
+                    _test_iou.append(iou.item())
+                
+                mean_test_loss = np.mean(_test_loss)
+                mean_test_accuracy = np.mean(_test_accuracy)
+                mean_test_iou = np.mean(_test_iou)
+
+                if args.use_mlflow:
+                    mlflow.log_metric('test_loss', mean_test_loss, step=epoch)
+                    mlflow.log_metric('test_accuracy', mean_test_accuracy, step=epoch)
+                    mlflow.log_metric('test_iou', mean_test_iou, step=epoch)
+
+                test_loss.append(mean_test_loss)
+                test_accuracy.append(mean_test_accuracy)
+                test_iou.append(mean_test_iou)
+                print(f'Epoch: {epoch + 1} - Valid Loss: {test_loss[-1]:.4f} ' \
+                    + f'- Valid Accuracy: {test_accuracy[-1]:.4f} ' \
+                    + f'- Valid IOU: {test_iou[-1]:.4f}')
+                
+                # Save best models
+                if (test_iou[-1] >= best_iou):
+                    best_iou = test_iou[-1]
+                    best_epoch = epoch + 1
+                    savepath = str(exp_dir) + '/best_model.pth'
+                    log_string('Saving model at %s' % savepath)
+                    state = {
+                        'epoch': best_epoch,
+                        'train_loss': train_loss,
+                        'train_accuracy': train_accuracy,
+                        'train_iou': train_iou,
+                        'test_loss': test_loss,
+                        'test_accuracy': test_accuracy,
+                        'test_iou': test_iou,
+                        'model_state_dict': classifier.state_dict(),
+                        'optimizer_type': args.optimizer,
+                        'optimizer_state_dict': optimizer.state_dict(),
+                    }
+                    torch.save(state, savepath)
+                    if args.use_mlflow:
+                        mlflow.log_artifact(savepath)
+
+                global_epoch += 1
+    finally:
+        if args.use_mlflow:
+            mlflow.end_run()      
 
     log_string('End of training...')
 

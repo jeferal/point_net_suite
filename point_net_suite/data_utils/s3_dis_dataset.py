@@ -23,28 +23,30 @@ class S3DIS(Dataset):
         areas = []
         for area_num in area_nums:
             # glob all paths
-            areas.append(glob(os.path.join(root, f'Area_[{area_num}]*')))
+            areas.append(os.path.join(root, f'Area_{area_num}'))
 
         # check that datapaths are valid, if not raise error
-        for path in areas:
-            if len(path) == 0:
-                raise FileNotFoundError("NO VALID FILEPATHS FOUND!")
-
-        for path in areas:
-            if not os.path.exists(path[0]):
-                raise FileNotFoundError(f"PATH NOT VALID: {path[0]} \n")
+        for area_path in areas:
+            if not os.path.exists(area_path):
+                raise FileNotFoundError(f"PATH NOT VALID: {area_path} \n")
 
         # get all datapaths
+        # data paths should be a list of all the txt files in the area folders
         self.data_paths = []
-        for path in areas:
-            for area in path:
-                self.data_paths += glob(os.path.join(area, '**\*.txt'), 
-                                        recursive=True)
+        for area_path in areas:
+            if os.path.exists(area_path) and os.path.isdir(area_path):
+                for root, _, files in os.walk(area_path):
+                    if root == area_path:
+                        continue  # Skip files directly in the area directory
+                    for file in files:
+                        self.data_paths.append(os.path.join(root, file))
 
         # get unique space identifiers (area_##\\spacename_##_)
+        # TODO: This does not work
         self.space_ids = []
         for fp in self.data_paths:
-            area, space = fp.split('\\')[-2:]
+            area = os.path.basename(fp)
+            space = os.path.basename(fp)
             space_id = '\\'.join([area, '_'.join(space.split('_')[:2])]) + '_'
             self.space_ids.append(space_id)
 
@@ -86,7 +88,7 @@ class S3DIS(Dataset):
         ''' Obtains a Random space. In this case the batchsize would be
             the number of partitons that the space was separated into.
             This is a special function for testing.
-            '''
+        '''
 
         # get random space id
         idx = random.randint(0, len(self.space_ids) - 1)
@@ -140,7 +142,7 @@ class S3DIS(Dataset):
     def random_rotate(points):
         ''' randomly rotates point cloud about vertical axis.
             Code is commented out to rotate about all axes
-            '''
+        '''
         # construct a randomly parameterized 3x3 rotation matrix
         phi = np.random.uniform(-np.pi, np.pi)
         theta = np.random.uniform(-np.pi, np.pi)
