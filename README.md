@@ -4,8 +4,8 @@
 * Dataset [ModelNet](https://shapenet.cs.stanford.edu/media/modelnet40_normal_resampled.zip):
 ```bash
 wget https://shapenet.cs.stanford.edu/media/modelnet40_normal_resampled.zip --no-check-certificate
-unzip point_net_suite/data/modelnet40_normal_resampled
-rm point_net_suite/data/modelnet40_normal_resampled.zip
+unzip modelnet40_normal_resampled.zip -d point_net_suite/data/modelnet40
+rm modelnet40_normal_resampled.zip
 ```
 
 * Dataset [S3DIS](http://buildingparser.stanford.edu/dataset.html): 3D indoor parsing dataset
