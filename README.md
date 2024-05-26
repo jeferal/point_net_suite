@@ -9,6 +9,10 @@ rm modelnet40_normal_resampled.zip
 ```
 
 * Dataset [S3DIS](http://buildingparser.stanford.edu/dataset.html): 3D indoor parsing dataset
+```bash
+wget https://cvg-data.inf.ethz.ch/s3dis/Stanford3dDataset_v1.2_Aligned_Version.zip
+unzip Stanford3dDataset_v1.2_Aligned_Version.zip -d data/stanford_indoor3d
+rm Stanford3dDataset_v1.2_Aligned_Version.zip
 **TODO**: Update this with the URL that was used and with the script to process the data.
 
 ## Installation
