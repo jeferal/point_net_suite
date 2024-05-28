@@ -31,7 +31,7 @@ CATEGORIES = {
 NUM_CLASSES = len(CATEGORIES)
 
 def main(args):
-    model = get_model(num_points=4096, m=NUM_CLASSES)
+    model = get_model(num_points=args.num_points, m=NUM_CLASSES)
 
     checkpoint = torch.load(args.model_path)
     model.load_state_dict(checkpoint['model_state_dict'])
@@ -39,7 +39,7 @@ def main(args):
     root_data_path = args.data_path
 
     loader_args = type('', (), {})()
-    loader_args.num_points = 4096
+    loader_args.num_points = args.num_points
     args.test_area = [3]
     test_dataset = S3DIS(root=root_data_path, area_nums=args.test_area, split='test', npoints=loader_args.num_points)
 
@@ -83,6 +83,8 @@ if __name__ == '__main__':
     parser.add_argument('model_path', type=str, help='Path to the model ().pth file)')
     # Second argument is the data path
     parser.add_argument('data_path', type=str, help='Path to the dataset, for example data/stanford_indoor3d')
+    # Another argument that is the number of points, by default 4096
+    parser.add_argument('--num_points', type=int, default=4096, help='Number of points in each sample')
 
     args = parser.parse_args()
 
