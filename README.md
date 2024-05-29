@@ -13,7 +13,11 @@ rm modelnet40_normal_resampled.zip
 wget https://cvg-data.inf.ethz.ch/s3dis/Stanford3dDataset_v1.2_Aligned_Version.zip
 unzip Stanford3dDataset_v1.2_Aligned_Version.zip -d data/stanford_indoor3d
 rm Stanford3dDataset_v1.2_Aligned_Version.zip
-**TODO**: Update this with the URL that was used and with the script to process the data.
+```
+Use the script to process the areas of the dataset:
+```bash
+python3 point_net_suite/data_utils/s3_dis_data_gen.py <path_to_the_Area>
+```
 
 ## Installation
 You can work with anaconda or create a python3 virtual environment.

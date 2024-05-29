@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader
 
 
 def main(args):
-    model = get_model(num_points=1024, k=40)
+    model = get_model(num_points=args.num_points, k=40)
 
     checkpoint = torch.load(args.model_path)
     model.load_state_dict(checkpoint['model_state_dict'])
@@ -21,7 +21,7 @@ def main(args):
     root_data_path = args.data_path
 
     loader_args = type('', (), {})()
-    loader_args.num_point = 1024
+    loader_args.num_point = args.num_points
     loader_args.use_uniform_sample = False
     loader_args.use_normals = False
     loader_args.num_category = 40
@@ -67,6 +67,8 @@ if __name__ == '__main__':
     parser.add_argument('model_path', type=str, help='Path to the model ().pth file)')
     # Second argument is the data path
     parser.add_argument('data_path', type=str, help='Path to the dataset, for example data/modelnet40')
+    # Argument that is the number of points, by default 1024
+    parser.add_argument('--num_points', type=int, default=1024, help='Number of points in each sample')
 
     args = parser.parse_args()
 
