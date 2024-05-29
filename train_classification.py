@@ -10,13 +10,13 @@ from tqdm import tqdm
 import mlflow
 
 from torch.utils.data import DataLoader
-from point_net_suite.data_utils.metrics import compute_iou
-from point_net_suite.data_utils.model_net import ModelNetDataLoader
-import point_net_suite.data_utils.augmentation as DataAugmentator
+from data_utils.metrics import compute_iou
+from data_utils.model_net import ModelNetDataLoader
+import data_utils.augmentation as DataAugmentator
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 models_folder_dict = {'pointnet_cls': 'models/Pointnet'}
-models_modules_dict = {'pointnet_cls': 'point_net_suite.models.point_net_classification'}
+models_modules_dict = {'pointnet_cls': 'models.point_net_classification'}
 
 def parse_args():
     '''PARAMETERS'''

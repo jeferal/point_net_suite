@@ -1,5 +1,5 @@
 import torch.nn as nn
-from point_net_suite.models.point_net import PointNetSegmentation, PointNetLossForSemanticSegmentation
+from models.point_net import PointNetSegmentation, PointNetLossForSemanticSegmentation
 
 
 class get_model(nn.Module):

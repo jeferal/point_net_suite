@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from point_net_suite.models.point_net import PointNetClassification, PointNetLossForClassification
+from models.point_net import PointNetClassification, PointNetLossForClassification
 
 
 class get_model(nn.Module):

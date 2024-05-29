@@ -12,13 +12,13 @@ import mlflow
 from torch.utils.data import DataLoader
 
 #import data_utils.DataAugmentationAndShuffle as DataAugmentator
-from point_net_suite.data_utils.metrics import compute_iou
-from point_net_suite.data_utils.s3_dis_dataset import S3DIS
+from data_utils.metrics import compute_iou
+from data_utils.s3_dis_dataset import S3DIS
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 models_folder_dict = {'pointnet_sem_segmentation': 'models/Pointnet'}
-models_modules_dict = {'pointnet_sem_segmentation': 'point_net_suite.models.pointnet_sem_segmentation'}
+models_modules_dict = {'pointnet_sem_segmentation': 'models.pointnet_sem_segmentation'}
 
 CATEGORIES = {
     'ceiling'  : 0, 

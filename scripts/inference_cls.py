@@ -7,9 +7,9 @@ import time
 
 import open3d as o3d
 
-from point_net_suite.models.point_net_classification import get_model
-from point_net_suite.data_utils.model_net import ModelNetDataLoader
-from torch.utils.data import DataLoader
+from models.point_net_classification import get_model
+from data_utils.model_net import ModelNetDataLoader
+#from torch.utils.data import DataLoader
 
 
 def main(args):

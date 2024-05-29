@@ -7,9 +7,9 @@ import time
 
 import open3d as o3d
 
-from point_net_suite.models.pointnet_sem_segmentation import get_model
-from point_net_suite.data_utils.s3_dis_dataset import S3DIS
-from torch.utils.data import DataLoader
+from models.pointnet_sem_segmentation import get_model
+from data_utils.s3_dis_dataset import S3DIS
+#from torch.utils.data import DataLoader
 
 
 CATEGORIES = {
