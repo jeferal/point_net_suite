@@ -10,20 +10,20 @@ def process_files(main_folder, class_dict):
     area_folders = [f for f in os.listdir(main_folder) if os.path.isdir(os.path.join(main_folder, f))]
     
     # Iterate over all area folders in the main folder with tqdm progress bar
-    for areafolder in tqdm(area_folders, desc="Processing subfolders"):
+    for areafolder in tqdm(area_folders, desc="Processing all area folders"):
         areafolder_path = os.path.join(main_folder, areafolder)
 
         # Get list of room subfolders
         room_folders = [f for f in os.listdir(areafolder_path) if os.path.isdir(os.path.join(areafolder_path, f))]
         
         # Iterate over all subfolders in the main folder with tqdm progress bar
-        for roomfolder in tqdm(room_folders, desc="Processing subfolders"):
+        for roomfolder in tqdm(room_folders, desc=f"Processing room folders in {areafolder}"):
             roomfolder_path = os.path.join(areafolder_path, roomfolder)
             annotations_folder = os.path.join(roomfolder_path, 'Annotations')
             
             # Check if the Annotations folder exists
             if os.path.exists(annotations_folder):
-                output_file = os.path.join(roomfolder_path, f'{roomfolder}.txt')
+                output_file = os.path.join(areafolder_path, f'{roomfolder}.txt')
                 
                 # Open the output file in write mode
                 with open(output_file, 'w') as outfile:
@@ -49,6 +49,7 @@ def process_files(main_folder, class_dict):
 
                         if not class_found:
                             # If no class name was found in the file name, copy the lines as they are
+                            print("Error: class not found in " + file_path + ".")
                             with open(file_path, 'r') as infile:
                                 lines = infile.readlines()
                                 for line in lines:
@@ -70,7 +71,7 @@ if __name__ == "__main__":
     # Define the path to the main folder containing the subfolders
     parser = argparse.ArgumentParser(description='Process the files in the Stanford Indoor 3D dataset')
     # Argument that is the directory where the data is
-    parser.add_argument('--data_dir', type=str, help='The directory where the Area is')
+    parser.add_argument('--data_dir', type=str, help='The directory where the Areas are')
     args = parser.parse_args()
 
     main_folder = args.data_dir
