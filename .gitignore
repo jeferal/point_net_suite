@@ -1,4 +1,4 @@
+/[Dd]ata/
+/[Ll]og/
 *.egg-info
-*log
-*data
 __pycache__
