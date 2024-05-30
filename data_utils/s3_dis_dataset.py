@@ -72,7 +72,7 @@ class S3DIS(Dataset):
 
             # add random rotation to the point cloud with probability
             if np.random.uniform(0, 1) > 1 - self.r_prob:
-                points = self.random_rotate(points)
+                points[:, :3] = self.random_rotate(points[:, :3])
 
 
         # Normalize Point Cloud to (0, 1)

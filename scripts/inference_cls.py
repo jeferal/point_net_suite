@@ -25,7 +25,7 @@ def main(args):
     loader_args.use_uniform_sample = False
     loader_args.use_normals = False
     loader_args.num_category = 40
-    test_dataset = ModelNetDataLoader(root=root_data_path, args=loader_args, split='test', process_data=False)
+    test_dataset = ModelNetDataLoader(root=root_data_path, args=loader_args, split='test', pre_process_data=False)
 
     # Get a random idx from test dataset
     idx = random.randint(0, len(test_dataset))

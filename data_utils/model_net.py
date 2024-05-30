@@ -49,13 +49,14 @@ def farthest_point_sample(point, npoint):
 
 
 class ModelNetDataLoader(Dataset):
-    def __init__(self, root, args, split='train', process_data=False):
+    def __init__(self, root, split='train', num_cat=40, num_point=1024, use_extra_feat=False, use_fps=False, pre_process_data=False):
         self.root = root
-        self.npoints = args.num_point
-        self.process_data = process_data
-        self.uniform = args.use_uniform_sample
-        self.use_normals = args.use_normals
-        self.num_category = args.num_category
+        self.num_category = num_cat
+        self.npoints = num_point
+        self.use_extra_features = use_extra_feat
+        self.use_fps = use_fps
+        self.pre_process_data = pre_process_data
+
 
         if self.num_category == 10:
             self.catfile = os.path.join(self.root, 'modelnet10_shape_names.txt')
@@ -79,12 +80,12 @@ class ModelNetDataLoader(Dataset):
                          in range(len(shape_ids[split]))]
         print('The size of %s data is %d' % (split, len(self.datapath)))
 
-        if self.uniform:
+        if self.use_fps:
             self.save_path = os.path.join(root, 'modelnet%d_%s_%dpts_fps.dat' % (self.num_category, split, self.npoints))
         else:
             self.save_path = os.path.join(root, 'modelnet%d_%s_%dpts.dat' % (self.num_category, split, self.npoints))
 
-        if self.process_data:
+        if self.pre_process_data:
             if not os.path.exists(self.save_path):
                 print('Processing data %s (only running in the first time)...' % self.save_path)
                 self.list_of_points = [None] * len(self.datapath)
@@ -96,7 +97,7 @@ class ModelNetDataLoader(Dataset):
                     cls = np.array([cls]).astype(np.int32)
                     point_set = np.loadtxt(fn[1], delimiter=',').astype(np.float32)
 
-                    if self.uniform:
+                    if self.use_fps:
                         point_set = farthest_point_sample(point_set, self.npoints)
                     else:
                         point_set = point_set[0:self.npoints, :]
@@ -115,7 +116,7 @@ class ModelNetDataLoader(Dataset):
         return len(self.datapath)
 
     def _get_item(self, index):
-        if self.process_data:
+        if self.pre_process_data:
             point_set, label = self.list_of_points[index], self.list_of_labels[index]
         else:
             fn = self.datapath[index]
@@ -123,13 +124,13 @@ class ModelNetDataLoader(Dataset):
             label = np.array([cls]).astype(np.int32)
             point_set = np.loadtxt(fn[1], delimiter=',').astype(np.float32)
 
-            if self.uniform:
+            if self.use_fps:
                 point_set = farthest_point_sample(point_set, self.npoints)
             else:
                 point_set = point_set[0:self.npoints, :]
                 
         point_set[:, 0:3] = pc_normalize(point_set[:, 0:3])
-        if not self.use_normals:
+        if not self.use_extra_features:
             point_set = point_set[:, 0:3]
 
         return point_set, label[0]
