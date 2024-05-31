@@ -23,10 +23,9 @@ models_modules_dict = {'pointnet_cls': 'models.point_net_classification'}
     'num_point': 1024,
     'batch_size': 24,
     'dropout': 0.4,
-    'label_smoothing': 0.1,
+    'label_smoothing': 0.0,
     'optimizer': 'AdamW',  
-    'learning_rate': 1e-3, 
-    'decay_rate': 1e-4,    
+    'learning_rate': 1e-3,
     'scheduler': 'Cosine'  
 }'''
 
@@ -36,11 +35,10 @@ hparams_for_args_to_evaluate = {
     # one run with --use_extra_features
     # one run with --use_fps
     'batch_size': 24,       #12, 24, 48, 96     --> I think this will only change the speed of execution, try it the last one as is the least important
-    'dropout': 0.4,         #0.3, 0.4, 0.5
-    'label_smoothing': 0.1, #0.0, 0.1, 0.2
+    'dropout': 0.4,         #0.0, 0.2, 0.4
+    'label_smoothing': 0.0, #0.0, 0.1, 0.2
     'optimizer': 'AdamW',   #AdamW, Adam, SGD
     'learning_rate': 1e-3,  #1e-2, 1e-3, 1e-4
-    'decay_rate': 1e-4,     #1e-3, 1e-4, 1e-5
     'scheduler': 'Cosine'   #Cosine, Cyclic, Step
 }
 
@@ -69,7 +67,6 @@ def parse_args():
     # Optimizer parameters
     parser.add_argument('--optimizer', type=str, default=hparams_for_args_to_evaluate['optimizer'], help='optimizer for training [AdamW, Adam, SGD]')
     parser.add_argument('--learning_rate', type=float, default=hparams_for_args_to_evaluate['learning_rate'], help='learning rate in training')
-    parser.add_argument('--decay_rate', type=float, default=hparams_for_args_to_evaluate['decay_rate'], help='decay rate')
     # Scheduler parameters
     parser.add_argument('--scheduler', type=str, default=hparams_for_args_to_evaluate['scheduler'], help='scheduler for training [Cosine (CosineAnnealingLR), Cyclic (CyclicLR), Step (StepLR)]')
     # Other logging parameters
@@ -142,16 +139,14 @@ def main(args):
             classifier.parameters(),
             lr=args.learning_rate,
             betas=(0.9, 0.999),
-            eps=1e-08,
-            weight_decay=args.decay_rate
+            eps=1e-08
         )
     elif args.optimizer == 'Adam':
         optimizer = torch.optim.Adam(
             classifier.parameters(),
             lr=args.learning_rate,
             betas=(0.9, 0.999),
-            eps=1e-08,
-            weight_decay=args.decay_rate
+            eps=1e-08
         )
     else:
         optimizer = torch.optim.SGD(classifier.parameters(), lr=args.learning_rate, momentum=0.9)
@@ -161,10 +156,8 @@ def main(args):
     # ===============================================================
     if args.scheduler == 'Cosine':
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epoch)
-    elif args.scheduler == 'Cyclic':
-        scheduler = torch.optim.lr_scheduler.CyclicLR(optimizer, base_lr=args.learning_rate, max_lr=1e-3, cycle_momentum=False)
     else:
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.7)
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=args.epoch / 10, gamma=0.5)
 
     # ===============================================================
     # MODEL STATE AND METRICS VARIABLES INITIALIZATION

@@ -148,7 +148,7 @@ class PointNetClassification(nn.Module):
 # ================================================================================================
 class PointNetSegmentation(nn.Module):
     ''' PointNet Segmentation module that obtains the object part subclass using the global and local features combined '''
-    def __init__(self, num_points=1024, m=2, input_dim=3):
+    def __init__(self, num_points=1024, m=2, dropout=0.4, input_dim=3):
         """
         :param num_points: number of points in the point cloud
         :param k: number of object part classes available
@@ -171,7 +171,9 @@ class PointNetSegmentation(nn.Module):
 
         # Last shared MLP that obtais the part classes
         self.conv4 = nn.Conv1d(128, m, kernel_size=1)
-        
+
+        # Dropout is not present in the paper, but we can test if it works
+        self.dropout = nn.Dropout(p=dropout)
 
     def forward(self, x):
         # Get the local + global features from the encoder (also the critical points and feature transform matrix)
@@ -180,7 +182,7 @@ class PointNetSegmentation(nn.Module):
         # Pass through the first shared MLP
         x = F.relu(self.bn1(self.conv1(combined_features)))
         x = F.relu(self.bn2(self.conv2(x)))
-        point_features = F.relu(self.bn3(self.conv3(x)))
+        point_features = F.relu(self.bn3(self.dropout(self.conv3(x))))
 
         # Pass through the last shared MLP
         output_scores = self.conv4(point_features)

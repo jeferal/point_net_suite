@@ -43,10 +43,9 @@ NUM_CLASSES = len(CATEGORIES)
     'num_point': 8192,
     'batch_size': 8,
     #'dropout': 0.4,
-    'label_smoothing': 0.1,
+    'label_smoothing': 0.0,
     'optimizer': 'AdamW',  
-    'learning_rate': 1e-3, 
-    'decay_rate': 1e-4,    
+    'learning_rate': 1e-3,
     'scheduler': 'Cosine'  
 }'''
 
@@ -56,11 +55,10 @@ hparams_for_args_to_evaluate = {
     # one run with --use_extra_features
     ## one run with --use_fps
     'batch_size': 8,        #8, 16, 32, 64     --> I think this will only change the speed of execution, try it the last one as is the least important
-    #'dropout': 0.4,        #0.3, 0.4, 0.5
-    'label_smoothing': 0.1, #0.0, 0.1, 0.2
+    'dropout': 0.4,         #0.0, 0.2, 0.4
+    'label_smoothing': 0.0, #0.0, 0.1, 0.2
     'optimizer': 'AdamW',   #AdamW, Adam, SGD
     'learning_rate': 1e-3,  #1e-2, 1e-3, 1e-4
-    'decay_rate': 1e-4,     #1e-3, 1e-4, 1e-5
     'scheduler': 'Cosine'   #Cosine, Cyclic, Step
 }
 
@@ -88,12 +86,11 @@ def parse_args():
     parser.add_argument('--epoch', default=100, type=int, help='number of epoch in training')
     parser.add_argument('--batch_size', type=int, default=hparams_for_args_to_evaluate['batch_size'], help='batch size in training')
     #TO DO: DROPOUT
-    #parser.add_argument('--dropout', type=float, default=hparams_for_args_to_evaluate['dropout'], help='Dropout')
+    parser.add_argument('--dropout', type=float, default=hparams_for_args_to_evaluate['dropout'], help='Dropout')
     parser.add_argument('--label_smoothing', type=float, default=hparams_for_args_to_evaluate['label_smoothing'], help='Loss label smoothing used for the cross entropy')
     # Optimizer parameters
     parser.add_argument('--optimizer', type=str, default=hparams_for_args_to_evaluate['optimizer'], help='optimizer for training [AdamW, Adam, SGD]')
     parser.add_argument('--learning_rate', type=float, default=hparams_for_args_to_evaluate['learning_rate'], help='learning rate in training')
-    parser.add_argument('--decay_rate', type=float, default=hparams_for_args_to_evaluate['decay_rate'], help='decay rate')
     # Scheduler parameters
     parser.add_argument('--scheduler', type=str, default=hparams_for_args_to_evaluate['scheduler'], help='scheduler for training [Cosine (CosineAnnealingLR), Cyclic (CyclicLR), Step (StepLR)]')
     # Other logging parameters
@@ -153,7 +150,7 @@ def main(args):
     sys.path.append(os.path.join(BASE_DIR, models_folder_dict[args.model]))
     model = importlib.import_module(models_modules_dict[args.model])
 
-    classifier = model.get_model(num_points=num_points, m=num_classes, input_dim=input_dimension)
+    classifier = model.get_model(num_points=num_points, m=num_classes, dropout=args.dropout, input_dim=input_dimension)
     criterion = model.get_loss(label_smoothing=args.label_smoothing)
 
     if not args.use_cpu:
@@ -168,16 +165,14 @@ def main(args):
             classifier.parameters(),
             lr=args.learning_rate,
             betas=(0.9, 0.999),
-            eps=1e-08,
-            weight_decay=args.decay_rate
+            eps=1e-08
         )
     elif args.optimizer == 'Adam':
         optimizer = torch.optim.Adam(
             classifier.parameters(),
             lr=args.learning_rate,
             betas=(0.9, 0.999),
-            eps=1e-08,
-            weight_decay=args.decay_rate
+            eps=1e-08
         )
     else:
         optimizer = torch.optim.SGD(classifier.parameters(), lr=args.learning_rate, momentum=0.9)
@@ -187,10 +182,8 @@ def main(args):
     # ===============================================================
     if args.scheduler == 'Cosine':
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epoch)
-    elif args.scheduler == 'Cyclic':
-        scheduler = torch.optim.lr_scheduler.CyclicLR(optimizer, base_lr=args.learning_rate, max_lr=1e-3, cycle_momentum=False)
     else:
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.7)
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=args.epoch / 10, gamma=0.5)
     
     # ===============================================================
     # MODEL STATE AND METRICS VARIABLES INITIALIZATION
