@@ -266,7 +266,6 @@ def main(args):
                 loss = criterion(preds, targets, pred_choice) 
                 loss.backward()
                 optimizer.step()
-                scheduler.step()
                 
                 # get metrics
                 correct = pred_choice.eq(targets.data).cpu().sum()

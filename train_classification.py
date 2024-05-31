@@ -109,7 +109,7 @@ def main(args):
     data_preprocess = not args.no_data_preprocess
     
     train_dataset = ModelNetDataLoader(root=data_path, split='train', num_cat=args.num_category, num_point=args.num_point,
-                                       use_extra_feat=True, use_fps=args.use_fps, pre_process_data=data_preprocess)
+                                       use_extra_feat=args.use_extra_features, use_fps=args.use_fps, pre_process_data=data_preprocess)
     eval_dataset = ModelNetDataLoader(root=data_path, split='test', num_cat=args.num_category, num_point=args.num_point,
                                       use_extra_feat=args.use_extra_features, use_fps=args.use_fps, pre_process_data=data_preprocess)
     trainDataLoader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=8, drop_last=True)
@@ -243,8 +243,6 @@ def main(args):
 
                 loss = criterion(pred, target.long(), feat_trans)
                 pred_choice = pred.data.max(1)[1]
-
-                optim_learning_rate.append(scheduler.get_last_lr())
                 
                 loss.backward()
                 optimizer.step()
