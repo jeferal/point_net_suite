@@ -21,7 +21,7 @@ python3 point_net_suite/data_utils/s3_dis_data_gen.py <path_to_the_Area>
 
 ## Installation
 
-## Option 1: pip3 venv via requirements.txt
+### Option 1: pip3 venv via requirements.txt
 1. **Clone the Repository:**
     ```bash
     git clone https://github.com/jeferal/point_net_suite.git
