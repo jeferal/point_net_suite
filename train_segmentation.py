@@ -42,7 +42,8 @@ NUM_CLASSES = len(CATEGORIES)
 '''hparams_for_args_default = {
     'num_point': 8192,
     'batch_size': 8,
-    #'dropout': 0.4,
+    'dropout': 0.4,
+    'extra_feat_dropout': 0.2,
     'label_smoothing': 0.0,
     'optimizer': 'AdamW',  
     'learning_rate': 1e-3,
@@ -51,15 +52,16 @@ NUM_CLASSES = len(CATEGORIES)
 
 # hparams for arguments to evaluate model performance
 hparams_for_args_to_evaluate = {
-    'num_point': 8192,      #4096, 8192, 16384, 32768
+    'num_point': 8192,          #4096, 8192, 16384, 32768
     # one run with --use_extra_features
     ## one run with --use_fps
-    'batch_size': 8,        #8, 16, 32, 64     --> I think this will only change the speed of execution, try it the last one as is the least important
-    'dropout': 0.4,         #0.0, 0.2, 0.4
-    'label_smoothing': 0.0, #0.0, 0.1, 0.2
-    'optimizer': 'AdamW',   #AdamW, Adam, SGD
-    'learning_rate': 1e-3,  #1e-2, 1e-3, 1e-4
-    'scheduler': 'Cosine'   #Cosine, Cyclic, Step
+    'batch_size': 8,            #8, 16, 32, 64
+    'dropout': 0.4,             #0.0, 0.2, 0.4
+    'extra_feat_dropout': 0.2,  #0.0, 0.2, 0.5
+    'label_smoothing': 0.0,     #0.0, 0.1, 0.2
+    'optimizer': 'AdamW',       #AdamW, Adam, SGD
+    'learning_rate': 1e-3,      #1e-2, 1e-3, 1e-4
+    'scheduler': 'Cosine'       #Cosine, Cyclic, Step
 }
 
 
@@ -85,8 +87,8 @@ def parse_args():
     # Model parameters
     parser.add_argument('--epoch', default=100, type=int, help='number of epoch in training')
     parser.add_argument('--batch_size', type=int, default=hparams_for_args_to_evaluate['batch_size'], help='batch size in training')
-    #TO DO: DROPOUT
     parser.add_argument('--dropout', type=float, default=hparams_for_args_to_evaluate['dropout'], help='Dropout')
+    parser.add_argument('--extra_feat_dropout', type=float, default=hparams_for_args_to_evaluate['extra_feat_dropout'], help='Extra Features Dropout to avoid the classifier rely on them')
     parser.add_argument('--label_smoothing', type=float, default=hparams_for_args_to_evaluate['label_smoothing'], help='Loss label smoothing used for the cross entropy')
     # Optimizer parameters
     parser.add_argument('--optimizer', type=str, default=hparams_for_args_to_evaluate['optimizer'], help='optimizer for training [AdamW, Adam, SGD]')
@@ -150,7 +152,7 @@ def main(args):
     sys.path.append(os.path.join(BASE_DIR, models_folder_dict[args.model]))
     model = importlib.import_module(models_modules_dict[args.model])
 
-    classifier = model.get_model(num_points=num_points, m=num_classes, dropout=args.dropout, input_dim=input_dimension)
+    classifier = model.get_model(num_points=num_points, m=num_classes, dropout=args.dropout, input_dim=input_dimension, extra_feat_dropout=args.extra_feat_dropout)
     criterion = model.get_loss(label_smoothing=args.label_smoothing)
 
     if not args.use_cpu:
@@ -196,6 +198,7 @@ def main(args):
     eval_loss = []
     eval_accuracy = []
     eval_iou = []
+    optim_learning_rate = []
     best_eval_iou = 0.2
 
     # ===============================================================
@@ -211,6 +214,7 @@ def main(args):
         eval_accuracy = checkpoint['eval_accuracy']
         eval_iou = checkpoint['eval_iou']
         best_eval_iou = eval_iou[-1]
+        optim_learning_rate = checkpoint['optim_learning_rate']
         classifier.load_state_dict(checkpoint['model_state_dict'])
         if checkpoint['optimizer_type'] == args.optimizer:
             optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
@@ -278,10 +282,15 @@ def main(args):
             train_epoch_accuracy = np.mean(train_instance_accuracy)
             train_epoch_iou = np.mean(train_instance_iou)
 
+            current_lr = scheduler.get_last_lr()[0]
+            optim_learning_rate.append(current_lr)
+            scheduler.step()
+
             if args.use_mlflow:
                 mlflow.log_metric('train_loss', train_epoch_loss, step=epoch)
                 mlflow.log_metric('train_accuracy', train_epoch_accuracy, step=epoch)
                 mlflow.log_metric('train_iou', train_epoch_iou, step=epoch)
+                mlflow.log_metric("learning_rate", current_lr, step=epoch)
 
             train_loss.append(train_epoch_loss)
             train_accuracy.append(train_epoch_accuracy)
@@ -322,6 +331,7 @@ def main(args):
                         'train_loss': train_loss,
                         'train_accuracy': train_accuracy,
                         'train_iou': train_iou,
+                        'optim_learning_rate': optim_learning_rate,
                         'eval_loss': eval_loss,
                         'eval_accuracy': eval_accuracy,
                         'eval_iou': eval_iou,

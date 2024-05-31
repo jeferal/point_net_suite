@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import numpy as np
 
 
 # ================================================================================================
@@ -8,7 +9,7 @@ import torch.nn.functional as F
 # ================================================================================================
 class PointNetEncoder(nn.Module):
     ''' PointNet Encoder module that obtains the global and local point features '''
-    def __init__(self, num_points=1024, local_feat=False, input_dim=3):
+    def __init__(self, num_points=1024, local_feat=False, input_dim=3, extra_feat_dropout=0.0):
         """
         :param num_points: number of points in the point cloud
         :param local_feat: if True, forward() returns the concatenation of the local and global features
@@ -18,10 +19,11 @@ class PointNetEncoder(nn.Module):
         self.num_points = num_points
         self.local_feat = local_feat
         self.input_dim = input_dim
+        self.extra_feat_dropout = extra_feat_dropout
 
         # First Spatial Transformer Network (T-net) and shared MLP (with 2 layers (64,64))
         self.tnet1 = Tnet(dim=3, num_points=num_points)
-        self.conv1 = nn.Conv1d(3, 64, kernel_size=1)
+        self.conv1 = nn.Conv1d(3 + (self.input_dim - 3), 64, kernel_size=1)        #+ (self.input_dim - 3) makes the model be able to accept extra features as RGB
         self.conv2 = nn.Conv1d(64, 64, kernel_size=1)
 
         # Batch Normalization required for the first shared MLP
@@ -30,12 +32,12 @@ class PointNetEncoder(nn.Module):
 
         # Second Spatial Transformer Network (T-net) and shared MLP (with 3 layers (64,128,1024))
         self.tnet2 = Tnet(dim=64, num_points=num_points)
-        self.conv3 = nn.Conv1d(64 + (self.input_dim - 3), 64 + (self.input_dim - 3), kernel_size=1) #+ (self.input_dim - 3) makes the model be able to accept extra features as RGB
-        self.conv4 = nn.Conv1d(64 + (self.input_dim - 3), 128, kernel_size=1)
+        self.conv3 = nn.Conv1d(64, 64, kernel_size=1) 
+        self.conv4 = nn.Conv1d(64, 128, kernel_size=1)
         self.conv5 = nn.Conv1d(128, 1024, kernel_size=1)
         
         # Batch Normalization required for the second shared MLP
-        self.bn3 = nn.BatchNorm1d(64 + (self.input_dim - 3))
+        self.bn3 = nn.BatchNorm1d(64)
         self.bn4 = nn.BatchNorm1d(128)
         self.bn5 = nn.BatchNorm1d(1024)
 
@@ -60,6 +62,17 @@ class PointNetEncoder(nn.Module):
             # Perform the first transformation across every point (3 dims)
             x = torch.bmm(x.transpose(2, 1), input_transform_matrix).transpose(2, 1)
 
+            # If we had more than 3 dimensions, just after the first Tnet and the transformation,
+            # we can add back the extra dimensions as they should be treated as extra features with the same importance as the xyz info.
+            # We can also implement some dropout so that the model does not learn to decide based on these extra features
+            # (for example, decide a class based on color with rgb extra info). This is done in other models like KPCOnv.
+            if xDimension > 3:
+                #TO DO: EXTRA FEATURES DROPOUT
+                # add random rotation to the point cloud with probability
+                if np.random.uniform(0, 1) < self.extra_feat_dropout:
+                    extra_features[:, :, :] = 0.0
+                x = torch.cat([x, extra_features], dim=1)
+
             # Pass through the first shared MLP
             x = F.relu(self.bn1(self.conv1(x)))
             x = F.relu(self.bn2(self.conv2(x)))
@@ -69,10 +82,6 @@ class PointNetEncoder(nn.Module):
 
             # Perform the second transformation across each feature (in 64 dims now) 
             x = torch.bmm(x.transpose(2, 1), feature_transform_matrix).transpose(2, 1)
-
-            # If we had more than 3 dimensions, we can now add back the extra dimensions as they should be treated as extra features
-            if xDimension > 3:
-                x = torch.cat([x, extra_features], dim=1)
 
             # Save the local point features (used in the segmentation head)
             if self.local_feat:
@@ -105,7 +114,7 @@ class PointNetEncoder(nn.Module):
 # ================================================================================================
 class PointNetClassification(nn.Module):
     ''' PointNet Classification module that obtains the object class using the global features '''
-    def __init__(self, num_points=1024, k=2, dropout=0.4, input_dim=3):
+    def __init__(self, num_points=1024, k=2, dropout=0.4, input_dim=3, extra_feat_dropout=0.0):
         """
         :param num_points: number of points in the point cloud
         :param k: number of object classes available
@@ -114,7 +123,7 @@ class PointNetClassification(nn.Module):
         super(PointNetClassification, self).__init__()
 
         # PointNet Encoder with only global features
-        self.encoder = PointNetEncoder(num_points, local_feat=False, input_dim=input_dim)
+        self.encoder = PointNetEncoder(num_points, local_feat=False, input_dim=input_dim, extra_feat_dropout=extra_feat_dropout)
 
         # FC layers for the classification MLP
         self.fc1 = nn.Linear(1024, 512)
@@ -148,7 +157,7 @@ class PointNetClassification(nn.Module):
 # ================================================================================================
 class PointNetSegmentation(nn.Module):
     ''' PointNet Segmentation module that obtains the object part subclass using the global and local features combined '''
-    def __init__(self, num_points=1024, m=2, dropout=0.4, input_dim=3):
+    def __init__(self, num_points=1024, m=2, dropout=0.4, input_dim=3, extra_feat_dropout=0.0):
         """
         :param num_points: number of points in the point cloud
         :param k: number of object part classes available
@@ -156,11 +165,10 @@ class PointNetSegmentation(nn.Module):
         super(PointNetSegmentation, self).__init__()
 
         # PointNet Encoder with only global features
-        self.encoder = PointNetEncoder(num_points, local_feat=True, input_dim=input_dim)
+        self.encoder = PointNetEncoder(num_points, local_feat=True, input_dim=input_dim, extra_feat_dropout=extra_feat_dropout)
 
         # FC layers for the first shared MLP
-        self.conv1 = nn.Conv1d(1088 + (input_dim - 3), 512, kernel_size=1) #1088 comes from concatenating 64 local features vector with the 1024 global feature vector 
-                                                            #+ (input_dim - 3) makes the model be able to accept extra features as RGB, the points will have more local features if they have rgb
+        self.conv1 = nn.Conv1d(1088, 512, kernel_size=1) #1088 comes from concatenating 64 local features vector with the 1024 global feature vector
         self.conv2 = nn.Conv1d(512, 256, kernel_size=1)
         self.conv3 = nn.Conv1d(256, 128, kernel_size=1)
 
