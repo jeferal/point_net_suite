@@ -20,13 +20,38 @@ python3 point_net_suite/data_utils/s3_dis_data_gen.py <path_to_the_Area>
 ```
 
 ## Installation
-You can work with anaconda or create a python3 virtual environment.
-```bash
-git clone https://github.com/jeferal/point_net_suite.git
-cd point_net_suite
-pip3 install -r requirements.txt
-pip3 install -e .
-```
+
+## Option 1: pip3 venv via requirements.txt
+1. **Clone the Repository:**
+    ```bash
+    git clone https://github.com/jeferal/point_net_suite.git
+    cd point_net_suite
+    ```
+
+2. **Install Requirements:**
+    ```bash
+    pip3 install -r requirements.txt
+    pip3 install -e .
+    ```
+### Option 2: Conda Environment via yaml file
+
+1. **Clone the Repository:**
+    ```bash
+    git clone https://github.com/jeferal/point_net_suite.git
+    cd point_net_suite
+    ```
+
+2. **Create the Conda Environment:**
+    ```bash
+    conda env create -f conda_env_backup.yaml
+    ```
+
+3. **Activate the Environment:**
+    ```bash
+    conda activate pointnet_thesis
+    ```
+
+
 
 ## Train a model
 ```bash
