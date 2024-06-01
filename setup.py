@@ -14,6 +14,6 @@ setup(
     version="0.1.0",
     description="Point Net Suite",
     url="https://github.com/jeferal/point_net_suite",
-    packages=find_namespace_packages(include=["point_net_suite.*"]),
+    packages=find_namespace_packages(include=["models.*", "data_utils.*"]),
     long_description=read("README.md"),
 )

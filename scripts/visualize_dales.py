@@ -25,6 +25,7 @@ if __name__ == "__main__":
     # Access to a point cloud
     point_cloud, labels = dataset[args.index]
     print(f"Point cloud shape: {point_cloud.shape}")
+    print(f"Labels shape: {labels.shape}")
 
     # Convert the point cloud to numpy
     points = point_cloud.numpy()
