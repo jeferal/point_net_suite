@@ -15,7 +15,12 @@ class DalesDataset(Dataset):
         self._data_dir = os.path.join(self._root, self._split)
 
         # Create the list of files
-        self._ply_files = [f for f in os.listdir(self._data_dir) if f.endswith('.ply')]
+        self._ply_files = []
+        for file in os.listdir(self._data_dir):
+            if file.startswith("."):
+                continue
+            if file.endswith(".ply"):
+                self._ply_files.append(file)
 
         self._intensity = intensity
         self._instance_seg = instance_seg
@@ -29,7 +34,9 @@ class DalesDataset(Dataset):
         ply_file = self._ply_files[idx]
 
         # Read the ply file
-        ply_data = PlyData.read(os.path.join(self._data_dir, ply_file))
+        file_path = os.path.join(self._data_dir, ply_file)
+        print(file_path)
+        ply_data = PlyData.read(file_path)
 
         # Obtain the point cloud
         point_cloud_x = torch.from_numpy(ply_data.elements[0].data['x'])
