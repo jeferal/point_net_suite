@@ -18,7 +18,7 @@ if __name__ == "__main__":
     # Parse the arguments
     args = parser.parse_args()
 
-    dataset = DalesDataset(args.data_path, args.split)
+    dataset = DalesDataset(args.data_path, args.split, partitions=5, intensity=True)
 
     # Get the length of the dataset
     print(f"Length of the dataset: {len(dataset)}")
