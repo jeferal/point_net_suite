@@ -90,11 +90,11 @@ def explore_and_visualize_ply(file_path):
     shading = np.clip(shading, 0, 1)  # Ensure shading is within [0, 1]
 
     # Blend intensity with colors, giving more weight to colors
-    intensity_weight = 0.1  # Adjust this to give less weight to intensity
+    intensity_weight = 0.25  # Adjust this to give less weight to intensity
     blended_colors = colors * (1 - intensity_weight) + colors * intensity[:, np.newaxis] * intensity_weight
 
     # Apply the shading effect
-    shadow_effect = 0.4  # Adjust this to control shadow intensity
+    shadow_effect = 0.0  # Adjust this to control shadow intensity
     blended_colors = blended_colors * ((1 - shadow_effect) + shading[:, np.newaxis] * shadow_effect)
 
     # Ensure colors are within [0, 1]

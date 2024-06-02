@@ -1,8 +1,8 @@
 import argparse
-
 import open3d as o3d
 
-from data_utils.dales_dataset import DalesDataset
+from data_utils.dales_dataset import DalesDataset, visualize_pointcloud
+
 
 if __name__ == "__main__":
 
@@ -14,11 +14,13 @@ if __name__ == "__main__":
     parser.add_argument('split', type=str, default='train', help='Split of the dataset (train or test)')
     # Third argument is the index of the point cloud
     parser.add_argument('index', type=int, default=0, help='Index of the point cloud')
+    # 4th argument enables intensity
+    parser.add_argument('--intensity', action='store_true', help='Use intensity data')
 
     # Parse the arguments
     args = parser.parse_args()
 
-    dataset = DalesDataset(args.data_path, args.split)
+    dataset = DalesDataset(args.data_path, args.split, intensity=args.intensity)
 
     # Get the length of the dataset
     print(f"Length of the dataset: {len(dataset)}")
@@ -27,11 +29,4 @@ if __name__ == "__main__":
     print(f"Point cloud shape: {point_cloud.shape}")
     print(f"Labels shape: {labels.shape}")
 
-    # Convert the point cloud to numpy
-    points = point_cloud.numpy()
-
-    # Create an Open3D point cloud object
-    point_cloud = o3d.geometry.PointCloud()
-    # Assign the numpy array to the Open3D point cloud object
-    point_cloud.points = o3d.utility.Vector3dVector(points)
-    o3d.visualization.draw_geometries([point_cloud], window_name=f"DALES point cloud {args.index}")
+    visualize_pointcloud(point_cloud, labels)
