@@ -70,7 +70,7 @@ class DalesDataset(Dataset):
             # Split the point cloud
             if not self.does_cache_exist(ply_file):
                 print(f"Splitting the point cloud {ply_file}")
-                self.split_ply_point_cloud(data_map, self._partitions)
+                split_ply_point_cloud(data_map, self._partitions, self._quadrant_map)
 
     def does_cache_exist(self, ply_file : str):
         # TODO: This function could check if every file exists
@@ -94,26 +94,27 @@ class DalesDataset(Dataset):
 
         return data, labels
 
-    def split_ply_point_cloud(self, data_map : np.memmap, N : int) -> None:
-        # Create a lock map to protect access to the quadrant files
-        x_min, y_min, x_interval, y_interval = calculate_bounds_and_intervals(data_map, N)
+def split_ply_point_cloud(data_map : np.memmap, N : int, quadrant_map : dict) -> None:
+    # Create a lock map to protect access to the quadrant files
+    x_min, y_min, x_interval, y_interval = calculate_bounds_and_intervals(data_map, N)
 
-        # Split point cloud into chunks for parallel processing
-        num_chunks = cpu_count()
-        chunks = np.array_split(data_map, num_chunks)
+    # Split point cloud into chunks for parallel processing
+    num_chunks = cpu_count()
+    chunks = np.array_split(data_map, num_chunks)
 
-        # Create the map of locks
-        lock_map = {}
-        for key, _ in self._quadrant_map.items():
-            lock_map[key] = Lock()
+    # Create the map of locks
+    lock_map = {}
+    for key, _ in quadrant_map.items():
+        lock_map[key] = Lock()
 
-        partial_process_chunk = partial(process_chunk, txt_map=self._quadrant_map)
+    partial_process_chunk = partial(process_chunk, txt_map=quadrant_map)
 
-        with Pool(num_chunks, initializer=init_locks, initargs=(lock_map,)) as pool:
-            pool.starmap(partial_process_chunk,
-                        [(chunk, x_min, y_min, x_interval, y_interval, N) for chunk in chunks])
+    print(f"Processing {num_chunks} chunks")
+    with Pool(num_chunks, initializer=init_locks, initargs=(lock_map,)) as pool:
+        pool.starmap(partial_process_chunk,
+                    [(chunk, x_min, y_min, x_interval, y_interval, N) for chunk in chunks])
 
-        return None
+    return None
 
 def calculate_bounds_and_intervals(data_map : np.memmap, N : int):
     """
