@@ -49,30 +49,50 @@ class DalesDataset(Dataset):
         # Quadrants indices are the same for all ply files
         quadrant_indices = get_all_quadrant_indices(self._partitions)
 
+        # List with the path of the txt files
+        self._split_files = []
         # Loop for every file
-        for ply_file in self._ply_files:
+        for ply_file in tqdm(self._ply_files):
             # Create a dictionary to map quadrant indices to path of the quadrant txt file
             self._quadrant_map = {}
-            self._mutex_map = {}
             for i, index in enumerate(quadrant_indices):
-                self._quadrant_map[index] = os.path.join(self._cache_dir,
-                                                         os.path.splitext(ply_file)[0],
-                                                         f"quadrant_{self._partitions}_{i}.txt")
+                split_file = os.path.join(self._cache_dir,
+                                          os.path.splitext(ply_file)[0],
+                                          f"partition_{self._partitions}_{i}.txt")
+                self._split_files.append(split_file)
+                self._quadrant_map[index] = split_file
+
             # Read the ply file
             file_path = os.path.join(self._data_dir, ply_file)
             ply_data = PlyData.read(file_path)
-
             data_map = ply_data.elements[0].data
 
             # Split the point cloud
-            self.split_ply_point_cloud(data_map, self._partitions)
+            if not self.does_cache_exist(ply_file):
+                print(f"Splitting the point cloud {ply_file}")
+                self.split_ply_point_cloud(data_map, self._partitions)
+
+    def does_cache_exist(self, ply_file : str):
+        # TODO: This function could check if every file exists
+        ply_cache_dir = os.path.join(self._cache_dir, os.path.splitext(ply_file)[0])
+        return os.path.exists(ply_cache_dir)
 
     def __len__(self):
         return len(self._ply_files * self._partitions)
 
     def __getitem__(self, idx):
-        # TODO: Implement the get item function
-        return
+        # Read a quadrant txt file
+        txt_file = self._split_files[idx]
+        print(f"Reading this file {txt_file}")
+        # Read the txt file
+        data = np.loadtxt(txt_file)
+
+        # Convert to a tensor Nx4
+        data = torch.from_numpy(data).float()
+        # TODO: Write labels
+        labels = torch.zeros(data.shape[0])
+
+        return data, labels
 
     def split_ply_point_cloud(self, data_map : np.memmap, N : int) -> None:
         # Create a lock map to protect access to the quadrant files
@@ -152,24 +172,24 @@ def process_chunk(chunk : np.memmap,
         @param N: The number of quadrants to split the point cloud into
     """
     quadrants = {}
-    for point in tqdm(chunk):
+    for point in chunk:
         x, y = point['x'], point['y']
         quadrant = get_quadrant(x, y, x_min, y_min, x_interval, y_interval, N)
         if quadrant not in quadrants:
             quadrants[quadrant] = []
         quadrants[quadrant].append(point)
-    
+
     # Store the quadrants with text files
     for quadrant, points in quadrants.items():
+        # Critical section to write to the txt file
+        # This must be protected with a lock
         with lock_map[quadrant]:
             # Create the base directory if it does not exist
             if not os.path.exists(os.path.dirname(txt_map[quadrant])):
                 os.makedirs(os.path.dirname(txt_map[quadrant]))
             with open(txt_map[quadrant], 'a') as f:
-                print(f"Writing to {txt_map[quadrant]}")
                 for point in points:
-                    f.write(f"{point['x']} {point['y']} {point['z']} {point['intensity']}\n")
-                print(f"Finished writing to {txt_map[quadrant]}")
+                    f.write(f"{point['x']} {point['y']} {point['z']} {point['intensity']} {point['sem_class']} {point['ins_class']}\n")
 
     return None
 

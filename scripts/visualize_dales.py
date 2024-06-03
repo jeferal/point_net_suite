@@ -30,6 +30,9 @@ if __name__ == "__main__":
     # Convert the point cloud to numpy
     points = point_cloud.numpy()
 
+    # Remove the intensity
+    points = points[:, :3]
+
     # Create an Open3D point cloud object
     point_cloud = o3d.geometry.PointCloud()
     # Assign the numpy array to the Open3D point cloud object
