@@ -21,6 +21,13 @@ def compare_point_clouds(pc1, pc2):
 
 class TestDalesDataset(unittest.TestCase):
 
+    # TODO: Simplify the test with a point cloud that is not that big
+    # Generate random points and split them into N x N splits
+
+    # TODO: Add a test for how we split the x,y coordinates given N
+
+    # TODO: Add a test when we add the 'overlap' feature
+
     def test_quadrant_indices(self):
         # This method tests the get_all_quadrant_indices method
         # by checking that the number of indices is correct
