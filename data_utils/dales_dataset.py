@@ -55,12 +55,12 @@ class DalesDataset(Dataset):
         for ply_file in tqdm(self._ply_files):
             # Create a dictionary to map quadrant indices to path of the quadrant txt file
             self._quadrant_map = {}
-            for i, index in enumerate(quadrant_indices):
+            for quadrant_idx in enumerate(quadrant_indices):
                 split_file = os.path.join(self._cache_dir,
                                           os.path.splitext(ply_file)[0],
-                                          f"partition_{self._partitions}_{i}.txt")
+                                          f"quadrant_{quadrant_idx[0]}_{quadrant_idx[1]}.txt")
                 self._split_files.append(split_file)
-                self._quadrant_map[index] = split_file
+                self._quadrant_map[quadrant_idx] = split_file
 
             # Read the ply file
             file_path = os.path.join(self._data_dir, ply_file)
@@ -95,6 +95,8 @@ class DalesDataset(Dataset):
         return data, labels
 
 def split_ply_point_cloud(data_map : np.memmap, N : int, quadrant_map : dict) -> None:
+    print(quadrant_map.keys())
+    
     # Create a lock map to protect access to the quadrant files
     x_min, y_min, x_interval, y_interval = calculate_bounds_and_intervals(data_map, N)
 
