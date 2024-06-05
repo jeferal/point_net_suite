@@ -277,13 +277,19 @@ def main(args):
             
             # EVALUATING
             with torch.no_grad():
-                eval_epoch_loss, eval_epoch_acc, eval_epoch_mean_class_acc, eval_epoch_iou = evaluate_model(classifier.eval(), criterion, evalDataLoader, num_class=num_class)
+                eval_epoch_loss, eval_epoch_acc, eval_epoch_mean_class_acc, eval_epoch_iou, loss_per_class, iou_per_class = evaluate_model(classifier.eval(), criterion, evalDataLoader, num_class=num_class)
 
                 if args.use_mlflow:
                     mlflow.log_metric("eval_loss", eval_epoch_loss, step=epoch)
                     mlflow.log_metric("eval_accuracy", eval_epoch_acc, step=epoch)
                     mlflow.log_metric("eval_mean_class_accuracy", eval_epoch_mean_class_acc, step=epoch)
                     mlflow.log_metric("eval_iou", eval_epoch_iou, step=epoch)
+
+                     # Log per-class metrics
+                    for class_idx in range(num_class):
+                        mlflow.log_metric(f"class_{class_idx}_loss", loss_per_class[class_idx], step=epoch)
+                        mlflow.log_metric(f"class_{class_idx}_iou", iou_per_class[class_idx], step=epoch)
+
 
                 eval_loss.append(eval_epoch_loss)
                 eval_accuracy.append(eval_epoch_acc)
@@ -347,6 +353,11 @@ def evaluate_model(model, criterion, loader, num_class=40):
     eval_instance_loss = []
     eval_instance_mean_acc = []
     eval_instance_iou = []
+
+    # Initialize arrays for class-wise loss and IoU
+    class_loss = np.zeros(num_class)
+    class_iou = np.zeros(num_class)
+    class_count = np.zeros(num_class)
     
     eval_classifier = model.eval()
 
@@ -371,6 +382,15 @@ def evaluate_model(model, criterion, loader, num_class=40):
             # Adds one more batch count to the class (so we can later get the mean class accuracy - we will have the accumulation of accuracy and the number of batches to divide the accumulation by)
             class_acc[curr_class, 1] += 1 
 
+            # Accumulate the class-wise loss and count
+            class_loss[curr_class] += loss.item()
+            class_count[curr_class] += 1
+
+            # Compute IoU for current class
+            iou = compute_iou(target[target == curr_class], pred_choice[target == curr_class])
+            class_iou[curr_class] += iou.item()
+
+
         # Batch metrics calculation
         eval_instance_loss.append(loss.item())
         correct = pred_choice.eq(target.long().data).cpu().sum()
@@ -392,7 +412,11 @@ def evaluate_model(model, criterion, loader, num_class=40):
     # Calculate the mean iou
     eval_epoch_iou_ = np.mean(eval_instance_iou)
 
-    return eval_epoch_loss_, eval_epoch_acc_, eval_epoch_mean_class_acc_, eval_epoch_iou_
+    # Compute mean loss and IoU per class
+    mean_class_loss = class_loss / class_count
+    mean_class_iou = class_iou / class_count
+
+    return eval_epoch_loss_, eval_epoch_acc_, eval_epoch_mean_class_acc_, eval_epoch_iou_, mean_class_loss, mean_class_iou
 
 
 # =========================================================================================================================================================
