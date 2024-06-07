@@ -156,7 +156,7 @@ def visualize_pointcloud(point_cloud, labels):
     # Create an Open3D point cloud object
     o3d_point_cloud = o3d.geometry.PointCloud()
     o3d_point_cloud.points = o3d.utility.Vector3dVector(points)
-    #o3d_point_cloud.colors = o3d.utility.Vector3dVector(blended_colors)
+    o3d_point_cloud.colors = o3d.utility.Vector3dVector(blended_colors)
 
     # Visualize the point cloud
     o3d.visualization.draw_geometries([o3d_point_cloud], window_name="DALES point cloud")
