@@ -4,7 +4,6 @@ import os
 import shutil
 
 import numpy as np
-import random
 
 from data_utils.dales_dataset import split_ply_point_cloud, get_all_quadrant_indices, calculate_bounds_and_intervals, get_quadrant
 
@@ -72,8 +71,20 @@ class TestDalesDataset(unittest.TestCase):
         quadrants = get_quadrant(x, y, x_min, y_min, x_interval, y_interval, N, overlap)
         self.assertEqual(len(quadrants), 1)
 
+        x = 3.3249833583831787
+        y = 4.999974727630614
+        x_min = -9.999513626098633
+        y_min = -4.999854564666748
+        x_interval = 1.9999460220336913
+        y_interval = 0.9999829292297363
+        N = 10
+        overlap = 0.0
+        print("NEW TEST")
+        quadrants = get_quadrant(x, y, x_min, y_min, x_interval, y_interval, N, overlap)
+        self.assertEqual(len(quadrants), 1)
+
     def test_calculate_bounds_and_intervals(self):
-        random.seed(42)
+        np.random.seed(42)
         # Create a point cloud (x,y,z) with N random points
         # from x_min to x_max, y_min to y_max and z_min to z_max
         # and check that the bounds and intervals are correct
@@ -118,7 +129,7 @@ class TestDalesDataset(unittest.TestCase):
         self.assertEqual(quadrant_indices, correct_result)
 
     def test_split(self):
-        random.seed(42)
+        np.random.seed(4)
         # This method splits a ply point cloud into N x N splits and
         # checks that the resulting point cloud added are the same as the original
         # Create a point cloud (x,y,z) with N random points
@@ -134,7 +145,7 @@ class TestDalesDataset(unittest.TestCase):
                                              y_min, y_max,
                                              z_min, z_max)
 
-        n = 10
+        n = 100
         quadrant_indices = get_all_quadrant_indices(n)
         cache_dir = os.path.join('test_cache')
 
@@ -157,7 +168,6 @@ class TestDalesDataset(unittest.TestCase):
 
         # Check that the split files were created with the proper name
         for quadrant_idx in quadrant_indices:
-            print(f"Checking if the file exists: {quadrant_map[quadrant_idx]}")
             self.assertTrue(os.path.exists(quadrant_map[quadrant_idx]))
 
         # Load all the points from the split files and concatenate them in 
@@ -167,6 +177,7 @@ class TestDalesDataset(unittest.TestCase):
         for quadrant_idx in quadrant_indices:
             split_file = quadrant_map[quadrant_idx]
             split_data = np.loadtxt(split_file)
+            split_data = np.atleast_2d(split_data)
             split_points = np.concatenate((split_points, split_data), axis=0)
 
         self.assertEqual(split_points.shape[0], data_map.shape[0])

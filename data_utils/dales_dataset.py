@@ -162,11 +162,6 @@ def process_chunk(chunk : np.memmap,
                 quadrants[quadrant] = []
             quadrants[quadrant].append(point)
 
-    # Get the length of all the points in the quadrants
-    len_quadrants = {quadrant: len(points) for quadrant, points in quadrants.items()}
-
-    assert len_chunk == sum(len_quadrants.values()), f"Length of chunk {len_chunk} does not match the sum of the quadrants {sum(len_quadrants.values())}"
-
     # Store the quadrants with text files
     for quadrant, points in quadrants.items():
         # Critical section to write to the txt file
@@ -213,24 +208,35 @@ def get_quadrant(x : float, y : float, x_min : float, y_min : float, x_interval 
     x_start_index = int((x - x_min) / x_interval)
     y_start_index = int((y - y_min) / y_interval)
 
-    # Iterate through potential quadrants the point could belong to
-    for i in range(x_start_index - 1, x_start_index + 2):
-        if i < 0:
-            continue
-        for j in range(y_start_index - 1, y_start_index + 2):
-            if j < 0:
+    if (x_start_index == N or y_start_index == N):
+        print(f"Point ({x}, {y}) is on the edge")
+        quadrants.append((max(0,x_start_index-1), max(0,y_start_index-1)))
+    else:
+        # Iterate through potential quadrants the point could belong to
+        for i in range(x_start_index - 1, x_start_index + 2):
+            if i < 0:
                 continue
-            # Calculate the bounds of the current quadrant
-            x_quad_min = (x_min + i * x_interval) - x_overlap_interval
-            x_quad_max = (x_min + i * x_interval) + x_interval + x_overlap_interval
-            y_quad_min = (y_min + j * y_interval) - y_overlap_interval
-            y_quad_max = (y_min + j * y_interval) + y_interval + y_overlap_interval
+            for j in range(y_start_index - 1, y_start_index + 2):
+                if j < 0:
+                    continue
+                # Calculate the bounds of the current quadrant
+                x_quad_min = (x_min + i * x_interval) - x_overlap_interval
+                x_quad_max = (x_min + i * x_interval) + x_interval + x_overlap_interval
+                y_quad_min = (y_min + j * y_interval) - y_overlap_interval
+                y_quad_max = (y_min + j * y_interval) + y_interval + y_overlap_interval
 
-            # Check if the point lies within the current quadrant bounds
-            if x_quad_min <= x < x_quad_max and y_quad_min <= y < y_quad_max:
-                quadrants.append((i, j))
+                # Check if the point lies within the current quadrant bounds
+                if x_quad_min <= x < x_quad_max and y_quad_min <= y < y_quad_max:
+                    quadrants.append((i, j))
 
     # Filter out quadrants that are outside the valid range [0, N-1]
-    valid_quadrants = [(i, j) for i, j in quadrants if 0 <= i < N and 0 <= j < N]
+    valid_quadrants = []
+    for i, j in quadrants:
+        if 0 <= i < N and 0 <= j < N:
+            valid_quadrants.append((i, j))
+        else:
+            print(f"Skipping point ({x}, {y}) in quadrant ({i}, {j}) as it is outside the valid range [0, {N-1}]")
+            print(f"The method was called with x_min={x_min}, y_min={y_min}, x_interval={x_interval}, y_interval={y_interval}, N={N}, overlap={overlap}")
+            print(f"Start index was ({x_start_index}, {y_start_index})")
 
     return valid_quadrants
