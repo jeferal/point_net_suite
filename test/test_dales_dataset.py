@@ -1,22 +1,34 @@
 import unittest
 
 import os
+import shutil
 
-from plyfile import PlyData
 import numpy as np
+import random
 
-from data_utils.dales_dataset import DalesDataset, split_ply_point_cloud, get_all_quadrant_indices
+from data_utils.dales_dataset import split_ply_point_cloud, get_all_quadrant_indices, calculate_bounds_and_intervals, get_quadrant
 
 
-def compare_point_clouds(pc1, pc2):
+def create_random_point_cloud(num_points, x_min, x_max, y_min, y_max, z_min, z_max):
     """
-    Compare two point clouds.
+    Create a random point cloud with N points.
     """
-    pc1_sorted = np.array(sorted(pc1, key=lambda x: (x[0], x[1])))
-    pc2_sorted = np.array(sorted(pc2, key=lambda x: (x[0], x[1])))
+    dtype = [('x', np.float32), ('y', np.float32), ('z', np.float32),
+             ('intensity', np.int32), ('sem_class', np.int32), ('ins_class', np.int32)]
 
-    # Compare the sorted arrays
-    return np.array_equal(pc1_sorted, pc2_sorted)
+    # Create the memmap array
+    filename = 'random_data.dat'
+    shape = (num_points,)
+    memmap_array = np.memmap(filename, dtype=dtype, mode='w+', shape=shape)
+
+    memmap_array['x'] = np.random.uniform(low=x_min, high=x_max, size=shape)
+    memmap_array['y'] = np.random.uniform(low=y_min, high=y_max, size=shape)
+    memmap_array['z'] = np.random.uniform(low=z_min, high=z_max, size=shape)
+    memmap_array['intensity'] = np.random.uniform(low=0, high=1000, size=shape)
+    memmap_array['sem_class'] = np.random.uniform(low=0, high=8, size=shape)
+    memmap_array['ins_class'] = np.random.uniform(low=0, high=1000, size=shape)
+
+    return memmap_array
 
 
 class TestDalesDataset(unittest.TestCase):
@@ -27,20 +39,74 @@ class TestDalesDataset(unittest.TestCase):
     # TODO: Add a test for how we split the x,y coordinates given N
 
     # TODO: Add a test when we add the 'overlap' feature
+    def test_get_quadrant(self):
+        x = 7
+        y = 0
+
+        x_min = 0
+        y_min = 0
+        x_interval = 4
+        y_interval = 4
+        N = 5
+
+        # Test the first quadrant
+        print("Testing with no overlap")
+        quadrants = get_quadrant(x, y, x_min, y_min, x_interval, y_interval, N)
+
+        self.assertEqual(quadrants, [(1, 0)])
+        print("Test passed with this quadrant: ", quadrants)
+
+        overlap = 1.0
+        quadrants = get_quadrant(x, y, x_min, y_min, x_interval, y_interval, N, overlap)
+        print(f"Got these quadrants: {quadrants}")
+        self.assertEqual(quadrants, [(0,0), (0, 1), (1,0), (1,1), (2,0), (2,1)])
+
+        x = 6.128175
+        y = 1.6596304
+        x_min = -10
+        y_min = -5
+        x_interval = 2
+        y_interval = 1
+        N = 10
+        overlap = 0.0
+        quadrants = get_quadrant(x, y, x_min, y_min, x_interval, y_interval, N, overlap)
+        self.assertEqual(len(quadrants), 1)
+
+    def test_calculate_bounds_and_intervals(self):
+        random.seed(42)
+        # Create a point cloud (x,y,z) with N random points
+        # from x_min to x_max, y_min to y_max and z_min to z_max
+        # and check that the bounds and intervals are correct
+        x_max, x_min = 10, -10
+        y_max, y_min = 5, -5
+        z_max, z_min = 10, -10
+        num_points = 1000
+
+        data_map = create_random_point_cloud(num_points,
+                                             x_min, x_max,
+                                             y_min, y_max,
+                                             z_min, z_max)
+
+        N = 5
+        x_min, y_min, x_interval, y_interval = calculate_bounds_and_intervals(data_map, N)
+
+        self.assertAlmostEqual(x_min, -10, delta=0.1)
+        self.assertAlmostEqual(y_min, -5, delta=0.1)
+        self.assertAlmostEqual(x_interval, 4, delta=0.1)
+        self.assertAlmostEqual(y_interval, 2, delta=0.1)
 
     def test_quadrant_indices(self):
         # This method tests the get_all_quadrant_indices method
         # by checking that the number of indices is correct
         # and that the indices are unique
-
         n = 5
         quadrant_indices = get_all_quadrant_indices(n)
 
         # Check that the number of indices is correct
-        assert len(quadrant_indices) == n ** 2
+        self.assertEqual(len(quadrant_indices), n ** 2)
 
         # Check that the indices are unique
-        assert len(set(quadrant_indices)) == len(quadrant_indices)
+        self.assertEqual(len(set(quadrant_indices)), len(quadrant_indices))
 
         correct_result = [
             (0, 0), (0, 1), (0, 2), (0, 3), (0, 4),
@@ -49,31 +115,37 @@ class TestDalesDataset(unittest.TestCase):
             (3, 0), (3, 1), (3, 2), (3, 3), (3, 4),
             (4, 0), (4, 1), (4, 2), (4, 3), (4, 4)]
 
-        assert quadrant_indices == correct_result
+        self.assertEqual(quadrant_indices, correct_result)
 
     def test_split(self):
+        random.seed(42)
         # This method splits a ply point cloud into N x N splits and
         # checks that the resulting point cloud added are the same as the original
+        # Create a point cloud (x,y,z) with N random points
+        # from x_min to x_max, y_min to y_max and z_min to z_max
+        # and check that the bounds and intervals are correct
+        x_max, x_min = 10, -10
+        y_max, y_min = 5, -5
+        z_max, z_min = 10, -10
+        num_points = 100000
 
-        # Load a ply
-        ply_file = os.path.join('data', 'DALESObjects', 'train', '5080_54435_new.ply')
-        ply_data = PlyData.read(ply_file)
-        data_map = ply_data.elements[0].data
+        data_map = create_random_point_cloud(num_points,
+                                             x_min, x_max,
+                                             y_min, y_max,
+                                             z_min, z_max)
 
-        n = 30
+        n = 10
         quadrant_indices = get_all_quadrant_indices(n)
-        cache_dir = os.path.join('data', 'DALESObjects', 'train', 'test_cache')
+        cache_dir = os.path.join('test_cache')
 
         # Remove the cache directory if it exists
         if os.path.exists(cache_dir):
-            import shutil
+            print(f"Removing the cache directory: {cache_dir}")
             shutil.rmtree(cache_dir)
 
         quadrant_map = {}
         for quadrant_idx in quadrant_indices:
-            print(quadrant_idx)
             split_file = os.path.join(cache_dir,
-                                     '5080_54435_new',
                                      f"quadrant_{quadrant_idx[0]}_{quadrant_idx[1]}.txt")
             quadrant_map[quadrant_idx] = split_file
 
@@ -81,11 +153,12 @@ class TestDalesDataset(unittest.TestCase):
         split_ply_point_cloud(data_map, n, quadrant_map)
 
         # Check that the cache directory was created
-        assert os.path.exists(cache_dir)
+        self.assertTrue(os.path.exists(cache_dir))
 
         # Check that the split files were created with the proper name
         for quadrant_idx in quadrant_indices:
-            assert os.path.exists(quadrant_map[quadrant_idx])
+            print(f"Checking if the file exists: {quadrant_map[quadrant_idx]}")
+            self.assertTrue(os.path.exists(quadrant_map[quadrant_idx]))
 
         # Load all the points from the split files and concatenate them in 
         # a single numpy array with x, y, z, intensity, sem_class, ins_class
@@ -94,20 +167,31 @@ class TestDalesDataset(unittest.TestCase):
         for quadrant_idx in quadrant_indices:
             split_file = quadrant_map[quadrant_idx]
             split_data = np.loadtxt(split_file)
-            print(f"Got split data with shape: {split_data.shape}")
             split_points = np.concatenate((split_points, split_data), axis=0)
 
-        print(f"Split points shape: {split_points.shape}")
-
-        assert split_points.shape[0] == data_map.shape[0]
-        assert split_points.shape[1] == len(data_map[0])
+        self.assertEqual(split_points.shape[0], data_map.shape[0])
+        self.assertEqual(split_points.shape[1], len(data_map[0]))
 
         # Check that both point cloud are the same
-        print("The point clouds have the same dimensionality")
-        print("Comparing the point clouds...")
-        compare_point_clouds(data_map, split_points)
-
+        self.compare_point_clouds(data_map, split_points)
         print("The point clouds are the same")
+
+    def compare_point_clouds(self, pc1, pc2):
+        """
+        Compare two point clouds.
+        """
+        pc1_sorted = np.array(sorted(pc1, key=lambda x: (x[0], x[1])))
+        pc2_sorted = np.array(sorted(pc2, key=lambda x: (x[0], x[1])))
+        # Compare row by row and assert almost equal x, y and z fields
+        for i in range(pc1_sorted.shape[0]):
+            # There are some floating point errors, if this is fixed, this test
+            # should use assertEqual
+            self.assertEqual(pc1_sorted[i][0], pc2_sorted[i][0]) # x
+            self.assertEqual(pc1_sorted[i][1], pc2_sorted[i][1]) # y
+            self.assertEqual(pc1_sorted[i][2], pc2_sorted[i][2]) # z
+            self.assertEqual(pc1_sorted[i][3], pc2_sorted[i][3]) # intensity
+            self.assertEqual(pc1_sorted[i][4], pc2_sorted[i][4]) # sem_class
+            self.assertEqual(pc1_sorted[i][5], pc2_sorted[i][5]) # ins_class
 
 
 if __name__ == '__main__':

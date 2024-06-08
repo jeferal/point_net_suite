@@ -94,9 +94,13 @@ class DalesDataset(Dataset):
 
         return data, labels
 
-def split_ply_point_cloud(data_map : np.memmap, N : int, quadrant_map : dict) -> None:
+def split_ply_point_cloud(data_map : np.memmap, N : int, quadrant_map : dict, overlap : float = 0.0) -> None:
     print(quadrant_map.keys())
-    
+
+    # Create the cache directory if it does not exist
+    if not os.path.exists(os.path.dirname(quadrant_map[(0,0)])):
+        os.makedirs(os.path.dirname(quadrant_map[(0,0)]))
+
     # Create a lock map to protect access to the quadrant files
     x_min, y_min, x_interval, y_interval = calculate_bounds_and_intervals(data_map, N)
 
@@ -135,33 +139,6 @@ def calculate_bounds_and_intervals(data_map : np.memmap, N : int):
 
     return x_min, y_min, x_interval, y_interval
 
-
-def split_point_cloud_open3d(input_pc, N):
-    # Create an Open3D point cloud object
-    point_cloud = o3d.geometry.PointCloud()
-    # Assign the numpy array to the Open3D point cloud object
-    point_cloud.points = o3d.utility.Vector3dVector(input_pc.numpy())
-
-    # Crop the point cloud
-    x_min, y_min, x_interval, y_interval = calculate_bounds_and_intervals(input_pc, N)
-
-    # Crop the point cloud
-    for i in range(N):
-        for j in range(N):
-            print(f"Processing quadrant {i}, {j}")
-            # Create a bounding box
-            x_min_bound = x_min + i * x_interval
-            x_max_bound = x_min + (i + 1) * x_interval
-            y_min_bound = y_min + j * y_interval
-            y_max_bound = y_min + (j + 1) * y_interval
-            # Create a bounding box
-            bounding_box = o3d.geometry.AxisAlignedBoundingBox(min_bound=(x_min_bound, y_min_bound, -np.inf), max_bound=(x_max_bound, y_max_bound, np.inf))
-            # Crop the point cloud
-            cropped_point_cloud = point_cloud.crop(bounding_box)
-            print(f"Point cloud has this shape {np.asarray(cropped_point_cloud.points).shape}")
-            # Visualize the point cloud
-            o3d.visualization.draw_geometries([cropped_point_cloud], window_name=f"Quadrant {i}, {j}") 
-
 def process_chunk(chunk : np.memmap,
                   x_min : float, y_min : float, x_interval : float, y_interval : float, N : int,
                   txt_map : dict):
@@ -174,22 +151,27 @@ def process_chunk(chunk : np.memmap,
         @param y_interval: The interval for y
         @param N: The number of quadrants to split the point cloud into
     """
+    len_chunk = len(chunk)
+
     quadrants = {}
     for point in chunk:
         x, y = point['x'], point['y']
-        quadrant = get_quadrant(x, y, x_min, y_min, x_interval, y_interval, N)
-        if quadrant not in quadrants:
-            quadrants[quadrant] = []
-        quadrants[quadrant].append(point)
+        quadrants_point = get_quadrant(x, y, x_min, y_min, x_interval, y_interval, N)
+        for quadrant in quadrants_point:
+            if quadrant not in quadrants:
+                quadrants[quadrant] = []
+            quadrants[quadrant].append(point)
+
+    # Get the length of all the points in the quadrants
+    len_quadrants = {quadrant: len(points) for quadrant, points in quadrants.items()}
+
+    assert len_chunk == sum(len_quadrants.values()), f"Length of chunk {len_chunk} does not match the sum of the quadrants {sum(len_quadrants.values())}"
 
     # Store the quadrants with text files
     for quadrant, points in quadrants.items():
         # Critical section to write to the txt file
         # This must be protected with a lock
         with lock_map[quadrant]:
-            # Create the base directory if it does not exist
-            if not os.path.exists(os.path.dirname(txt_map[quadrant])):
-                os.makedirs(os.path.dirname(txt_map[quadrant]))
             with open(txt_map[quadrant], 'a') as f:
                 for point in points:
                     f.write(f"{point['x']} {point['y']} {point['z']} {point['intensity']} {point['sem_class']} {point['ins_class']}\n")
@@ -206,7 +188,7 @@ def get_all_quadrant_indices(N: int) -> list:
     return quadrant_indices
 
 # Function to determine the quadrant of a point
-def get_quadrant(x : float, y : float, x_min : float, y_min : float, x_interval : float, y_interval : float, N : int) -> tuple:
+def get_quadrant(x : float, y : float, x_min : float, y_min : float, x_interval : float, y_interval : float, N : int, overlap : float = 0.0) -> tuple:
     """
         This function takes a point, the bounds, the intervals and the number of quadrants
         and returns the quadrant the point belongs to.
@@ -217,13 +199,38 @@ def get_quadrant(x : float, y : float, x_min : float, y_min : float, x_interval 
         @param x_interval: The interval for x
         @param y_interval: The interval for y
         @param N: The number of quadrants to split the point cloud into
+        @param overlap: The overlap between quadrants, with overlap a point can belong to multiple quadrants
         @return: The quadrant the point belongs to
     """
-    x_index = int((x - x_min) / x_interval)
-    y_index = int((y - y_min) / y_interval)
+    # List to store the quadrants the point belongs to
+    quadrants = []
 
-    # Ensure the index is within the bounds
-    x_index = min(x_index, N - 1)
-    y_index = min(y_index, N - 1)
+    # Calculate the extended interval considering the overlap
+    x_overlap_interval = x_interval * overlap
+    y_overlap_interval = y_interval * overlap
 
-    return (x_index, y_index)
+    # Determine the potential range of quadrant indices the point might belong to
+    x_start_index = int((x - x_min) / x_interval)
+    y_start_index = int((y - y_min) / y_interval)
+
+    # Iterate through potential quadrants the point could belong to
+    for i in range(x_start_index - 1, x_start_index + 2):
+        if i < 0:
+            continue
+        for j in range(y_start_index - 1, y_start_index + 2):
+            if j < 0:
+                continue
+            # Calculate the bounds of the current quadrant
+            x_quad_min = (x_min + i * x_interval) - x_overlap_interval
+            x_quad_max = (x_min + i * x_interval) + x_interval + x_overlap_interval
+            y_quad_min = (y_min + j * y_interval) - y_overlap_interval
+            y_quad_max = (y_min + j * y_interval) + y_interval + y_overlap_interval
+
+            # Check if the point lies within the current quadrant bounds
+            if x_quad_min <= x < x_quad_max and y_quad_min <= y < y_quad_max:
+                quadrants.append((i, j))
+
+    # Filter out quadrants that are outside the valid range [0, N-1]
+    valid_quadrants = [(i, j) for i, j in quadrants if 0 <= i < N and 0 <= j < N]
+
+    return valid_quadrants
