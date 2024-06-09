@@ -49,15 +49,12 @@ class TestDalesDataset(unittest.TestCase):
         N = 5
 
         # Test the first quadrant
-        print("Testing with no overlap")
         quadrants = get_quadrant(x, y, x_min, y_min, x_interval, y_interval, N)
 
         self.assertEqual(quadrants, [(1, 0)])
-        print("Test passed with this quadrant: ", quadrants)
 
         overlap = 1.0
         quadrants = get_quadrant(x, y, x_min, y_min, x_interval, y_interval, N, overlap)
-        print(f"Got these quadrants: {quadrants}")
         self.assertEqual(quadrants, [(0,0), (0, 1), (1,0), (1,1), (2,0), (2,1)])
 
         x = 6.128175
@@ -79,7 +76,6 @@ class TestDalesDataset(unittest.TestCase):
         y_interval = 0.9999829292297363
         N = 10
         overlap = 0.0
-        print("NEW TEST")
         quadrants = get_quadrant(x, y, x_min, y_min, x_interval, y_interval, N, overlap)
         self.assertEqual(len(quadrants), 1)
 
@@ -145,47 +141,40 @@ class TestDalesDataset(unittest.TestCase):
                                              y_min, y_max,
                                              z_min, z_max)
 
-        n = 100
+        n = 10
         quadrant_indices = get_all_quadrant_indices(n)
         cache_dir = os.path.join('test_cache')
 
         # Remove the cache directory if it exists
         if os.path.exists(cache_dir):
-            print(f"Removing the cache directory: {cache_dir}")
             shutil.rmtree(cache_dir)
 
-        quadrant_map = {}
-        for quadrant_idx in quadrant_indices:
-            split_file = os.path.join(cache_dir,
-                                     f"quadrant_{quadrant_idx[0]}_{quadrant_idx[1]}.txt")
-            quadrant_map[quadrant_idx] = split_file
-
-        print(f"Len of data map: {len(data_map)}")
-        split_ply_point_cloud(data_map, n, quadrant_map)
+        tile_map = split_ply_point_cloud(data_map, n, cache_dir)
 
         # Check that the cache directory was created
         self.assertTrue(os.path.exists(cache_dir))
 
         # Check that the split files were created with the proper name
         for quadrant_idx in quadrant_indices:
-            self.assertTrue(os.path.exists(quadrant_map[quadrant_idx]))
+            self.assertTrue(os.path.exists(tile_map[quadrant_idx]))
 
         # Load all the points from the split files and concatenate them in 
         # a single numpy array with x, y, z, intensity, sem_class, ins_class
         # split points should be a numpy array with shape (n, 6)
         split_points = np.empty((0, 6))
         for quadrant_idx in quadrant_indices:
-            split_file = quadrant_map[quadrant_idx]
+            split_file = tile_map[quadrant_idx]
             split_data = np.loadtxt(split_file)
             split_data = np.atleast_2d(split_data)
             split_points = np.concatenate((split_points, split_data), axis=0)
 
+        # Assert that the number of points is the same
+        # And also the number of columns (x,y,z,intensity,sem_class,ins_class)  
         self.assertEqual(split_points.shape[0], data_map.shape[0])
         self.assertEqual(split_points.shape[1], len(data_map[0]))
 
         # Check that both point cloud are the same
         self.compare_point_clouds(data_map, split_points)
-        print("The point clouds are the same")
 
     def compare_point_clouds(self, pc1, pc2):
         """

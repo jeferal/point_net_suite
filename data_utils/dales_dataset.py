@@ -88,18 +88,24 @@ class DalesDataset(Dataset):
         data = np.loadtxt(txt_file)
 
         # Convert to a tensor Nx4
-        data = torch.from_numpy(data).float()
+        data = torch.from_numpy(data).double()
         # TODO: Write labels
         labels = torch.zeros(data.shape[0])
 
         return data, labels
 
-def split_ply_point_cloud(data_map : np.memmap, N : int, quadrant_map : dict, overlap : float = 0.0) -> None:
-    print(quadrant_map.keys())
+def split_ply_point_cloud(data_map : np.memmap, N : int, cache_path : str = 'cache', overlap : float = 0.0) -> dict:
+    # Create the tile map dictionary
+    tile_map = {}
+    tile_indices = get_all_quadrant_indices(N)
+    for tile_idx in tile_indices:
+        split_file = os.path.join(cache_path,
+                                 f"tile_{tile_idx[0]}_{tile_idx[1]}.txt")
+        tile_map.update({tile_idx : split_file})
 
     # Create the cache directory if it does not exist
-    if not os.path.exists(os.path.dirname(quadrant_map[(0,0)])):
-        os.makedirs(os.path.dirname(quadrant_map[(0,0)]))
+    if not os.path.exists(cache_path):
+        os.makedirs(cache_path)
 
     # Create a lock map to protect access to the quadrant files
     x_min, y_min, x_interval, y_interval = calculate_bounds_and_intervals(data_map, N)
@@ -110,17 +116,16 @@ def split_ply_point_cloud(data_map : np.memmap, N : int, quadrant_map : dict, ov
 
     # Create the map of locks
     lock_map = {}
-    for key, _ in quadrant_map.items():
+    for key, _ in tile_map.items():
         lock_map[key] = Lock()
 
-    partial_process_chunk = partial(process_chunk, txt_map=quadrant_map)
+    partial_process_chunk = partial(process_chunk, txt_map=tile_map, overlap=overlap)
 
-    print(f"Processing {num_chunks} chunks")
     with Pool(num_chunks, initializer=init_locks, initargs=(lock_map,)) as pool:
         pool.starmap(partial_process_chunk,
                     [(chunk, x_min, y_min, x_interval, y_interval, N) for chunk in chunks])
 
-    return None
+    return tile_map
 
 def calculate_bounds_and_intervals(data_map : np.memmap, N : int):
     """
@@ -141,7 +146,7 @@ def calculate_bounds_and_intervals(data_map : np.memmap, N : int):
 
 def process_chunk(chunk : np.memmap,
                   x_min : float, y_min : float, x_interval : float, y_interval : float, N : int,
-                  txt_map : dict):
+                  txt_map : dict, overlap : float = 0.0):
     """
         This function processes a chunk of a point cloud and splits it into quadrants.
         @param chunk: The chunk of the point cloud to process
@@ -151,12 +156,10 @@ def process_chunk(chunk : np.memmap,
         @param y_interval: The interval for y
         @param N: The number of quadrants to split the point cloud into
     """
-    len_chunk = len(chunk)
-
     quadrants = {}
     for point in chunk:
         x, y = point['x'], point['y']
-        quadrants_point = get_quadrant(x, y, x_min, y_min, x_interval, y_interval, N)
+        quadrants_point = get_quadrant(x, y, x_min, y_min, x_interval, y_interval, N, overlap=overlap)
         for quadrant in quadrants_point:
             if quadrant not in quadrants:
                 quadrants[quadrant] = []
@@ -209,15 +212,14 @@ def get_quadrant(x : float, y : float, x_min : float, y_min : float, x_interval 
     y_start_index = int((y - y_min) / y_interval)
 
     if (x_start_index == N or y_start_index == N):
-        print(f"Point ({x}, {y}) is on the edge")
         quadrants.append((max(0,x_start_index-1), max(0,y_start_index-1)))
     else:
         # Iterate through potential quadrants the point could belong to
         for i in range(x_start_index - 1, x_start_index + 2):
-            if i < 0:
+            if i < 0 or i >= N:
                 continue
             for j in range(y_start_index - 1, y_start_index + 2):
-                if j < 0:
+                if j < 0 or j >= N:
                     continue
                 # Calculate the bounds of the current quadrant
                 x_quad_min = (x_min + i * x_interval) - x_overlap_interval
