@@ -2,3 +2,6 @@
 /[Ll]og/
 *.egg-info
 __pycache__
+*cache
+*.DS_Store
+args.yaml
