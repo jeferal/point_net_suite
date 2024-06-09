@@ -8,12 +8,15 @@ import argparse
 from pathlib import Path
 from tqdm import tqdm
 import mlflow
+import yaml
+import datetime
 
 from torch.utils.data import DataLoader
 
 #import data_utils.DataAugmentationAndShuffle as DataAugmentator
 from data_utils.metrics import compute_iou
 from data_utils.s3_dis_dataset import S3DIS
+from data_utils.dales_dataset import DalesDataset
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -82,6 +85,12 @@ def parse_args():
     #parser.add_argument('--use_fps', action='store_true', default=False, help='use further point sampiling')
     # TO DO: DATA PREPROCESSING
     #parser.add_argument('--no_data_preprocess', action='store_true', default=False, help='preprocess the data or process it during the getitem call')
+    # Dataset selection
+    parser.add_argument('--dataset', default='s3dis', help='dataset name, options are [s3dis, dales]')
+    parser.add_argument('--dataset_path', default='data/stanford_indoor3d', help='Path to the dataset [default: data/stanford_indoor3d]')
+    # Specific parameters for dales dataset
+    parser.add_argument('--partitions', type=int, default=10, help='Number of partitions to split the data')
+    parser.add_argument('--overlap', type=float, default=0.1, help='Overlap between partitions')
     # Model selection
     parser.add_argument('--model', default='pointnet_sem_segmentation', help='model name [default: pointnet_sem_segmentation]')
     # Model parameters
@@ -98,8 +107,13 @@ def parse_args():
     # Other logging parameters
     parser.add_argument('--remove_checkpoint', action='store_true', default=False, help='remove last checkpoint train progress')
     parser.add_argument('--use_mlflow', action='store_true', default=False, help='Log train with mlflow')
+    parser.add_argument('--mlflow_run_name', type=str, default='pointnet_sem_segmentation', help='Name of the mlflow run')
     return parser.parse_args()
 
+def dump_args_to_yaml(args, yaml_file):
+    args_dict = vars(args)  # Convert Namespace to dictionary
+    with open(yaml_file, 'w') as file:
+        yaml.dump(args_dict, file)
 
 # =========================================================================================================================================================
 # ==================================================   MAIN METHOD CONTAINING TRAINING   ==================================================================
@@ -131,10 +145,20 @@ def main(args):
     # DATA LOADING
     # ===============================================================
     print('Loading dataset...')
-    data_path = os.path.join(BASE_DIR, 'data/stanford_indoor3d')
-    
-    train_dataset = S3DIS(root=data_path, area_nums=args.train_area, split='train', npoints=num_points, r_prob=0.25, include_rgb=args.use_extra_features)
-    eval_dataset = S3DIS(root=data_path, area_nums=args.test_area, split='test', npoints=num_points, r_prob=0.25, include_rgb=args.use_extra_features)
+    data_path = args.dataset_path
+    if not os.path.exists(data_path):
+        raise ValueError(f"Data path does not exist: {data_path}")
+
+    train_dataset = None
+    eval_dataset = None
+    if args.dataset == 's3dis':
+        train_dataset = S3DIS(root=data_path, area_nums=args.train_area, split='train', npoints=num_points, r_prob=0.25, include_rgb=args.use_extra_features)
+        eval_dataset = S3DIS(root=data_path, area_nums=args.test_area, split='test', npoints=num_points, r_prob=0.25, include_rgb=args.use_extra_features)
+    elif args.dataset == 'dales':
+        train_dataset = DalesDataset(root=data_path, split='train', partitions=args.partitions, overlap=args.overlap, npoints=num_points)
+        eval_dataset = DalesDataset(root=data_path, split='test', partitions=args.partitions, overlap=args.overlap, npoints=num_points)
+    else:
+        raise ValueError(f"Dataset {args.dataset} not supported")
 
     trainDataLoader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     evalDataLoader = DataLoader(eval_dataset, batch_size=batch_size, shuffle=False)
@@ -231,7 +255,11 @@ def main(args):
         os.environ['MLFLOW_TRACKING_URI'] = 'http://34.16.143.171:3389'
         os.environ['MLFLOW_EXPERIMENT_NAME'] = 'pointnet_sem_segmentation'
         os.environ['MLFLOW_ENABLE_SYSTEM_METRICS_LOGGING'] = 'true'
-        mlflow.start_run()
+        run_name = f"{args.mlflow_run_name}_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}"
+        mlflow.start_run(run_name=run_name)
+        dump_args_to_yaml(args, 'args.yaml')
+        # Log the arguments
+        mlflow.log_artifact('args.yaml')
 
     # ===============================================================
     # MODEL TRAINING

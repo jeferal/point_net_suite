@@ -14,6 +14,8 @@ import torch
 from torch.utils.data import Dataset
 from plyfile import PlyData
 
+from data_utils.point_cloud_utils import normalize_points, downsample
+
 
 def init_locks(l):
     # Define as many locks as the number of tiles
@@ -23,9 +25,11 @@ def init_locks(l):
 
 class DalesDataset(Dataset):
 
-    def __init__(self, root : str, split : str, partitions = 1, intensity : bool = False, instance_seg : bool = False, overlap : float = 0.0):
+    def __init__(self, root : str, split : str, partitions = 1, intensity : bool = False, instance_seg : bool = False, overlap : float = 0.0, npoints : int = 20000):
         self._root = root
         self._split = split
+
+        self._npoints = npoints
 
         # Create the data directory
         self._data_dir = os.path.join(self._root, self._split)
@@ -49,11 +53,15 @@ class DalesDataset(Dataset):
         self._intensity = intensity
         self._instance_seg = instance_seg
 
+        if self._instance_seg:
+            raise NotImplementedError("Instance segmentation is not implemented yet")
+
         self._partitions = partitions
 
         # List with the path of the txt files
         self._split_files = []
         # Loop for every file
+        print(f"Splitting the point cloud into {self._partitions} x {self._partitions} tiles...")
         for ply_file in tqdm(self._ply_files):
 
             # Cache path
@@ -78,17 +86,29 @@ class DalesDataset(Dataset):
     def __getitem__(self, idx):
         # Read a tile txt file
         txt_file = self._split_files[idx]
-        print(f"Reading this file {txt_file}")
+
         # Read the txt file
         data = np.loadtxt(txt_file)
 
-        # Convert to a tensor Nx4 (N points with x,y,z,intensity)
-        data = torch.tensor(data, dtype=torch.float32)
+        if self._intensity:
+            points = data[:, :4]  # Keep only the first 4 columns (x,y,z,intensity)
+        else:
+            points = data[:, :3]
 
+        # Normalize Point Cloud to (0, 1)
+        # This is also normalizing the intensity if it is present
+        points = normalize_points(points)
         # Extract the labels, which is the 5th column
-        labels = data[:, 4].long()
+        targets = data[:, 4]
+        # down sample point cloud
+        if self._npoints:
+            points, targets = downsample(points, targets, npoints=self._npoints)
 
-        return data, labels
+        # Convert to tensor
+        points = torch.tensor(points, dtype=torch.float32)
+        targets = torch.tensor(targets, dtype=torch.long)
+
+        return points, targets
 
 def split_ply_point_cloud(data_map : np.memmap, N : int, cache_path : str = 'cache', overlap : float = 0.0) -> dict:
     # Create the tile map dictionary
