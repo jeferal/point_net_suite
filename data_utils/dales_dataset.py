@@ -25,6 +25,17 @@ def init_locks(l):
 
 class DalesDataset(Dataset):
 
+    CATEGORIES = [
+        'ground',
+        'vegetation',
+        'car',
+        'truck',
+        'powerline',
+        'fence',
+        'pole',
+        'buildings'
+    ]
+
     def __init__(self, root : str, split : str, partitions = 1, intensity : bool = False, instance_seg : bool = False, overlap : float = 0.0, npoints : int = 20000):
         self._root = root
         self._split = split
@@ -109,6 +120,9 @@ class DalesDataset(Dataset):
         targets = torch.tensor(targets, dtype=torch.long)
 
         return points, targets
+
+    def get_categories(self):
+        return self.CATEGORIES
 
 def split_ply_point_cloud(data_map : np.memmap, N : int, cache_path : str = 'cache', overlap : float = 0.0) -> dict:
     # Create the tile map dictionary

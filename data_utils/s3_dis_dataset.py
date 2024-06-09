@@ -12,6 +12,23 @@ from torch.utils.data import Dataset
 
 
 class S3DIS(Dataset):
+    CATEGORIES = [
+        'ceiling',
+        'floor',
+        'wall',
+        'beam',
+        'column',
+        'window',
+        'door',
+        'table',
+        'chair',
+        'sofa',
+        'bookcase',
+        'board',
+        'stairs',
+        'clutter',
+    ]
+
     def __init__(self, root, area_nums, split='train', npoints=4096, r_prob=0.25, include_rgb=False):
         self.root = root
         self.area_nums = area_nums      # i.e. '1-4' # areas 1-4
@@ -180,3 +197,6 @@ class S3DIS(Dataset):
 
     def __len__(self):
         return len(self.data_paths)
+
+    def get_categories(self):
+        return self.CATEGORIES

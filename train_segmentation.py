@@ -23,24 +23,6 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 models_folder_dict = {'pointnet_sem_segmentation': 'models/Pointnet'}
 models_modules_dict = {'pointnet_sem_segmentation': 'models.pointnet_sem_segmentation'}
 
-CATEGORIES = {
-    'ceiling'  : 0, 
-    'floor'    : 1, 
-    'wall'     : 2, 
-    'beam'     : 3, 
-    'column'   : 4, 
-    'window'   : 5,
-    'door'     : 6, 
-    'table'    : 7, 
-    'chair'    : 8, 
-    'sofa'     : 9, 
-    'bookcase' : 10, 
-    'board'    : 11,
-    'stairs'   : 12,
-    'clutter'  : 13
-}
-NUM_CLASSES = len(CATEGORIES)
-
 
 '''hparams_for_args_default = {
     'num_point': 8192,
@@ -139,7 +121,6 @@ def main(args):
     print(args)
     num_points = args.num_point
     batch_size = args.batch_size
-    num_classes = NUM_CLASSES
 
     # ===============================================================
     # DATA LOADING
@@ -159,6 +140,9 @@ def main(args):
         eval_dataset = DalesDataset(root=data_path, split='test', partitions=args.partitions, overlap=args.overlap, npoints=num_points)
     else:
         raise ValueError(f"Dataset {args.dataset} not supported")
+
+    num_classes = len(train_dataset.get_categories())
+    print(f"Number of classes: {num_classes}")
 
     trainDataLoader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     evalDataLoader = DataLoader(eval_dataset, batch_size=batch_size, shuffle=False)
