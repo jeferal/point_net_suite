@@ -5,7 +5,7 @@ import shutil
 
 import numpy as np
 
-from data_utils.dales_dataset import split_ply_point_cloud, get_all_quadrant_indices, calculate_bounds_and_intervals, get_quadrant
+from data_utils.dales_dataset import split_ply_point_cloud, get_all_tile_indices, calculate_bounds_and_intervals, get_tile
 
 
 def create_random_point_cloud(num_points, x_min, x_max, y_min, y_max, z_min, z_max):
@@ -38,7 +38,7 @@ class TestDalesDataset(unittest.TestCase):
     # TODO: Add a test for how we split the x,y coordinates given N
 
     # TODO: Add a test when we add the 'overlap' feature
-    def test_get_quadrant(self):
+    def test_get_tile(self):
         x = 7
         y = 0
 
@@ -48,14 +48,14 @@ class TestDalesDataset(unittest.TestCase):
         y_interval = 4
         N = 5
 
-        # Test the first quadrant
-        quadrants = get_quadrant(x, y, x_min, y_min, x_interval, y_interval, N)
+        # Test the first tile
+        tiles = get_tile(x, y, x_min, y_min, x_interval, y_interval, N)
 
-        self.assertEqual(quadrants, [(1, 0)])
+        self.assertEqual(tiles, [(1, 0)])
 
         overlap = 1.0
-        quadrants = get_quadrant(x, y, x_min, y_min, x_interval, y_interval, N, overlap)
-        self.assertEqual(quadrants, [(0,0), (0, 1), (1,0), (1,1), (2,0), (2,1)])
+        tiles = get_tile(x, y, x_min, y_min, x_interval, y_interval, N, overlap)
+        self.assertEqual(tiles, [(0,0), (0, 1), (1,0), (1,1), (2,0), (2,1)])
 
         x = 6.128175
         y = 1.6596304
@@ -65,8 +65,8 @@ class TestDalesDataset(unittest.TestCase):
         y_interval = 1
         N = 10
         overlap = 0.0
-        quadrants = get_quadrant(x, y, x_min, y_min, x_interval, y_interval, N, overlap)
-        self.assertEqual(len(quadrants), 1)
+        tiles = get_tile(x, y, x_min, y_min, x_interval, y_interval, N, overlap)
+        self.assertEqual(len(tiles), 1)
 
         x = 3.3249833583831787
         y = 4.999974727630614
@@ -76,8 +76,8 @@ class TestDalesDataset(unittest.TestCase):
         y_interval = 0.9999829292297363
         N = 10
         overlap = 0.0
-        quadrants = get_quadrant(x, y, x_min, y_min, x_interval, y_interval, N, overlap)
-        self.assertEqual(len(quadrants), 1)
+        tiles = get_tile(x, y, x_min, y_min, x_interval, y_interval, N, overlap)
+        self.assertEqual(len(tiles), 1)
 
     def test_calculate_bounds_and_intervals(self):
         np.random.seed(42)
@@ -102,18 +102,18 @@ class TestDalesDataset(unittest.TestCase):
         self.assertAlmostEqual(x_interval, 4, delta=0.1)
         self.assertAlmostEqual(y_interval, 2, delta=0.1)
 
-    def test_quadrant_indices(self):
-        # This method tests the get_all_quadrant_indices method
+    def test_tile_indices(self):
+        # This method tests the get_all_tile_indices method
         # by checking that the number of indices is correct
         # and that the indices are unique
         n = 5
-        quadrant_indices = get_all_quadrant_indices(n)
+        tile_indices = get_all_tile_indices(n)
 
         # Check that the number of indices is correct
-        self.assertEqual(len(quadrant_indices), n ** 2)
+        self.assertEqual(len(tile_indices), n ** 2)
 
         # Check that the indices are unique
-        self.assertEqual(len(set(quadrant_indices)), len(quadrant_indices))
+        self.assertEqual(len(set(tile_indices)), len(tile_indices))
 
         correct_result = [
             (0, 0), (0, 1), (0, 2), (0, 3), (0, 4),
@@ -122,7 +122,7 @@ class TestDalesDataset(unittest.TestCase):
             (3, 0), (3, 1), (3, 2), (3, 3), (3, 4),
             (4, 0), (4, 1), (4, 2), (4, 3), (4, 4)]
 
-        self.assertEqual(quadrant_indices, correct_result)
+        self.assertEqual(tile_indices, correct_result)
 
     def test_split(self):
         np.random.seed(4)
@@ -142,7 +142,7 @@ class TestDalesDataset(unittest.TestCase):
                                              z_min, z_max)
 
         n = 10
-        quadrant_indices = get_all_quadrant_indices(n)
+        tile_indices = get_all_tile_indices(n)
         cache_dir = os.path.join('test_cache')
 
         # Remove the cache directory if it exists
@@ -155,15 +155,15 @@ class TestDalesDataset(unittest.TestCase):
         self.assertTrue(os.path.exists(cache_dir))
 
         # Check that the split files were created with the proper name
-        for quadrant_idx in quadrant_indices:
-            self.assertTrue(os.path.exists(tile_map[quadrant_idx]))
+        for tile_idx in tile_indices:
+            self.assertTrue(os.path.exists(tile_map[tile_idx]))
 
         # Load all the points from the split files and concatenate them in 
         # a single numpy array with x, y, z, intensity, sem_class, ins_class
         # split points should be a numpy array with shape (n, 6)
         split_points = np.empty((0, 6))
-        for quadrant_idx in quadrant_indices:
-            split_file = tile_map[quadrant_idx]
+        for tile_idx in tile_indices:
+            split_file = tile_map[tile_idx]
             split_data = np.loadtxt(split_file)
             split_data = np.atleast_2d(split_data)
             split_points = np.concatenate((split_points, split_data), axis=0)

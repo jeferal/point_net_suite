@@ -14,7 +14,7 @@ import torch
 from torch.utils.data import Dataset
 
 def init_locks(l):
-    # Define as many locks as the number of quadrants
+    # Define as many locks as the number of tiles
     # And store them in a dictionary
     global lock_map
     lock_map = l
@@ -49,9 +49,6 @@ class DalesDataset(Dataset):
 
         self._partitions = partitions
 
-        # Quadrants indices are the same for all ply files
-        quadrant_indices = get_all_quadrant_indices(self._partitions)
-
         # List with the path of the txt files
         self._split_files = []
         # Loop for every file
@@ -77,7 +74,7 @@ class DalesDataset(Dataset):
         return len(self._ply_files * self._partitions)
 
     def __getitem__(self, idx):
-        # Read a quadrant txt file
+        # Read a tile txt file
         txt_file = self._split_files[idx]
         print(f"Reading this file {txt_file}")
         # Read the txt file
@@ -85,7 +82,6 @@ class DalesDataset(Dataset):
 
         # Convert to a tensor Nx4
         data = torch.from_numpy(data).double()
-        # TODO: Write labels
         labels = torch.zeros(data.shape[0])
 
         return data, labels
@@ -93,12 +89,12 @@ class DalesDataset(Dataset):
 def split_ply_point_cloud(data_map : np.memmap, N : int, cache_path : str = 'cache', overlap : float = 0.0) -> dict:
     # Create the tile map dictionary
     tile_map = {}
-    tile_indices = get_all_quadrant_indices(N)
+    tile_indices = get_all_tile_indices(N)
     for tile_idx in tile_indices:
         split_file = os.path.join(cache_path,
                                  f"tile_{tile_idx[0]}_{tile_idx[1]}.txt")
         tile_map.update({tile_idx : split_file})
-    
+
     # Check if the cache directory exists already
     if os.path.exists(cache_path):
         # Check if the files already exist
@@ -115,7 +111,7 @@ def split_ply_point_cloud(data_map : np.memmap, N : int, cache_path : str = 'cac
     if not os.path.exists(cache_path):
         os.makedirs(cache_path)
 
-    # Create a lock map to protect access to the quadrant files
+    # Create a lock map to protect access to the tile files
     x_min, y_min, x_interval, y_interval = calculate_bounds_and_intervals(data_map, N)
 
     # Split point cloud into chunks for parallel processing
@@ -139,9 +135,9 @@ def calculate_bounds_and_intervals(data_map : np.memmap, N : int):
     """
         This function takes a point cloud and N as input and returns the
         minimum and maximum values for x and y and the intervals for x and y
-        to split the point cloud into N x N quadrants.
+        to split the point cloud into N x N tiles.
         @param point_cloud: The point cloud to split
-        @param N: The number of quadrants to split the point cloud into
+        @param N: The number of tiles to split the point cloud into
         @return: The minimum and maximum values for x and y and the intervals for x and y 
     """
     x_min, x_max = np.min(data_map['x']), np.max(data_map['x'])
@@ -156,97 +152,97 @@ def process_chunk(chunk : np.memmap,
                   x_min : float, y_min : float, x_interval : float, y_interval : float, N : int,
                   txt_map : dict, overlap : float = 0.0):
     """
-        This function processes a chunk of a point cloud and splits it into quadrants.
+        This function processes a chunk of a point cloud and splits it into tiles.
         @param chunk: The chunk of the point cloud to process
         @param x_min: The minimum value for x
         @param y_min: The minimum value for y
         @param x_interval: The interval for x
         @param y_interval: The interval for y
-        @param N: The number of quadrants to split the point cloud into
+        @param N: The number of tiles to split the point cloud into
     """
-    quadrants = {}
+    tiles = {}
     for point in chunk:
         x, y = point['x'], point['y']
-        quadrants_point = get_quadrant(x, y, x_min, y_min, x_interval, y_interval, N, overlap=overlap)
-        for quadrant in quadrants_point:
-            if quadrant not in quadrants:
-                quadrants[quadrant] = []
-            quadrants[quadrant].append(point)
+        tiles_point = get_tile(x, y, x_min, y_min, x_interval, y_interval, N, overlap=overlap)
+        for tile in tiles_point:
+            if tile not in tiles:
+                tiles[tile] = []
+            tiles[tile].append(point)
 
-    # Store the quadrants with text files
-    for quadrant, points in quadrants.items():
+    # Store the tiles with text files
+    for tile, points in tiles.items():
         # Critical section to write to the txt file
         # This must be protected with a lock
-        with lock_map[quadrant]:
-            with open(txt_map[quadrant], 'a') as f:
+        with lock_map[tile]:
+            with open(txt_map[tile], 'a') as f:
                 for point in points:
                     f.write(f"{point['x']} {point['y']} {point['z']} {point['intensity']} {point['sem_class']} {point['ins_class']}\n")
 
     return None
 
-def get_all_quadrant_indices(N: int) -> list:
+def get_all_tile_indices(N: int) -> list:
     """
-    This function generates all possible quadrant indices for a given number of divisions.
-    @param N: The number of quadrants to split the point cloud into
-    @return: A list of tuples representing all possible quadrant indices
+    This function generates all possible tile indices for a given number of divisions.
+    @param N: The number of tiles to split the point cloud into
+    @return: A list of tuples representing all possible tile indices
     """
-    quadrant_indices = [(i, j) for i in range(N) for j in range(N)]
-    return quadrant_indices
+    tile_indices = [(i, j) for i in range(N) for j in range(N)]
+    return tile_indices
 
-# Function to determine the quadrant of a point
-def get_quadrant(x : float, y : float, x_min : float, y_min : float, x_interval : float, y_interval : float, N : int, overlap : float = 0.0) -> tuple:
+# Function to determine the tile of a point
+def get_tile(x : float, y : float, x_min : float, y_min : float, x_interval : float, y_interval : float, N : int, overlap : float = 0.0) -> tuple:
     """
-        This function takes a point, the bounds, the intervals and the number of quadrants
-        and returns the quadrant the point belongs to.
+        This function takes a point, the bounds, the intervals and the number of tiles
+        and returns the tile the point belongs to.
         @param x: The x coordinate of the point
         @param y: The y coordinate of the point
         @param x_min: The minimum value for x
         @param y_min: The minimum value for y
         @param x_interval: The interval for x
         @param y_interval: The interval for y
-        @param N: The number of quadrants to split the point cloud into
-        @param overlap: The overlap between quadrants, with overlap a point can belong to multiple quadrants
-        @return: The quadrant the point belongs to
+        @param N: The number of tiles to split the point cloud into
+        @param overlap: The overlap between tiles, with overlap a point can belong to multiple tiles
+        @return: The tile the point belongs to
     """
-    # List to store the quadrants the point belongs to
-    quadrants = []
+    # List to store the tiles the point belongs to
+    tiles = []
 
     # Calculate the extended interval considering the overlap
     x_overlap_interval = x_interval * overlap
     y_overlap_interval = y_interval * overlap
 
-    # Determine the potential range of quadrant indices the point might belong to
+    # Determine the potential range of tile indices the point might belong to
     x_start_index = int((x - x_min) / x_interval)
     y_start_index = int((y - y_min) / y_interval)
 
     if (x_start_index == N or y_start_index == N):
-        quadrants.append((max(0,x_start_index-1), max(0,y_start_index-1)))
+        tiles.append((max(0,x_start_index-1), max(0,y_start_index-1)))
     else:
-        # Iterate through potential quadrants the point could belong to
+        # Iterate through potential tiles the point could belong to
         for i in range(x_start_index - 1, x_start_index + 2):
             if i < 0 or i >= N:
                 continue
             for j in range(y_start_index - 1, y_start_index + 2):
                 if j < 0 or j >= N:
                     continue
-                # Calculate the bounds of the current quadrant
+                # Calculate the bounds of the current tile
                 x_quad_min = (x_min + i * x_interval) - x_overlap_interval
                 x_quad_max = (x_min + i * x_interval) + x_interval + x_overlap_interval
                 y_quad_min = (y_min + j * y_interval) - y_overlap_interval
                 y_quad_max = (y_min + j * y_interval) + y_interval + y_overlap_interval
 
-                # Check if the point lies within the current quadrant bounds
+                # Check if the point lies within the current tile bounds
                 if x_quad_min <= x < x_quad_max and y_quad_min <= y < y_quad_max:
-                    quadrants.append((i, j))
+                    tiles.append((i, j))
 
-    # Filter out quadrants that are outside the valid range [0, N-1]
-    valid_quadrants = []
-    for i, j in quadrants:
+    # Filter out tiles that are outside the valid range [0, N-1]
+    valid_tiles = []
+    for i, j in tiles:
         if 0 <= i < N and 0 <= j < N:
-            valid_quadrants.append((i, j))
+            valid_tiles.append((i, j))
         else:
-            print(f"Skipping point ({x}, {y}) in quadrant ({i}, {j}) as it is outside the valid range [0, {N-1}]")
+            print(f"Skipping point ({x}, {y}) in tile ({i}, {j}) as it is outside the valid range [0, {N-1}]")
             print(f"The method was called with x_min={x_min}, y_min={y_min}, x_interval={x_interval}, y_interval={y_interval}, N={N}, overlap={overlap}")
             print(f"Start index was ({x_start_index}, {y_start_index})")
 
-    return valid_quadrants
+    return valid_tiles
