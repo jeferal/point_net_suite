@@ -1,8 +1,8 @@
 import argparse
-
 import open3d as o3d
 
-from data_utils.dales_dataset import DalesDataset
+from data_utils.dales_dataset import DalesDataset, visualize_pointcloud
+
 
 if __name__ == "__main__":
 
@@ -18,29 +18,49 @@ if __name__ == "__main__":
     parser.add_argument('--partitions', type=int, default=5, help='Number of partitions')
     # Optional argument to set the overlap
     parser.add_argument('--overlap', type=float, default=0.0, help='Overlap between partitions')
-    # Optional argument to set the intensity
-    parser.add_argument('--intensity', action='store_true', help='Include intensity in the point cloud')
+    # 4th argument enables intensity
+    parser.add_argument('--intensity', action='store_true', help='Use intensity data')
 
     # Parse the arguments
     args = parser.parse_args()
 
     dataset = DalesDataset(args.data_path, args.split, partitions=args.partitions, intensity=args.intensity, overlap=args.overlap)
 
-    # Get the length of the dataset
-    print(f"Length of the dataset: {len(dataset)}")
-    # Access to a point cloud
-    point_cloud, labels = dataset[args.index]
-    print(f"Point cloud shape: {point_cloud.shape}")
-    print(f"Labels shape: {labels.shape}")
+    # Allow the user the possibility to navigate over different point clouds
+    index = args.index
+    while True:
+        point_cloud, labels = dataset[args.index]
 
-    # Convert the point cloud to numpy
-    points = point_cloud.numpy()
+        print(f"Point cloud shape {point_cloud.shape}")
+        print(f"Labels shape {labels.shape}")
 
-    # Remove the intensity
-    points = points[:, :3]
+        window_name = f"Tile {index} of {len(dataset)}. Press q to exit."
 
-    # Create an Open3D point cloud object
-    point_cloud = o3d.geometry.PointCloud()
-    # Assign the numpy array to the Open3D point cloud object
-    point_cloud.points = o3d.utility.Vector3dVector(points)
-    o3d.visualization.draw_geometries([point_cloud], window_name=f"DALES point cloud {args.index}")
+        visualize_pointcloud(point_cloud, labels, window_name)
+
+        # If the user presses right arrow, move to the next point cloud
+        # If the user presses left arrow, move to the previous point cloud
+        # If the user presses q, exit the program
+        # If the user presses space, ask for a new index
+
+        print("Press d arrow to move to the next point cloud")
+        print("Press a arrow to move to the previous point cloud")
+        print("Enter a number to move to a specific index of tile of the dataset")
+        print("Press q to exit the program")
+
+        key = input()
+
+        if key == 'q':
+            break
+        if key.isdigit():
+            index = int(key)
+            if index < 0 or index >= len(dataset):
+                print("Invalid index")
+                continue
+        elif key == 'd':
+            index = min(index + 1, len(dataset) - 1)
+        elif key == 'a':
+            index = max(index - 1, 0)
+        else:
+            print("Invalid key")
+            continue

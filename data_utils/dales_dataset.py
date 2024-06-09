@@ -2,16 +2,18 @@ import os
 
 from plyfile import PlyData
 
-import open3d as o3d
-
 import numpy as np
 from tqdm import tqdm
 from multiprocessing import Pool, cpu_count
 from multiprocessing import Lock
 from functools import partial
 
+import open3d as o3d
+
 import torch
 from torch.utils.data import Dataset
+from plyfile import PlyData
+
 
 def init_locks(l):
     # Define as many locks as the number of tiles
@@ -80,9 +82,11 @@ class DalesDataset(Dataset):
         # Read the txt file
         data = np.loadtxt(txt_file)
 
-        # Convert to a tensor Nx4
-        data = torch.from_numpy(data).double()
-        labels = torch.zeros(data.shape[0])
+        # Convert to a tensor Nx4 (N points with x,y,z,intensity)
+        data = torch.tensor(data, dtype=torch.float32)
+
+        # Extract the labels, which is the 5th column
+        labels = data[:, 4].long()
 
         return data, labels
 
@@ -246,3 +250,81 @@ def get_tile(x : float, y : float, x_min : float, y_min : float, x_interval : fl
             print(f"Start index was ({x_start_index}, {y_start_index})")
 
     return valid_tiles
+
+def visualize_pointcloud(point_cloud, labels, window_name : str = "DALES point cloud"):
+
+    # Extract the data
+    points = point_cloud[:, :3].numpy()
+    intensity = point_cloud[:, 3].numpy() if point_cloud.shape[1] == 4 else None
+    print(f"Labels are {labels} with len {len(labels)}")
+    sem_class = labels.numpy()
+
+    # Print some basic statistics for coordinates
+    x, y, z = points[:, 0], points[:, 1], points[:, 2]
+    print("\nStatistics for coordinates:")
+    print(f"  X: min={x.min()}, max={x.max()}, mean={x.mean()}")
+    print(f"  Y: min={y.min()}, max={y.max()}, mean={y.mean()}")
+    print(f"  Z: min={z.min()}, max={z.max()}, mean={z.mean()}")
+
+    # Example color palette for semantic classes
+    color_palette = np.array([
+        [1, 3, 117],    # Class 0: Unknown
+        [1, 79, 156],   # Class 1: Blue: Ground
+        [1, 114, 3],    # Class 2: Green: Vegetation
+        [222, 47, 225], # Class 3: Pink: Cars
+        [237, 236, 5],  # Class 4: Yellow: Trucks
+        [2, 205, 1],    # Class 5: Light Green: Power Lines
+        [5, 216, 223],  # Class 6: Light Blue: Fences
+        [250, 125, 0],  # Class 7: Orange: Poles
+        [196 ,1, 1],    # Class 8: Red: Buildings
+    ])
+
+    # Normalize the palette to [0, 1] range for Open3D
+    color_palette = color_palette / 255.0
+
+    # Get the colors based on semantic class
+    colors = color_palette[sem_class % len(color_palette)]
+
+    if intensity is not None:
+        # Normalize intensity to the range [0, 1]
+        intensity = intensity.astype(np.float32)
+        intensity_min = intensity.min()
+        intensity_max = intensity.max()
+        intensity = (intensity - intensity_min) / (intensity_max - intensity_min)
+
+        # Calculate normals for the point cloud
+        o3d_point_cloud = o3d.geometry.PointCloud()
+        o3d_point_cloud.points = o3d.utility.Vector3dVector(points)
+        o3d_point_cloud.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))
+
+        # Define a light source direction
+        light_direction = np.array([1.0, 1.0, 1.0])
+        light_direction /= np.linalg.norm(light_direction)  # Normalize the light direction
+
+        # Get the normals
+        normals = np.asarray(o3d_point_cloud.normals)
+
+        # Compute the shading (dot product between normals and light direction)
+        shading = np.dot(normals, light_direction)
+        shading = np.clip(shading, 0, 1)  # Ensure shading is within [0, 1]
+
+        # Blend intensity with colors, giving more weight to colors
+        intensity_weight = 0.25  # Adjust this to give less weight to intensity
+        blended_colors = colors * (1 - intensity_weight) + colors * intensity[:, np.newaxis] * intensity_weight
+
+        # Apply the shading effect
+        shadow_effect = 0.0  # Adjust this to control shadow intensity
+        blended_colors = blended_colors * ((1 - shadow_effect) + shading[:, np.newaxis] * shadow_effect)
+
+        # Ensure colors are within [0, 1]
+        blended_colors = np.clip(blended_colors, 0, 1)
+    else:
+        blended_colors = colors
+
+    # Create an Open3D point cloud object
+    o3d_point_cloud = o3d.geometry.PointCloud()
+    o3d_point_cloud.points = o3d.utility.Vector3dVector(points)
+    o3d_point_cloud.colors = o3d.utility.Vector3dVector(blended_colors)
+
+    # Visualize the point cloud
+    o3d.visualization.draw_geometries([o3d_point_cloud], window_name=window_name)
