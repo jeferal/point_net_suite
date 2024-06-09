@@ -56,7 +56,7 @@ class DalesDataset(Dataset):
 
             # Cache path
             cache_dir = os.path.join(self._cache_dir,
-                                     f"{os.path.splitext(ply_file)[0]}_{self._partitions}_overlap_{self._overlap*100}")
+                                     f"{os.path.splitext(ply_file)[0]}_{self._partitions}_overlap_{int(self._overlap*100)}")
 
             # Read the ply file
             file_path = os.path.join(self._data_dir, ply_file)
