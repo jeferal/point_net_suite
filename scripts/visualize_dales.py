@@ -29,7 +29,7 @@ if __name__ == "__main__":
     # Allow the user the possibility to navigate over different point clouds
     index = args.index
     while True:
-        point_cloud, labels = dataset[args.index]
+        point_cloud, labels = dataset[index]
 
         print(f"Point cloud shape {point_cloud.shape}")
         print(f"Labels shape {labels.shape}")
