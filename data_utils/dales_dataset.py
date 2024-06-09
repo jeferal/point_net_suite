@@ -26,6 +26,7 @@ def init_locks(l):
 class DalesDataset(Dataset):
 
     CATEGORIES = [
+        'unknown',
         'ground',
         'vegetation',
         'car',
