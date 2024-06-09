@@ -21,13 +21,16 @@ def init_locks(l):
 
 class DalesDataset(Dataset):
 
-    def __init__(self, root : str, split : str, partitions = 1, intensity : bool = False, instance_seg : bool = False):
+    def __init__(self, root : str, split : str, partitions = 1, intensity : bool = False, instance_seg : bool = False, overlap : float = 0.0):
         self._root = root
         self._split = split
 
         # Create the data directory
         self._data_dir = os.path.join(self._root, self._split)
         self._cache_dir = os.path.join(self._root, self._split, "cache")
+        self._overlap = round(overlap, 2)
+        if overlap < 0.0 or overlap > 1.0:
+            raise ValueError("Overlap must be in the range [0, 1]")
 
         # Create the cache directory if it does not exist
         if not os.path.exists(self._cache_dir):
@@ -53,14 +56,10 @@ class DalesDataset(Dataset):
         self._split_files = []
         # Loop for every file
         for ply_file in tqdm(self._ply_files):
-            # Create a dictionary to map quadrant indices to path of the quadrant txt file
-            self._quadrant_map = {}
-            for quadrant_idx in enumerate(quadrant_indices):
-                split_file = os.path.join(self._cache_dir,
-                                          os.path.splitext(ply_file)[0],
-                                          f"quadrant_{quadrant_idx[0]}_{quadrant_idx[1]}.txt")
-                self._split_files.append(split_file)
-                self._quadrant_map[quadrant_idx] = split_file
+
+            # Cache path
+            cache_dir = os.path.join(self._cache_dir,
+                                     f"{os.path.splitext(ply_file)[0]}_{self._partitions}_overlap_{self._overlap*100}")
 
             # Read the ply file
             file_path = os.path.join(self._data_dir, ply_file)
@@ -68,14 +67,11 @@ class DalesDataset(Dataset):
             data_map = ply_data.elements[0].data
 
             # Split the point cloud
-            if not self.does_cache_exist(ply_file):
-                print(f"Splitting the point cloud {ply_file}")
-                split_ply_point_cloud(data_map, self._partitions, self._quadrant_map)
+            tile_map = split_ply_point_cloud(data_map, self._partitions, cache_dir, overlap=self._overlap)
 
-    def does_cache_exist(self, ply_file : str):
-        # TODO: This function could check if every file exists
-        ply_cache_dir = os.path.join(self._cache_dir, os.path.splitext(ply_file)[0])
-        return os.path.exists(ply_cache_dir)
+            # Add the tile map values to the split files list
+            for _, value in tile_map.items():
+                self._split_files.append(value)
 
     def __len__(self):
         return len(self._ply_files * self._partitions)
@@ -102,6 +98,18 @@ def split_ply_point_cloud(data_map : np.memmap, N : int, cache_path : str = 'cac
         split_file = os.path.join(cache_path,
                                  f"tile_{tile_idx[0]}_{tile_idx[1]}.txt")
         tile_map.update({tile_idx : split_file})
+    
+    # Check if the cache directory exists already
+    if os.path.exists(cache_path):
+        # Check if the files already exist
+        all_files_exist = True
+        for _, value in tile_map.items():
+            if not os.path.exists(value):
+                all_files_exist = False
+                break
+        if all_files_exist:
+            print("This split already exists in cache, skipping.")
+            return tile_map
 
     # Create the cache directory if it does not exist
     if not os.path.exists(cache_path):
