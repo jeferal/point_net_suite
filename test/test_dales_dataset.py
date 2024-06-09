@@ -102,6 +102,9 @@ class TestDalesDataset(unittest.TestCase):
         self.assertAlmostEqual(x_interval, 4, delta=0.1)
         self.assertAlmostEqual(y_interval, 2, delta=0.1)
 
+        if os.path.exists(data_map.filename):
+            os.remove(data_map.filename)
+
     def test_tile_indices(self):
         # This method tests the get_all_tile_indices method
         # by checking that the number of indices is correct
@@ -175,6 +178,9 @@ class TestDalesDataset(unittest.TestCase):
 
         # Check that both point cloud are the same
         self.compare_point_clouds(data_map, split_points)
+
+        if os.path.exists(data_map.filename):
+            os.remove(data_map.filename)
 
     def compare_point_clouds(self, pc1, pc2):
         """
