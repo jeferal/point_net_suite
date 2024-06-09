@@ -86,8 +86,8 @@ run the visualization with this command:
 ```bash
 python3 scripts/visualize_dales.py data/DALESObjects <split_name> <index> --partitions <number_of_partitions> --overlap <overlap_from_0_to_1> --intensity
 ```
-![Alt text](./assets/dales_tile_example_1.png)
-![Alt text](./assets/dales_tile_example_2.png)
+<img src="./assets/dales_tile_example_1.png" alt="Alt text" style="width:50%;">
+<img src="./assets/dales_tile_example_2.png" alt="Alt text" style="width:50%;">
 
 ## Test
 The tests are located in the test folder. All the tests can be run with the following command:
