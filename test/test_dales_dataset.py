@@ -32,12 +32,6 @@ def create_random_point_cloud(num_points, x_min, x_max, y_min, y_max, z_min, z_m
 
 class TestDalesDataset(unittest.TestCase):
 
-    # TODO: Simplify the test with a point cloud that is not that big
-    # Generate random points and split them into N x N splits
-
-    # TODO: Add a test for how we split the x,y coordinates given N
-
-    # TODO: Add a test when we add the 'overlap' feature
     def test_get_tile(self):
         x = 7
         y = 0
