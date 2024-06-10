@@ -24,23 +24,23 @@ class PointNetSetAbstractionSingleScaleGrouping(nn.Module):
 
         self.group_all = group_all
 
-    def forward(self, xyz, extra_features):
+    def forward(self, xyz, features):
         """
         Input:
             xyz: input points positional data, [B, C, N]
-            extra_features: input points extra features data, [B, D, N]
+            features: input points features data, [B, D, N]
         Return:
             new_xyz: sampled points positional data, [B, C, S]
             new_features: sample points features data, [B, D', S]
         """
         xyz = xyz.permute(0, 2, 1)
-        if extra_features is not None:
-            extra_features = extra_features.permute(0, 2, 1)
+        if features is not None:
+            features = features.permute(0, 2, 1)
 
         if self.group_all:
-            new_xyz, new_features = sample_and_group_all(xyz, extra_features)
+            new_xyz, new_features = sample_and_group_all(xyz, features)
         else:
-            new_xyz, new_features = sample_and_group(self.npoint, self.radius, self.nsample, xyz, extra_features)
+            new_xyz, new_features = sample_and_group(self.npoint, self.radius, self.nsample, xyz, features)
         # new_xyz: sampled points positional data, [B, npoint, C]
         # new_features: sampled points features data, [B, npoint, nsample, C+D]
         new_features = new_features.permute(0, 3, 2, 1) # [B, C+D, nsample, npoint]
@@ -75,18 +75,18 @@ class PointNetSetAbstractionMultiScaleGrouping(nn.Module):
             self.conv_blocks.append(convs)
             self.bn_blocks.append(bns)
 
-    def forward(self, xyz, extra_features):
+    def forward(self, xyz, features):
         """
         Input:
             xyz: input points positional data, [B, C, N]
-            extra_features: input points extra features data, [B, D, N]
+            features: input points features data, [B, D, N]
         Return:
             new_xyz: sampled points positional data, [B, C, S]
             new_features: sample points features data, [B, D', S]
         """
         xyz = xyz.permute(0, 2, 1)
-        if extra_features is not None:
-            extra_features = extra_features.permute(0, 2, 1)
+        if features is not None:
+            features = features.permute(0, 2, 1)
 
         B, N, C = xyz.shape
         num_points = self.npoint
@@ -97,8 +97,8 @@ class PointNetSetAbstractionMultiScaleGrouping(nn.Module):
             group_idx = query_ball_point(radius, num_sample, xyz, new_xyz)
             grouped_xyz = index_points(xyz, group_idx)
             grouped_xyz -= new_xyz.view(B, num_points, 1, C)
-            if extra_features is not None:
-                grouped_points = index_points(extra_features, group_idx)
+            if features is not None:
+                grouped_points = index_points(features, group_idx)
                 grouped_points = torch.cat([grouped_points, grouped_xyz], dim=-1)
             else:
                 grouped_points = grouped_xyz

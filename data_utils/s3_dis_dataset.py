@@ -52,6 +52,20 @@ class S3DIS(Dataset):
 
         self.space_ids = list(set(self.space_ids))
 
+        if self.split == 'train':
+            labelweights = np.zeros(14)#mumclass
+            for room_path in self.data_paths:
+                room_data = np.loadtxt(room_path)  # xyzrgbl
+                labels = room_data[:, 6]
+                tmp, _ = np.histogram(labels, range(14))
+                labelweights += tmp
+            labelweights = labelweights.astype(np.float32)
+            labelweights = labelweights / np.sum(labelweights)
+            self.labelweights = np.power(np.amax(labelweights) / labelweights, 1 / 3.0)
+            #print(self.labelweights)
+        else:
+            self.labelweights = None
+
     def __getitem__(self, idx):
         space_data = np.loadtxt(self.data_paths[idx])
         #space_data = pd.read_hdf(self.data_paths[idx], key='space_slice').to_numpy()

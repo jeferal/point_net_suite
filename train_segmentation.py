@@ -17,8 +17,8 @@ from data_utils.s3_dis_dataset import S3DIS
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-models_folder_dict = {'pointnet_sem_segmentation': 'models/Pointnet'}
-models_modules_dict = {'pointnet_sem_segmentation': 'models.pointnet_sem_segmentation'}
+models_modules_dict = {'pointnet_sem_seg': 'models.point_net_sem_segmentation',
+                       'pointnet_sem_seg_ssg': 'models.point_net_v2_sem_segmentation_ssg'}
 
 CATEGORIES = {
     'ceiling'  : 0, 
@@ -56,9 +56,9 @@ hparams_for_args_to_evaluate = {
     # one run with --use_extra_features
     ## one run with --use_fps
     'batch_size': 8,            #8, 16, 32, 64
-    'dropout': 0.4,             #0.0, 0.2, 0.4
+    'dropout': 0.5,             #0.0, 0.2, 0.5
     'extra_feat_dropout': 0.2,  #0.0, 0.2, 0.5
-    'label_smoothing': 0.0,     #0.0, 0.1, 0.2
+    'label_smoothing': 0.1,     #0.0, 0.1, 0.2
     'optimizer': 'AdamW',       #AdamW, Adam, SGD
     'learning_rate': 1e-3,      #1e-2, 1e-3, 1e-4
     'scheduler': 'Cosine'       #Cosine, Cyclic, Step
@@ -83,7 +83,7 @@ def parse_args():
     # TO DO: DATA PREPROCESSING
     #parser.add_argument('--no_data_preprocess', action='store_true', default=False, help='preprocess the data or process it during the getitem call')
     # Model selection
-    parser.add_argument('--model', default='pointnet_sem_segmentation', help='model name [default: pointnet_sem_segmentation]')
+    parser.add_argument('--model', default='pointnet_sem_seg_ssg', help='model name [default: pointnet_sem_seg]')
     # Model parameters
     parser.add_argument('--epoch', default=100, type=int, help='number of epoch in training')
     parser.add_argument('--batch_size', type=int, default=hparams_for_args_to_evaluate['batch_size'], help='batch size in training')
@@ -139,6 +139,9 @@ def main(args):
     trainDataLoader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     evalDataLoader = DataLoader(eval_dataset, batch_size=batch_size, shuffle=False)
 
+    loss_weights = torch.Tensor([1.129165, 1.1773498, 1.0, 2.4247699, 2.4373214, 2.3881392, 1.703881, 2.1938348, 1.8358783, 3.9943254, 1.8101114, 2.933325, 1.3525476, 1.8]).cuda()
+    #loss_weights = torch.Tensor(train_dataset.labelweights).cuda()
+
     print("The length of the training data is: %d" % len(train_dataset))
     print("The length of the evaluation data is: %d" % len(eval_dataset))
 
@@ -149,7 +152,6 @@ def main(args):
     # ===============================================================
     # MODEL LOADING
     # ===============================================================
-    sys.path.append(os.path.join(BASE_DIR, models_folder_dict[args.model]))
     model = importlib.import_module(models_modules_dict[args.model])
 
     classifier = model.get_model(num_points=num_points, m=num_classes, dropout=args.dropout, input_dim=input_dimension, extra_feat_dropout=args.extra_feat_dropout)
@@ -263,7 +265,7 @@ def main(args):
                 pred_choice = torch.softmax(preds, dim=2).argmax(dim=2)
 
                 # get loss and perform backprop
-                loss = criterion(preds, targets, pred_choice) 
+                loss = criterion(preds, targets, pred_choice, loss_weights) 
                 loss.backward()
                 optimizer.step()
                 
@@ -302,7 +304,7 @@ def main(args):
             
             # EVALUATION
             with torch.no_grad():
-                eval_epoch_loss, eval_epoch_acc, eval_epoch_iou = evaluate_model(classifier.eval(), criterion, evalDataLoader, batch_size, num_points)
+                eval_epoch_loss, eval_epoch_acc, eval_epoch_iou = evaluate_model(classifier.eval(), criterion, loss_weights, evalDataLoader, batch_size, num_points)
 
                 if args.use_mlflow:
                     mlflow.log_metric('eval_loss', eval_epoch_loss, step=epoch)
@@ -356,7 +358,7 @@ def main(args):
 # =========================================================================================================================================================
 # ==================================================   EVALUATION METHOD TO USE IN TRAINING   =============================================================
 # =========================================================================================================================================================
-def evaluate_model(model, criterion, loader, batch_size, num_points):
+def evaluate_model(model, criterion, loss_weights, loader, batch_size, num_points):
     eval_instance_loss = []
     eval_instance_accuracy = []
     eval_instance_iou = []
@@ -373,7 +375,7 @@ def evaluate_model(model, criterion, loader, batch_size, num_points):
         preds, crit_idxs, feat_trans = eval_classifier(points)
         pred_choice = torch.softmax(preds, dim=2).argmax(dim=2)
 
-        loss = criterion(preds, targets, pred_choice) 
+        loss = criterion(preds, targets, pred_choice, loss_weights) 
 
         # get metrics
         correct = pred_choice.eq(targets.data).cpu().sum()

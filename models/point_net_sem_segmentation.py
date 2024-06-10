@@ -16,5 +16,5 @@ class get_loss(nn.Module):
         super(get_loss, self).__init__()
         self.loss_calculator = PointNetLossForSemanticSegmentation(ce_label_smoothing=label_smoothing, gamma=gamma, dice=dice, dice_eps=dice_eps)
     
-    def forward(self, pred, target, pred_choice):
+    def forward(self, pred, target, pred_choice, loss_weights):
         return self.loss_calculator(pred, target, pred_choice)
