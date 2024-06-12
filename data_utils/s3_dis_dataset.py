@@ -65,21 +65,22 @@ class S3DIS(Dataset):
             #print(self.labelweights)
         else:
             self.labelweights = None'''
-        '''if self.split != 'test':
+        if self.split != 'test':
             label_probs = np.zeros(14)
             for room_path in self.data_paths:
                 room_data = np.loadtxt(room_path)  # xyzrgbl
-                labels = room_data[:, 6]
-                tmp, _ = np.histogram(labels, range(15))
-                label_probs += tmp
+                targets = room_data[:, 6]
+                unique_targets, counts_targets = np.unique(targets, return_counts=True)
+                for i, target in enumerate(unique_targets):
+                    label_probs[int(target)] += counts_targets[i]
             label_probs = label_probs.astype(np.float32)
             label_probs = label_probs / np.sum(label_probs)
             beta_value = 3.0
             self.label_probs_softmax = np.exp(beta_value * label_probs) / np.sum(np.exp(beta_value * label_probs))
             #print(label_probs)
             #print(self.label_probs_softmax)
-        else:'''
-        self.label_probs_softmax = np.ones(14) / 14
+        else:
+            self.label_probs_softmax = np.ones(14) / 14
 
     def __getitem__(self, idx):
         space_data = np.loadtxt(self.data_paths[idx])
@@ -90,11 +91,11 @@ class S3DIS(Dataset):
         targets = space_data[:, 6]      # integer categories aster the rgb values
 
         # down sample point cloud
-        '''if self.npoints:
+        if self.npoints:
             if self.split != 'test':
                 points, targets = self.downsample_with_label_probs_softmax(points, targets)
-            else:'''
-        points, targets = self.downsample(points, targets)
+            else:
+                points, targets = self.downsample(points, targets)
 
         # add Gaussian noise to point set if not testing
         if self.split != 'test':
@@ -171,7 +172,7 @@ class S3DIS(Dataset):
     
     def downsample_with_label_probs_softmax(self, points, targets):
         unique_targets = np.unique(targets)
-        probs_for_target = self.label_probs_softmax
+        probs_for_target = self.label_probs_softmax.copy()
 
         # Share probabilities between the rest of targets if a target does not exist in this instance
         empty_targets = []
@@ -209,12 +210,14 @@ class S3DIS(Dataset):
 
         # Initialize lists to collect sampled points and targets
         choice = np.array([], dtype=int)
-
+        #print("Starting sample:")
         for target in unique_targets:
             # Get the indices of all points belonging to the current target
             target_indices = np.where(targets == target)[0]
 
             num_points_to_sample = int(points_to_sample_per_target[int(target)])
+
+            #print(str(len(target_indices)) + " - " + str(num_points_to_sample))
             
             if len(target_indices) >= num_points_to_sample:
                 target_choice = np.random.choice(target_indices, num_points_to_sample, replace=False)
