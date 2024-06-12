@@ -215,6 +215,8 @@ class PointNetV2SemanticSegmentation(nn.Module):
         """
         super(PointNetV2SemanticSegmentation, self).__init__()
 
+        self.extra_feat_dropout = extra_feat_dropout
+
         if single_scale_grouping:
             self.feature_learner = PointNetV2FeatureLearnerSemanticSegSingleScaleGrouping(input_dim=input_dim, extra_feat_dropout=extra_feat_dropout)
         else:
@@ -281,10 +283,13 @@ class PointNetV2LossForClassification(nn.Module):
     
 
 class PointNetV2LossForSemanticSegmentation(nn.Module):
-    def __init__(self):
+    def __init__(self, ce_label_smoothing=0.0):
         super(PointNetV2LossForSemanticSegmentation, self).__init__()
 
-    def forward(self, predictions, targets, weights):
-        total_loss = F.nll_loss(predictions.transpose(2, 1), targets, weight=weights)
+        self.cross_entropy_loss = nn.CrossEntropyLoss(label_smoothing=ce_label_smoothing)
 
-        return total_loss
+    def forward(self, predictions, targets):
+        # Cross Entropy Loss
+        ce_loss = self.cross_entropy_loss(predictions.transpose(2, 1), targets)
+
+        return ce_loss
