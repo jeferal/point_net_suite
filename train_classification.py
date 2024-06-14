@@ -15,8 +15,9 @@ from data_utils.model_net import ModelNetDataLoader
 import data_utils.augmentation as DataAugmentator
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-models_folder_dict = {'pointnet_cls': 'models/Pointnet'}
-models_modules_dict = {'pointnet_cls': 'models.point_net_classification'}
+models_modules_dict = {'pointnet_cls': 'models.point_net_classification',
+                       'pointnet_v2_cls_ssg': 'models.point_net_v2_classification_ssg',
+                       'pointnet_v2_cls_msg': 'models.point_net_v2_classification_msg'}
 
 
 '''hparams_for_args_default = {
@@ -35,10 +36,10 @@ hparams_for_args_to_evaluate = {
     'num_point': 1024,          #1024, 2048
     # one run with --use_extra_features
     # one run with --use_fps
-    'batch_size': 24,           #12, 24, 48, 96 
-    'dropout': 0.4,                #0.0, 0.2, 0.4
+    'batch_size': 16,           #12, 24, 48, 96 
+    'dropout': 0.5,                #0.0, 0.2, 0.5
     'extra_feat_dropout': 0.2,  #0.0, 0.2, 0.5
-    'label_smoothing': 0.0,     #0.0, 0.1, 0.2
+    'label_smoothing': 0.1,     #0.0, 0.1, 0.2
     'optimizer': 'AdamW',       #AdamW, Adam, SGD
     'learning_rate': 1e-3,      #1e-2, 1e-3, 1e-4
     'scheduler': 'Cosine'       #Cosine, Cyclic, Step
@@ -60,7 +61,7 @@ def parse_args():
     parser.add_argument('--use_fps', action='store_true', default=False, help='use further point sampiling')
     parser.add_argument('--no_data_preprocess', action='store_true', default=False, help='preprocess the data or process it during the getitem call')
     # Model selection
-    parser.add_argument('--model', default='pointnet_cls', help='model name [default: pointnet_cls]')
+    parser.add_argument('--model', default='pointnet_v2_cls_msg', help='model name [default: pointnet_cls]')
     # Model parameters
     parser.add_argument('--epoch', default=100, type=int, help='number of epoch in training')
     parser.add_argument('--batch_size', type=int, default=hparams_for_args_to_evaluate['batch_size'], help='batch size in training')
@@ -123,7 +124,6 @@ def main(args):
     # MODEL LOADING
     # ===============================================================
     print('Loading selected model...')
-    sys.path.append(os.path.join(BASE_DIR, models_folder_dict[args.model]))
     num_class = args.num_category
     model = importlib.import_module(models_modules_dict[args.model])
 
@@ -184,8 +184,8 @@ def main(args):
     try:
         checkpoint = torch.load(str(exp_dir) + '/best_model.pth')
         start_epoch = checkpoint['epoch']
-        best_eval_acc = checkpoint['best_eval_accuracy']
-        best_eval_class_acc = checkpoint['best_eval_class_accuracy']
+        best_eval_acc = checkpoint['best_accuracy']
+        best_eval_class_acc = checkpoint['best_class_accuracy']
         train_loss = checkpoint['train_loss']
         train_accuracy = checkpoint['train_accuracy']
         train_iou = checkpoint['train_iou']
@@ -305,7 +305,7 @@ def main(args):
                     best_eval_class_acc = eval_epoch_mean_class_acc
 
                 # Print evaluation results to keep track of the improvements
-                print('Test Instance Accuracy: %f, Mean Class Accuracy: %f' % (eval_epoch_acc, eval_epoch_mean_class_acc))
+                print('Eval Instance Accuracy: %f, Mean Class Accuracy: %f' % (eval_epoch_acc, eval_epoch_mean_class_acc))
                 print('Best Instance Accuracy: %f, Mean Class Accuracy: %f' % (best_eval_acc, best_eval_class_acc))
 
                 # Save a checkpoint with all the relevant status info it the model has improved

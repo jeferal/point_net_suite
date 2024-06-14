@@ -1,11 +1,12 @@
 import torch.nn as nn
-from models.point_net import PointNetSegmentation, PointNetLossForSemanticSegmentation
+
+from models.PointNet.point_net import PointNetSemanticSegmentation, PointNetLossForSemanticSegmentation
 
 
 class get_model(nn.Module):
     def __init__(self, num_points=1024, m=2, dropout=0.4, input_dim=3, extra_feat_dropout=0.0):
         super(get_model, self).__init__()
-        self.classificator = PointNetSegmentation(num_points, m, dropout=dropout, input_dim=input_dim, extra_feat_dropout=extra_feat_dropout) #Maybe add dropout to the last layer?
+        self.classificator = PointNetSemanticSegmentation(num_points, m, dropout=dropout, input_dim=input_dim, extra_feat_dropout=extra_feat_dropout) #Maybe add dropout to the last layer?
 
     def forward(self, x):
         return self.classificator(x)

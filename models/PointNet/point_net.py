@@ -3,6 +3,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
+from models.PointNet.t_net import Tnet
+
 
 # ================================================================================================
 # ==================================    POINTNET ENCODER    ======================================
@@ -13,6 +15,8 @@ class PointNetEncoder(nn.Module):
         """
         :param num_points: number of points in the point cloud
         :param local_feat: if True, forward() returns the concatenation of the local and global features
+        :param input_dim: number of dimensions of the input, the first 3 ones should be xyz while the rest can be extra features as normals or rgb data
+        :param extra_feat_dropout: amount of dropout to apply to the extra features so that the model does not learn only from them
         """
         super(PointNetEncoder, self).__init__()
 
@@ -46,9 +50,8 @@ class PointNetEncoder(nn.Module):
         # This might cause warnigns, we can them with: import warnings warnings.filterwarnings("ignore")
 
     def forward(self, x):
-            batchsize = x.shape[0]
-            xDimension = x.shape[1]
-            #batchsize, dimensions, numpoints = x.size()
+            batchsize, xDimension, _ = x.shape
+            #batchsize, dimensions, numpoints = x.shape
 
             # If we have more than 3 dimensions in the input, the points are only the first 3
             # The rest of the dimensions should be treated as features and we cannot transform them like we do with points
@@ -67,9 +70,8 @@ class PointNetEncoder(nn.Module):
             # We can also implement some dropout so that the model does not learn to decide based on these extra features
             # (for example, decide a class based on color with rgb extra info). This is done in other models like KPCOnv.
             if xDimension > 3:
-                #TO DO: EXTRA FEATURES DROPOUT
-                # add random rotation to the point cloud with probability
-                if np.random.uniform(0, 1) < self.extra_feat_dropout:
+                # Extra features dropout
+                if self.extra_feat_dropout > 0.0 and np.random.uniform(0, 1) < self.extra_feat_dropout:
                     extra_features[:, :, :] = 0.0
                 x = torch.cat([x, extra_features], dim=1)
 
@@ -119,6 +121,8 @@ class PointNetClassification(nn.Module):
         :param num_points: number of points in the point cloud
         :param k: number of object classes available
         :param dropout: dropout amount to apply after the second fc layer
+        :param input_dim: number of dimensions of the input, the first 3 ones should be xyz while the rest can be extra features as normals or rgb data
+        :param extra_feat_dropout: amount of dropout to apply to the extra features so that the model does not learn only from them
         """
         super(PointNetClassification, self).__init__()
 
@@ -153,16 +157,19 @@ class PointNetClassification(nn.Module):
 
 
 # ================================================================================================
-# ==================================    POINTNET SEGMENTATION    =================================
+# ==================================    POINTNET SEMANTIC SEGMENTATION    ========================
 # ================================================================================================
-class PointNetSegmentation(nn.Module):
-    ''' PointNet Segmentation module that obtains the object part subclass using the global and local features combined '''
-    def __init__(self, num_points=1024, m=2, dropout=0.4, input_dim=3, extra_feat_dropout=0.0):
+class PointNetSemanticSegmentation(nn.Module):
+    ''' PointNet Semantic Segmentation module that obtains every point class in a scene using the global and local features combined '''
+    def __init__(self, num_points=1024, k=2, dropout=0.4, input_dim=3, extra_feat_dropout=0.0):
         """
         :param num_points: number of points in the point cloud
-        :param k: number of object part classes available
+        :param k: number of object classes available
+        :param dropout: dropout amount to apply after the first shared mlp
+        :param input_dim: number of dimensions of the input, the first 3 ones should be xyz while the rest can be extra features as normals or rgb data
+        :param extra_feat_dropout: amount of dropout to apply to the extra features so that the model does not learn only from them
         """
-        super(PointNetSegmentation, self).__init__()
+        super(PointNetSemanticSegmentation, self).__init__()
 
         # PointNet Encoder with only global features
         self.encoder = PointNetEncoder(num_points, local_feat=True, input_dim=input_dim, extra_feat_dropout=extra_feat_dropout)
@@ -178,7 +185,7 @@ class PointNetSegmentation(nn.Module):
         self.bn3 = nn.BatchNorm1d(128)
 
         # Last shared MLP that obtais the part classes
-        self.conv4 = nn.Conv1d(128, m, kernel_size=1)
+        self.conv4 = nn.Conv1d(128, k, kernel_size=1)
 
         # Dropout is not present in the paper, but we can test if it works
         self.dropout = nn.Dropout(p=dropout)
@@ -199,76 +206,6 @@ class PointNetSegmentation(nn.Module):
 
         # Return the output scores per class matrix (probabilities of every class), critical points and feature transform matrix
         return output_scores, critical_indexes, feature_transform_matrix
-    
-
-# ================================================================================================
-# ==================================    T-NET    =================================================
-# ================================================================================================
-class Tnet(nn.Module):
-    ''' T-Net module that learns a Transformation matrix with any specified dimension '''
-    def __init__(self, dim, num_points=1024):
-        """
-        :param dim: the dimension of input features
-        :param num_points: number of points in the point cloud
-        """
-        super(Tnet, self).__init__()
-
-        # Dimensions
-        self.dim = dim 
-
-        # Shared MLPs are implemented as 1D convolutions to make implementation easier (as convolutions already share weights)
-        self.conv1 = nn.Conv1d(dim, 64, kernel_size=1)
-        self.conv2 = nn.Conv1d(64, 128, kernel_size=1)
-        self.conv3 = nn.Conv1d(128, 1024, kernel_size=1)
-
-        # Batch Normalization required for the shared MLPs
-        self.bn1 = nn.BatchNorm1d(64)
-        self.bn2 = nn.BatchNorm1d(128)
-        self.bn3 = nn.BatchNorm1d(1024)
-
-        # Max pool between the shared MLPs and the FC layers
-        self.max_pool = nn.MaxPool1d(kernel_size=num_points)
-
-        # Fully conected layers
-        self.fc1 = nn.Linear(1024, 512)
-        self.fc2 = nn.Linear(512, 256)
-        self.fc3 = nn.Linear(256, dim*dim)
-
-        # Batch Normalization for the FC layers
-        self.bn4 = nn.BatchNorm1d(512)
-        self.bn5 = nn.BatchNorm1d(256)
-
-    def forward(self, x):
-        batchsize = x.shape[0]
-
-        # Pass through shared MLPs:
-        x = F.relu(self.bn1(self.conv1(x)))
-        x = F.relu(self.bn2(self.conv2(x)))
-        x = F.relu(self.bn3(self.conv3(x)))
-
-        # Do the max pool
-        x = self.max_pool(x)
-
-        # Flatten x to be able to be passed to the first FC layer
-        x = x.view(batchsize, -1)
-        
-        # Pass through FC layers
-        x = F.relu(self.bn4(self.fc1(x)))
-        x = F.relu(self.bn5(self.fc2(x)))
-        x = self.fc3(x)
-
-        # Reshape the output of the last FC layer (to be dim x dim again)
-        x = x.view(-1, self.dim, self.dim)
-
-        # Create an identity matrix with the current dimension
-        iden = torch.eye(self.dim, requires_grad=True).repeat(batchsize, 1, 1)
-        if x.is_cuda:
-            iden = iden.cuda()
-
-        # Add the identity matrix to the output
-        x = x + iden
-
-        return x
     
 
 # ================================================================================================

@@ -69,9 +69,38 @@ class S3DIS(Dataset):
 
         self.space_ids = list(set(self.space_ids))
 
+        '''if self.split != 'test'::
+            labelweights = np.zeros(13)
+            for room_path in self.data_paths:
+                room_data = np.loadtxt(room_path)  # xyzrgbl
+                labels = room_data[:, 6]
+                tmp, _ = np.histogram(labels, range(14))
+                labelweights += tmp
+            labelweights = labelweights.astype(np.float32)
+            labelweights = labelweights / np.sum(labelweights)
+            self.labelweights = np.power(np.amax(labelweights) / labelweights, 1 / 3.0)
+            #print(self.labelweights)
+        else:
+            self.labelweights = None'''
+        if self.split != 'test':
+            label_probs = np.zeros(14)
+            for room_path in self.data_paths:
+                room_data = np.loadtxt(room_path)  # xyzrgbl
+                targets = room_data[:, 6]
+                unique_targets, counts_targets = np.unique(targets, return_counts=True)
+                for i, target in enumerate(unique_targets):
+                    label_probs[int(target)] += counts_targets[i]
+            label_probs = label_probs.astype(np.float32)
+            label_probs = label_probs / np.sum(label_probs)
+            beta_value = 3.0
+            self.label_probs_softmax = np.exp(beta_value * label_probs) / np.sum(np.exp(beta_value * label_probs))
+            #print(label_probs)
+            #print(self.label_probs_softmax)
+        else:
+            self.label_probs_softmax = np.ones(14) / 14
+
     def __getitem__(self, idx):
         space_data = np.loadtxt(self.data_paths[idx])
-        #space_data = pd.read_hdf(self.data_paths[idx], key='space_slice').to_numpy()
         if self.include_rgb:
             points = space_data[:, :6]      # xyz points + rgb info
         else:
@@ -80,7 +109,10 @@ class S3DIS(Dataset):
 
         # down sample point cloud
         if self.npoints:
-            points, targets = self.downsample(points, targets)
+            if self.split != 'test':
+                points, targets = self.downsample_with_label_probs_softmax(points, targets)
+            else:
+                points, targets = self.downsample(points, targets)
 
         # add Gaussian noise to point set if not testing
         if self.split != 'test':
@@ -127,7 +159,6 @@ class S3DIS(Dataset):
         # obtain data
         for i, space_path in enumerate(space_paths):
             space_data = np.loadtxt(space_path)
-            #space_data = pd.read_hdf(space_path, key='space_slice').to_numpy()
             _points = space_data[:, :3] # xyz points
             _targets = space_data[:, 3] # integer categories
 
@@ -150,6 +181,70 @@ class S3DIS(Dataset):
         else:
             # case when there are less points than the desired number
             choice = np.random.choice(len(points), self.npoints, replace=True)
+
+        points = points[choice, :] 
+        targets = targets[choice]
+
+        return points, targets
+    
+    def downsample_with_label_probs_softmax(self, points, targets):
+        unique_targets = np.unique(targets)
+        probs_for_target = self.label_probs_softmax.copy()
+
+        # Share probabilities between the rest of targets if a target does not exist in this instance
+        empty_targets = []
+        for i in range(len(probs_for_target)):
+            if i not in unique_targets:
+                empty_targets.append(i)
+
+        probability_to_split = 0
+        for empty_target in empty_targets:
+            probability_to_split += probs_for_target[empty_target]
+            probs_for_target[empty_target] = 0.0
+
+        prob_to_add_each_target = probability_to_split / len(unique_targets)
+        for target in unique_targets:
+            probs_for_target[int(target)] += prob_to_add_each_target
+
+        # Calculate the number of points to sample for each target
+        points_to_sample_per_target = np.zeros(14)
+        total_allocated_points = 0
+        
+        for target in unique_targets:
+            # Calculate the number of points to sample for this target
+            num_points_to_sample = int(np.floor(self.npoints * probs_for_target[int(target)]))
+            points_to_sample_per_target[int(target)] = num_points_to_sample
+            total_allocated_points += num_points_to_sample
+        
+        # Add the remaining number of points to ensure the total is exactly self.npoints
+        while total_allocated_points < self.npoints:
+            for target in unique_targets:
+                if total_allocated_points < self.npoints:
+                    points_to_sample_per_target[int(target)] += 1
+                    total_allocated_points += 1
+                else:
+                    break
+
+        # Initialize lists to collect sampled points and targets
+        choice = np.array([], dtype=int)
+        #print("Starting sample:")
+        for target in unique_targets:
+            # Get the indices of all points belonging to the current target
+            target_indices = np.where(targets == target)[0]
+
+            num_points_to_sample = int(points_to_sample_per_target[int(target)])
+
+            #print(str(len(target_indices)) + " - " + str(num_points_to_sample))
+            
+            if len(target_indices) >= num_points_to_sample:
+                target_choice = np.random.choice(target_indices, num_points_to_sample, replace=False)
+            else:
+                target_choice = np.random.choice(target_indices, num_points_to_sample, replace=True)
+            
+            choice = np.concatenate((choice, target_choice), axis=None)
+        
+        np.random.shuffle(choice)
+
         points = points[choice, :] 
         targets = targets[choice]
 

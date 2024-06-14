@@ -20,8 +20,8 @@ from data_utils.dales_dataset import DalesDataset
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-models_folder_dict = {'pointnet_sem_segmentation': 'models/Pointnet'}
-models_modules_dict = {'pointnet_sem_segmentation': 'models.pointnet_sem_segmentation'}
+models_modules_dict = {'pointnet_sem_seg': 'models.point_net_sem_segmentation',
+                       'pointnet_v2_sem_seg_ssg': 'models.point_net_v2_sem_segmentation_ssg'}
 
 
 '''hparams_for_args_default = {
@@ -40,10 +40,10 @@ hparams_for_args_to_evaluate = {
     'num_point': 8192,          #4096, 8192, 16384, 32768
     # one run with --use_extra_features
     ## one run with --use_fps
-    'batch_size': 8,            #8, 16, 32, 64
-    'dropout': 0.4,             #0.0, 0.2, 0.4
+    'batch_size': 12,            #8, 16, 32, 64
+    'dropout': 0.5,             #0.0, 0.2, 0.5
     'extra_feat_dropout': 0.2,  #0.0, 0.2, 0.5
-    'label_smoothing': 0.0,     #0.0, 0.1, 0.2
+    'label_smoothing': 0.1,     #0.0, 0.1, 0.2
     'optimizer': 'AdamW',       #AdamW, Adam, SGD
     'learning_rate': 1e-3,      #1e-2, 1e-3, 1e-4
     'scheduler': 'Cosine'       #Cosine, Cyclic, Step
@@ -74,7 +74,7 @@ def parse_args():
     parser.add_argument('--partitions', type=int, default=10, help='Number of partitions to split the data')
     parser.add_argument('--overlap', type=float, default=0.1, help='Overlap between partitions')
     # Model selection
-    parser.add_argument('--model', default='pointnet_sem_segmentation', help='model name [default: pointnet_sem_segmentation]')
+    parser.add_argument('--model', default='pointnet_v2_sem_seg_ssg', help='model name [default: pointnet_sem_seg]')
     # Model parameters
     parser.add_argument('--epoch', default=100, type=int, help='number of epoch in training')
     parser.add_argument('--batch_size', type=int, default=hparams_for_args_to_evaluate['batch_size'], help='batch size in training')
@@ -157,7 +157,6 @@ def main(args):
     # ===============================================================
     # MODEL LOADING
     # ===============================================================
-    sys.path.append(os.path.join(BASE_DIR, models_folder_dict[args.model]))
     model = importlib.import_module(models_modules_dict[args.model])
 
     classifier = model.get_model(num_points=num_points, m=num_classes, dropout=args.dropout, input_dim=input_dimension, extra_feat_dropout=args.extra_feat_dropout)
@@ -261,9 +260,9 @@ def main(args):
             for i, (points, targets) in tqdm(enumerate(trainDataLoader, 0), total=len(trainDataLoader), smoothing=0.9):
                 
                 if not args.use_cpu:
-                    points, targets = points.transpose(2, 1).cuda(), targets.squeeze().cuda()
+                    points, targets = points.transpose(2, 1).cuda(), targets.cuda()
                 else:
-                    points, targets = points.transpose(2, 1), targets.squeeze()
+                    points, targets = points.transpose(2, 1), targets
                 
                 # Zero gradients
                 optimizer.zero_grad()
@@ -351,8 +350,8 @@ def main(args):
                         'optimizer_state_dict': optimizer.state_dict(),
                     }
                     torch.save(state, savepath)
-                    if args.use_mlflow:
-                        mlflow.log_artifact(savepath)
+                    #if args.use_mlflow:
+                    #    mlflow.log_artifact(savepath)
 
                 # Next epoch
                 global_epoch += 1
@@ -360,7 +359,7 @@ def main(args):
     finally:
         # End the MLflow run if use_mlflow is True
         if args.use_mlflow:
-            mlflow.end_run()      
+            mlflow.end_run()
 
     print('Training completed!')
 
