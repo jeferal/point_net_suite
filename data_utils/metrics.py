@@ -36,10 +36,6 @@ def compute_iou_per_class(targets, predictions, num_classes):
 
         print(f"Class {cls}: Intersection = {intersection}, Union = {union}, IoU = {iou}")
 
-        # Check if iou is nan
-        if torch.isnan(iou):
-            raise ValueError(f"Class {cls} has an IoU of NaN. This is likely due to the class not being present in the target or prediction tensors.")
-
         iou_per_class.append(iou)
 
     return iou_per_class
