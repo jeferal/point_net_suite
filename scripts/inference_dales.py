@@ -7,45 +7,36 @@ import time
 
 import open3d as o3d
 
-from models.point_net_sem_segmentation import get_model
-from data_utils.s3_dis_dataset import S3DIS
-#from torch.utils.data import DataLoader
+from models.pointnet_sem_segmentation import get_model
+from data_utils.dales_dataset import DalesDataset
 
 
 CATEGORIES = {
-    'ceiling'  : 0, 
-    'floor'     : 1, 
-    'wall'     : 2, 
-    'beam'     : 3, 
-    'column'   : 4, 
-    'window'   : 5,
-    'door'     : 6, 
-    'table'    : 7, 
-    'chair'    : 8, 
-    'sofa'     : 9, 
-    'bookcase' : 10, 
-    'board'    : 11,
-    'stairs'   : 12,
-    'clutter'  : 13
+    'ground'         : 0, 
+    'vegetation'     : 1, 
+    'car'            : 2, 
+    'truck'          : 3, 
+    'powerline'      : 4, 
+    'fence'          : 5,
+    'pole'           : 6, 
+    'buildings'      : 7, 
 }
 NUM_CLASSES = len(CATEGORIES)
 
 def main(args):
     model = get_model(num_points=args.num_points, m=NUM_CLASSES)
-
     checkpoint = torch.load(args.model_path)
     model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()  # Set the model to evaluation mode
-    root_data_path = args.data_path
 
-    loader_args = type('', (), {})()
-    loader_args.num_points = args.num_points
-    args.test_area = [3]
-    test_dataset = S3DIS(root=root_data_path, area_nums=args.test_area, split='test', npoints=loader_args.num_points)
+    print("Loaded model")
+
+    root_data_path = args.data_path
+    test_dataset = DalesDataset(root_data_path, 'test', partitions=10, intensity=False, overlap=0.1, npoints=args.num_points)
 
     # Get a random idx from test dataset
     idx = random.randint(0, len(test_dataset))
-    points, label = test_dataset[idx]
+    points, _ = test_dataset[idx]
     print(points.shape)
     """
     # Create an Open3D point cloud object
@@ -62,9 +53,9 @@ def main(args):
     # The model is doing an inference here
     start_time = time.time()
     print(f"Intput shape: {input.shape}")
-    pred, crit_idxs, _ = model(input)
+    pred, _, _ = model(input)
     inference_time = time.time() - start_time
-    
+
     # Pred has the shape [1, point_number, num_classes]
     # We want to get the class with the highest probability for each point
     pred = pred.argmax(dim=2)

@@ -51,8 +51,6 @@ python3 point_net_suite/data_utils/s3_dis_data_gen.py <path_to_the_Area>
     conda activate pointnet_thesis
     ```
 
-
-
 ## Train a model
 ```bash
 python3 point_net_suite/train_classification.py
@@ -78,3 +76,21 @@ Semantic Segmentation:
 python3 scripts/inference_seg.py <model_path> <dataset_path>
 ```
 
+## DALES dataset
+The dales dataset is composed of files with very large point clouds. These
+point clouds must be partitioned into tiles so that we can use them for training.
+The script `scripts/visualize_dales.py` can be used to visualize the tiles of the
+point clouds. A particular partition will be stored in disk remembering the parameters N (number of partitions per side) and overlap [0,1]. If the DALES dataset
+is created with the same paramters it was used before, it will use the cache. You can
+run the visualization with this command:
+```bash
+python3 scripts/visualize_dales.py data/DALESObjects <split_name> <index> --partitions <number_of_partitions> --overlap <overlap_from_0_to_1> --intensity
+```
+<img src="./assets/dales_tile_example_1.png" alt="Alt text" style="width:50%;">
+<img src="./assets/dales_tile_example_2.png" alt="Alt text" style="width:50%;">
+
+## Test
+The tests are located in the test folder. All the tests can be run with the following command:
+```bash
+python -m unittest discover -s test -p 'test_*.py' -v
+```
