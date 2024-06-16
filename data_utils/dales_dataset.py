@@ -92,7 +92,7 @@ class DalesDataset(Dataset):
                 self._split_files.append(value)
 
     def __len__(self):
-        return len(self._ply_files * self._partitions)
+        return len(self._split_files)
 
     def __getitem__(self, idx):
         # Read a tile txt file
