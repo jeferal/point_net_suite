@@ -29,11 +29,7 @@ def compute_iou_per_class(targets, predictions, num_classes):
         union = torch.sum(cls_target | cls_prediction).item() # union
 
         if union == 0:
-            # Special case when union is 0, this means that the class is not present in the target or prediction tensors
-            iou = torch.tensor(0.0)
-        elif intersection == 0:
-            # Special case when intersection is 0
-            iou = torch.tensor(0.0)
+            iou = float('nan')  # To avoid division by zero
         else:
             # Intersection over union
             iou = intersection / union
