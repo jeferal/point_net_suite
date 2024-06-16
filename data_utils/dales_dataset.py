@@ -141,7 +141,6 @@ def split_ply_point_cloud(data_map : np.memmap, N : int, cache_path : str = 'cac
         # Check if the files already exist
         all_files_exist = True
         for _, value in tile_map.items():
-            print(f"Checking if {value} exists...")
             if not os.path.exists(value):
                 all_files_exist = False
                 break
