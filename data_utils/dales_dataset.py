@@ -26,7 +26,6 @@ def init_locks(l):
 class DalesDataset(Dataset):
 
     CATEGORIES = [
-        'unknown',
         'ground',
         'vegetation',
         'car',
@@ -93,7 +92,7 @@ class DalesDataset(Dataset):
                 self._split_files.append(value)
 
     def __len__(self):
-        return len(self._ply_files * self._partitions)
+        return len(self._split_files)
 
     def __getitem__(self, idx):
         # Read a tile txt file
@@ -119,6 +118,9 @@ class DalesDataset(Dataset):
         # Convert to tensor
         points = torch.tensor(points, dtype=torch.float32)
         targets = torch.tensor(targets, dtype=torch.long)
+
+        # The targets are indexed from 1, so we need to subtract 1
+        targets -= 1
 
         return points, targets
 
