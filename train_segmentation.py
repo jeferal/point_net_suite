@@ -9,16 +9,13 @@ import argparse
 from pathlib import Path
 from tqdm import tqdm
 import mlflow
-import matplotlib.pyplot as plt
 
 import yaml
 import datetime
 
 from torch.utils.data import DataLoader
 
-#import data_utils.DataAugmentationAndShuffle as DataAugmentator
-#from data_utils.metrics import compute_iou
-from data_utils.metrics import compute_iou_per_class
+from data_utils.metrics import compute_iou_per_class, plot_metrics_by_class_grid, plot_class_distribution
 from data_utils.s3_dis_dataset import S3DIS
 from data_utils.dales_dataset import DalesDataset
 
@@ -77,7 +74,7 @@ def parse_args():
     parser.add_argument('--partitions', type=int, default=10, help='Number of partitions to split the data')
     parser.add_argument('--overlap', type=float, default=0.1, help='Overlap between partitions')
     # Model selection
-    parser.add_argument('--model', default='pointnet_v2_sem_seg_ssg', help='model name [default: pointnet_sem_seg]')
+    parser.add_argument('--model', default='pointnet_v2_sem_seg_ssg', help='model name [default: pointnet_v2_sem_seg_ssg]')
     # Model parameters
     parser.add_argument('--epoch', default=3, type=int, help='number of epoch in training')
     parser.add_argument('--batch_size', type=int, default=hparams_for_args_to_evaluate['batch_size'], help='batch size in training')
@@ -94,16 +91,6 @@ def parse_args():
     parser.add_argument('--use_mlflow', action='store_true', default=False, help='Log train with mlflow')
     parser.add_argument('--mlflow_run_name', type=str, default='pointnet_sem_segmentation', help='Name of the mlflow run')
     return parser.parse_args()
-
-def plot_class_distribution(dataset, title):
-    labels = [sample[1] for sample in dataset]
-    labels = torch.cat(labels).cpu().numpy()
-    unique, counts = np.unique(labels, return_counts=True)
-    plt.bar(unique, counts)
-    plt.xlabel('Class')
-    plt.ylabel('Number of samples')
-    plt.title(title)
-    plt.show()
 
 def dump_args_to_yaml(args, yaml_file):
     args_dict = vars(args)  # Convert Namespace to dictionary
@@ -146,13 +133,18 @@ def main(args):
     train_dataset = None
     eval_dataset = None
     if args.dataset == 's3dis':
+        print("Loading S3DIS dataset")
         train_dataset = S3DIS(root=data_path, area_nums=args.train_area, split='train', npoints=num_points, r_prob=0.25, include_rgb=args.use_extra_features)
         eval_dataset = S3DIS(root=data_path, area_nums=args.test_area, split='test', npoints=num_points, r_prob=0.25, include_rgb=args.use_extra_features)
     elif args.dataset == 'dales':
+        print(f"Loading Dales dataset with data path {data_path}")
         train_dataset = DalesDataset(root=data_path, split='train', partitions=args.partitions, overlap=args.overlap, npoints=num_points)
         eval_dataset = DalesDataset(root=data_path, split='test', partitions=args.partitions, overlap=args.overlap, npoints=num_points)
     else:
         raise ValueError(f"Dataset {args.dataset} not supported")
+
+    if len(train_dataset) == 0 or len(eval_dataset) == 0:
+        raise ValueError(f"No data found. Are you sure the value of the argument --dataset_path {args.dataset_path} and --dataset {args.dataset} are correct?")
 
     num_classes = len(train_dataset.get_categories())
     print(f"Number of classes: {num_classes}")
@@ -163,8 +155,10 @@ def main(args):
     print("The length of the training data is: %d" % len(train_dataset))
     print("The length of the evaluation data is: %d" % len(eval_dataset))
 
-    plot_class_distribution(train_dataset, 'Training Set Class Distribution')
-    plot_class_distribution(eval_dataset, 'Evaluation Set Class Distribution')
+    train_class_distribution_file = os.path.join(exp_dir, 'train_class_distribution.png')
+    eval_class_distribution_file = os.path.join(exp_dir, 'eval_class_distribution.png')
+    plot_class_distribution(train_dataset, 'Training Set Class Distribution', show=False, save_path=train_class_distribution_file)
+    plot_class_distribution(eval_dataset, 'Evaluation Set Class Distribution', show=False, save_path=eval_class_distribution_file)
 
     # Get an example point to be able to know the input dimension of the data (xyz or xyz + extra features like rgb, normals, etc.)
     example_points, example_target = trainDataLoader.dataset[0]
@@ -256,9 +250,14 @@ def main(args):
         os.environ['MLFLOW_ENABLE_SYSTEM_METRICS_LOGGING'] = 'true'
         run_name = f"{args.mlflow_run_name}_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}"
         mlflow.start_run(run_name=run_name)
-        dump_args_to_yaml(args, 'args.yaml')
+        args_yml_file = os.path.join(exp_dir, 'args.yaml')
+        dump_args_to_yaml(args, args_yml_file)
+
         # Log the arguments
-        mlflow.log_artifact('args.yaml')
+        mlflow.log_artifact(args_yml_file)
+        # Log the class distribution plots
+        mlflow.log_artifact(train_class_distribution_file)
+        mlflow.log_artifact(eval_class_distribution_file)
 
     # ===============================================================
     # MODEL TRAINING
@@ -300,8 +299,6 @@ def main(args):
                 iou_per_class = compute_iou_per_class(targets.cpu(), pred_choice.cpu(), num_classes)
 
                 print(f"Batch {i + 1}/{len(trainDataLoader)} - IOU per class: {iou_per_class}")
-                
-                #breakpoint()
 
                 train_instance_loss.append(loss.item())
                 train_instance_accuracy.append(accuracy)
@@ -332,10 +329,10 @@ def main(args):
                 + f'- Train Accuracy: {train_accuracy[-1]:.4f} ' \
                 + f'- Train IOU: {[f"{iou:.4f}" for iou in train_iou[-1]]}')
 
-            
+
             # EVALUATION
             with torch.no_grad():
-                eval_epoch_loss, eval_epoch_acc, eval_epoch_iou = evaluate_model(classifier.eval(), criterion, evalDataLoader, batch_size, num_points)
+                eval_epoch_loss, eval_epoch_acc, eval_epoch_iou = evaluate_model(classifier.eval(), criterion, evalDataLoader, batch_size, num_points, num_classes=num_classes)
 
                 if args.use_mlflow:
                     mlflow.log_metric('eval_loss', eval_epoch_loss, step=epoch)
@@ -352,7 +349,7 @@ def main(args):
                 print(f'Epoch: {epoch + 1} - Valid Loss: {eval_loss[-1]:.4f} ' \
                     + f'- Valid Accuracy: {eval_accuracy[-1]:.4f} ' \
                     + f'- Valid IOU: {[f"{iou:.4f}" for iou in eval_iou[-1]]}')
-                
+
                 # Save a checkpoint with all the relevant status info it the model has improved
                 if (np.nanmean(eval_iou[-1]) >= best_eval_iou):
                     best_eval_iou = np.nanmean(eval_iou[-1])
@@ -373,22 +370,32 @@ def main(args):
                         'optimizer_state_dict': optimizer.state_dict(),
                     }
                     torch.save(state, savepath)
-                    #if args.use_mlflow:
-                    #    mlflow.log_artifact(savepath)
+
+                    if args.use_mlflow:
+                        mlflow.log_artifact(savepath)
 
                 # Next epoch
                 global_epoch += 1
 
     finally:
-
         metrics = {
             "train_iou": [[float(iou) for iou in ious] for ious in train_iou],
             "eval_iou": [[float(iou) for iou in ious] for ious in eval_iou]
         }
 
-        with open('iou_metrics.json', 'w') as f:
+        metrics_file = os.path.join(exp_dir, 'iou_metrics.json')
+        with open(metrics_file, 'w') as f:
             json.dump(metrics, f)
         
+        # Generate a subplot with the metrics
+        iou_per_class_fig_path = os.path.join(exp_dir, 'iou_metrics.png')
+        plot_metrics_by_class_grid(train_iou, eval_iou, show=False, save_path=iou_per_class_fig_path)
+
+        if args.use_mlflow:
+            mlflow.log_artifact(metrics_file)
+            mlflow.log_artifact(iou_per_class_fig_path)
+            mlflow.end_run()
+
         # End the MLflow run if use_mlflow is True
         if args.use_mlflow:
             mlflow.end_run()  
@@ -399,10 +406,10 @@ def main(args):
 # =========================================================================================================================================================
 # ==================================================   EVALUATION METHOD TO USE IN TRAINING   =============================================================
 # =========================================================================================================================================================
-def evaluate_model(model, criterion, loader, batch_size, num_points):
+def evaluate_model(model, criterion, loader, batch_size, num_points, num_classes=13):
     eval_instance_loss = []
     eval_instance_accuracy = []
-    eval_instance_iou = [[] for _ in range(NUM_CLASSES)]
+    eval_instance_iou = [[] for _ in range(num_classes)]
     
     eval_classifier = model.eval()
 
@@ -421,14 +428,14 @@ def evaluate_model(model, criterion, loader, batch_size, num_points):
         # get metrics
         correct = pred_choice.eq(targets.data).cpu().sum()
         accuracy = correct/float(batch_size*num_points)
-        iou_per_class = compute_iou_per_class(targets.cpu(), pred_choice.cpu(), NUM_CLASSES)
+        iou_per_class = compute_iou_per_class(targets.cpu(), pred_choice.cpu(), num_classes)
 
         print(f"Batch {i + 1}/{len(loader)} - IOU per class: {iou_per_class}")
 
         # update epoch loss and accuracy
         eval_instance_loss.append(loss.item())
         eval_instance_accuracy.append(accuracy)
-        for cls in range(NUM_CLASSES):
+        for cls in range(num_classes):
             eval_instance_iou[cls].append(iou_per_class[cls])
     
     eval_epoch_loss_ = np.mean(eval_instance_loss)

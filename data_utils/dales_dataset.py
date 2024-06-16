@@ -26,7 +26,6 @@ def init_locks(l):
 class DalesDataset(Dataset):
 
     CATEGORIES = [
-        'unknown',
         'ground',
         'vegetation',
         'car',
@@ -120,6 +119,9 @@ class DalesDataset(Dataset):
         points = torch.tensor(points, dtype=torch.float32)
         targets = torch.tensor(targets, dtype=torch.long)
 
+        # The targets are indexed from 1, so we need to subtract 1
+        targets -= 1
+
         return points, targets
 
     def get_categories(self):
@@ -139,6 +141,7 @@ def split_ply_point_cloud(data_map : np.memmap, N : int, cache_path : str = 'cac
         # Check if the files already exist
         all_files_exist = True
         for _, value in tile_map.items():
+            print(f"Checking if {value} exists...")
             if not os.path.exists(value):
                 all_files_exist = False
                 break
