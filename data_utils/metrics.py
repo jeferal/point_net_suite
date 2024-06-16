@@ -31,7 +31,6 @@ def compute_iou_per_class(targets, predictions, num_classes):
         if union == 0:
             iou = float('nan')  # To avoid division by zero
         else:
-            # Intersection over union
             iou = intersection / union
 
         print(f"Class {cls}: Intersection = {intersection}, Union = {union}, IoU = {iou}")
