@@ -26,7 +26,6 @@ def init_locks(l):
 class DalesDataset(Dataset):
 
     CATEGORIES = [
-        'unknown',
         'ground',
         'vegetation',
         'car',
@@ -93,7 +92,7 @@ class DalesDataset(Dataset):
                 self._split_files.append(value)
 
     def __len__(self):
-        return len(self._ply_files * self._partitions)
+        return len(self._split_files)
 
     def __getitem__(self, idx):
         # Read a tile txt file
@@ -119,6 +118,9 @@ class DalesDataset(Dataset):
         # Convert to tensor
         points = torch.tensor(points, dtype=torch.float32)
         targets = torch.tensor(targets, dtype=torch.long)
+
+        # The targets are indexed from 1, so we need to subtract 1
+        targets -= 1
 
         return points, targets
 
@@ -361,5 +363,12 @@ def visualize_pointcloud(point_cloud, labels, window_name : str = "DALES point c
     o3d_point_cloud.points = o3d.utility.Vector3dVector(points)
     o3d_point_cloud.colors = o3d.utility.Vector3dVector(blended_colors)
 
+
     # Visualize the point cloud
-    o3d.visualization.draw_geometries([o3d_point_cloud], window_name=window_name)
+    o3d.visualization.draw_geometries([o3d_point_cloud],
+                                    window_name="DALES point cloud",
+                                    zoom=0.3412,
+                                    front=[0.4257, -0.2125, -0.8795],
+                                    lookat=[2.6172, 2.0475, 1.532],
+                                    up=[-0.0694, -0.9768, 0.2024])
+    
