@@ -12,7 +12,7 @@ class get_model(nn.Module):
         return self.classificator(x)
 
 class get_loss(nn.Module):
-    def __init__(self, label_smoothing=0.0, gamma=1, dice=True, dice_eps=1):
+    def __init__(self, label_smoothing=0.0, gamma=1, dice=True, dice_eps=1, weights=None):
         super(get_loss, self).__init__()
         self.loss_calculator = PointNetLossForSemanticSegmentation(ce_label_smoothing=label_smoothing, gamma=gamma, dice=dice, dice_eps=dice_eps)
     

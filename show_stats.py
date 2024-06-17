@@ -9,7 +9,7 @@ models_log_folder_dict = {'pointnet_cls': 'classification/pointnet_cls',
 
 def parse_args():
     parser = argparse.ArgumentParser('show_stats')
-    parser.add_argument('--model', type=str, default='random', help='model name [default: pointnet_cls]')
+    parser.add_argument('--model', type=str, default='pointnet_cls', help='model name [default: pointnet_cls]')
 
     return parser.parse_args()
 

@@ -7,7 +7,7 @@ class get_model(nn.Module):
     def __init__(self, num_points=1024, m=2, dropout=0.5, input_dim=3, extra_feat_dropout=0.0):
         super(get_model, self).__init__()
         self.classificator = PointNetV2SemanticSegmentation(k=m, dropout=dropout, input_dim=input_dim, extra_feat_dropout=extra_feat_dropout,
-                                                            single_scale_grouping=True)
+                                                            single_scale_grouping=False)
 
     def forward(self, x):
         pred, sa4_features = self.classificator(x)

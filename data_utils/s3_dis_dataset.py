@@ -4,9 +4,9 @@
     '''
 
 import os
-from glob import glob
 import random
 import numpy as np
+from sklearn.utils import compute_class_weight
 import torch
 from torch.utils.data import Dataset
 
@@ -69,20 +69,33 @@ class S3DIS(Dataset):
 
         self.space_ids = list(set(self.space_ids))
 
-        '''if self.split != 'test'::
-            labelweights = np.zeros(13)
+        '''if self.split != 'test':
+            all_labels = np.array([], dtype=int)
+            for room_path in self.data_paths:
+                room_data = np.loadtxt(room_path)  # xyzrgbl
+                all_labels = np.append(all_labels, room_data[:, 6].astype(int))
+            self.labelweights = np.float32(compute_class_weight(class_weight="balanced", classes=np.unique(all_labels), y=all_labels))
+            print(self.labelweights)
+        else:
+            self.labelweights = None'''
+
+        '''if self.split != 'test':
+            cat_weights = np.zeros(len(self.CATEGORIES))
             for room_path in self.data_paths:
                 room_data = np.loadtxt(room_path)  # xyzrgbl
                 labels = room_data[:, 6]
-                tmp, _ = np.histogram(labels, range(14))
-                labelweights += tmp
-            labelweights = labelweights.astype(np.float32)
-            labelweights = labelweights / np.sum(labelweights)
-            self.labelweights = np.power(np.amax(labelweights) / labelweights, 1 / 3.0)
+                tmp, _ = np.histogram(labels, range(len(self.CATEGORIES) + 1))
+                cat_weights += tmp
+            cat_weights = cat_weights.astype(np.float32)
+            cat_weights = cat_weights / np.sum(cat_weights)
+            self.labelweights = np.power(np.amax(cat_weights) / cat_weights, 1 / 3.0)
             #print(self.labelweights)
-        else:
-            self.labelweights = None'''
-        if self.split != 'test':
+        else:'''
+        self.labelweights = None
+        
+        # TODO: review and retest.
+        # Test to see if increasing the probability of minority classes increased the model results. It failed.
+        '''if self.split != 'test':
             label_probs = np.zeros(14)
             for room_path in self.data_paths:
                 room_data = np.loadtxt(room_path)  # xyzrgbl
@@ -97,7 +110,7 @@ class S3DIS(Dataset):
             #print(label_probs)
             #print(self.label_probs_softmax)
         else:
-            self.label_probs_softmax = np.ones(14) / 14
+            self.label_probs_softmax = np.ones(14) / 14'''
 
     def __getitem__(self, idx):
         space_data = np.loadtxt(self.data_paths[idx])
@@ -109,10 +122,13 @@ class S3DIS(Dataset):
 
         # down sample point cloud
         if self.npoints:
-            if self.split != 'test':
+            # TODO: review and retest.
+            # Test to see if increasing the probability of minority classes increased the model results. It failed.
+            '''if self.split != 'test':
                 points, targets = self.downsample_with_label_probs_softmax(points, targets)
-            else:
-                points, targets = self.downsample(points, targets)
+            else:'''
+            points, targets = self.downsample(points, targets)
+            #points, targets = self.downsample_farthest_point(points, targets)
 
         # add Gaussian noise to point set if not testing
         if self.split != 'test':
@@ -187,7 +203,29 @@ class S3DIS(Dataset):
 
         return points, targets
     
-    def downsample_with_label_probs_softmax(self, points, targets):
+    def downsample_farthest_point(self, points, targets):
+        N, D = points.shape
+        xyz = points[:,:3]
+        centroids = np.zeros((self.npoints,))
+        distance = np.ones((N,)) * 1e10
+        farthest = np.random.randint(0, N)
+        for i in range(self.npoints):
+            centroids[i] = farthest
+            centroid = xyz[farthest, :]
+            dist = np.sum((xyz - centroid) ** 2, -1)
+            mask = dist < distance
+            distance[mask] = dist[mask]
+            farthest = np.argmax(distance, -1)
+        choice = centroids.astype(np.int32)
+
+        points = points[choice, :] 
+        targets = targets[choice]
+
+        return points, targets
+    
+    # TODO: review and retest.
+    # Test to see if increasing the probability of minority classes increased the model results. It failed.
+    '''def downsample_with_label_probs_softmax(self, points, targets):
         unique_targets = np.unique(targets)
         probs_for_target = self.label_probs_softmax.copy()
 
@@ -248,7 +286,7 @@ class S3DIS(Dataset):
         points = points[choice, :] 
         targets = targets[choice]
 
-        return points, targets
+        return points, targets'''
 
     @staticmethod
     def random_rotate(points):

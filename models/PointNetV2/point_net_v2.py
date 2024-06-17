@@ -188,7 +188,43 @@ class PointNetV2FeatureLearnerSemanticSegSingleScaleGrouping(nn.Module):
         self.sa3 = PointNetSetAbstractionSingleScaleGrouping(npoint=64, radius=0.4, nsample=32, in_channel=128 + 3,
                                                              mlp_layers=[128, 128, 256], group_all=False)
         self.sa4 = PointNetSetAbstractionSingleScaleGrouping(npoint=16, radius=0.8, nsample=32, in_channel=256 + 3,
-                                                             mlp_layers=[256, 256, 512], group_all=True)
+                                                             mlp_layers=[256, 256, 512], group_all=False)
+
+    def forward(self, x, extra_features):
+        # Pass through all the PointNet Set Abstractions
+        sa1_xyz, sa1_features = self.sa1(x, extra_features)
+        sa2_xyz, sa2_features = self.sa2(sa1_xyz, sa1_features)
+        sa3_xyz, sa3_features = self.sa3(sa2_xyz, sa2_features)
+        sa4_xyz, sa4_features = self.sa4(sa3_xyz, sa3_features)
+
+        return sa1_xyz, sa1_features, sa2_xyz, sa2_features, sa3_xyz, sa3_features, sa4_xyz, sa4_features
+    
+
+# ================================================================================================
+# ============================    POINTNET ++ SEMANTIC SEGMENTATION FEATURE LEARNER     ==========
+# ============================                 (MULTI - SCALE GROUPING)                ==========
+# ================================================================================================
+class PointNetV2FeatureLearnerSemanticSegMultiScaleGrouping(nn.Module):
+    ''' PointNet++ Feature Learner for semantic segmentation module using multi - scale grouping '''
+    def __init__(self, input_dim=3, extra_feat_dropout=0.0):
+        """
+        :param input_dim: number of dimensions of the input, the first 3 ones should be xyz while the rest can be extra features as normals or rgb data
+        :param extra_feat_dropout: amount of dropout to apply to the extra features so that the model does not learn only from them
+        """
+        super(PointNetV2FeatureLearnerSemanticSegMultiScaleGrouping, self).__init__()
+
+        self.input_dim = input_dim
+        self.extra_feat_dropout = extra_feat_dropout
+
+        # 4 layers of PointNet Set Abstractions Multi Scale grouping:
+        self.sa1 = PointNetSetAbstractionMultiScaleGrouping(npoint=1024, radius=[0.05, 0.1], nsample=[16, 32], in_channel=input_dim,
+                                                            mlp_layers=[[16, 16, 32], [32, 32, 64]])
+        self.sa2 = PointNetSetAbstractionMultiScaleGrouping(npoint=256, radius=[0.1, 0.2], nsample=[16, 32], in_channel=64 + 32 + 3,
+                                                            mlp_layers=[[64, 64, 128], [64, 96, 128]])
+        self.sa3 = PointNetSetAbstractionMultiScaleGrouping(npoint=64, radius=[0.2, 0.4], nsample=[16, 32], in_channel=128 + 128 + 3,
+                                                            mlp_layers=[[128, 196, 256], [128, 196, 256]])
+        self.sa4 = PointNetSetAbstractionMultiScaleGrouping(npoint=16, radius=[0.4, 0.8], nsample=[16, 32], in_channel=256 + 256 + 3,
+                                                            mlp_layers=[[256, 256, 512], [256, 384, 512]])
 
     def forward(self, x, extra_features):
         # Pass through all the PointNet Set Abstractions
@@ -219,16 +255,17 @@ class PointNetV2SemanticSegmentation(nn.Module):
 
         if single_scale_grouping:
             self.feature_learner = PointNetV2FeatureLearnerSemanticSegSingleScaleGrouping(input_dim=input_dim, extra_feat_dropout=extra_feat_dropout)
+            input_channels_feature_prop = [768, 384, 320, 128 + (input_dim - 3)] #[512+256, 256+128, 256+64, 128+(input_dim-3)] # Set abstraction output + last layer output
         else:
-            # TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            self.feature_learner = PointNetV2FeatureLearnerSemanticSegSingleScaleGrouping(input_dim=input_dim, extra_feat_dropout=extra_feat_dropout)
+            self.feature_learner = PointNetV2FeatureLearnerSemanticSegMultiScaleGrouping(input_dim=input_dim, extra_feat_dropout=extra_feat_dropout)
+            input_channels_feature_prop = [1536, 512, 352, 128 + (input_dim - 3)] #[512+512+256+256, 128+128+256, 32+64+256, 128+(input_dim-3)] # Set abstraction output + last layer output
 
         # Feature propagation as the paper states: (last convolution of last feature propagation is outside to activate it with log_softmax instead of relu)
         # FP(256, 256) --> FP(256, 256) --> FP(256, 128) --> FP(128, 128, 128, 128, K)
-        self.fp4 = PointNetFeaturePropagation(in_channel=768, mlp_layers=[256, 256], dropout_mlp_layers=[0.0, 0.0])
-        self.fp3 = PointNetFeaturePropagation(in_channel=384, mlp_layers=[256, 256], dropout_mlp_layers=[0.0, 0.0])
-        self.fp2 = PointNetFeaturePropagation(in_channel=320, mlp_layers=[256, 128], dropout_mlp_layers=[0.0, 0.0])
-        self.fp1 = PointNetFeaturePropagation(in_channel=128, mlp_layers=[128, 128, 128, 128], dropout_mlp_layers=[0.0, 0.0, dropout, dropout])
+        self.fp4 = PointNetFeaturePropagation(in_channel=input_channels_feature_prop[0], mlp_layers=[256, 256], dropout_mlp_layers=[0.0, 0.0])
+        self.fp3 = PointNetFeaturePropagation(in_channel=input_channels_feature_prop[1], mlp_layers=[256, 256], dropout_mlp_layers=[0.0, 0.0])
+        self.fp2 = PointNetFeaturePropagation(in_channel=input_channels_feature_prop[2], mlp_layers=[256, 128], dropout_mlp_layers=[0.0, 0.0])
+        self.fp1 = PointNetFeaturePropagation(in_channel=input_channels_feature_prop[3], mlp_layers=[128, 128, 128, 128], dropout_mlp_layers=[0.0, 0.0, 0.0, dropout])
         self.last_conv = nn.Conv1d(128, k, 1)
 
     def forward(self, x):
@@ -283,10 +320,15 @@ class PointNetV2LossForClassification(nn.Module):
     
 
 class PointNetV2LossForSemanticSegmentation(nn.Module):
-    def __init__(self, ce_label_smoothing=0.0):
+    def __init__(self, ce_label_smoothing=0.0, weights=None):
         super(PointNetV2LossForSemanticSegmentation, self).__init__()
 
-        self.cross_entropy_loss = nn.CrossEntropyLoss(label_smoothing=ce_label_smoothing)
+        #self.cross_entropy_loss = nn.CrossEntropyLoss(label_smoothing=ce_label_smoothing)
+        if weights is None:
+            self.cross_entropy_loss = nn.CrossEntropyLoss(label_smoothing=ce_label_smoothing)
+        else:
+            print("With weights")
+            self.cross_entropy_loss = nn.CrossEntropyLoss(weight=weights)
 
     def forward(self, predictions, targets):
         # Cross Entropy Loss

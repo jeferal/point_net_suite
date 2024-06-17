@@ -144,6 +144,11 @@ def main(args):
     num_classes = len(train_dataset.get_categories())
     print(f"Number of classes: {num_classes}")
 
+    weights_for_loss = train_dataset.labelweights
+    #weights_for_loss = np.array([0.37087864, 0.42041293, 0.25760815, 3.6725786, 3.7299068, 3.5086377, 1.2743168, 2.7200153, 1.5940105, 16.41685, 1.5278313, 6.501897, 17.408533, 0.66163313], dtype='float32') #Pre computed
+    if weights_for_loss is not None:
+        weights_for_loss = torch.from_numpy(weights_for_loss)
+
     trainDataLoader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     evalDataLoader = DataLoader(eval_dataset, batch_size=batch_size, shuffle=False)
 
@@ -160,7 +165,7 @@ def main(args):
     model = importlib.import_module(models_modules_dict[args.model])
 
     classifier = model.get_model(num_points=num_points, m=num_classes, dropout=args.dropout, input_dim=input_dimension, extra_feat_dropout=args.extra_feat_dropout)
-    criterion = model.get_loss(label_smoothing=args.label_smoothing)
+    criterion = model.get_loss(label_smoothing=args.label_smoothing, weights=weights_for_loss)
 
     if not args.use_cpu:
         classifier = classifier.cuda()
