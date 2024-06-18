@@ -2,33 +2,52 @@ import argparse
 import open3d as o3d
 
 from data_utils.dales_dataset import DalesDataset, visualize_pointcloud
+from data_utils.s3_dis_dataset import S3DIS
 
 
 if __name__ == "__main__":
 
     # Create the argument parser
     parser = argparse.ArgumentParser(description='Visualize DALES dataset')
-    # First argument is the DALES object root path
-    parser.add_argument('data_path', type=str, default='/home/jesusferrandiz/Learning/point_net_ws/src/point_net_suite/data/DALESObjects', help='Root path of the DALES objects')
+
+    parser.add_argument('dataset', type=str, default='dales', help='Dataset to visualize (dales or s3dis)')
+    # Argument is the DALES object root path
+    parser.add_argument('data_path', type=str, default='data/DALESObjects', help='Root path of the dataset')
     # Second argument is the split
     parser.add_argument('split', type=str, default='train', help='Split of the dataset (train or test)')
     # Third argument is the index of the point cloud
     parser.add_argument('index', type=int, default=0, help='Index of the point cloud')
+    # Optional argument to set the list of areas
+    parser.add_argument('--areas', type=int, nargs='+', default=[1,2,3,4,5], help='List of areas for s3dis')
     # Optional argument to set the number of partitions
-    parser.add_argument('--partitions', type=int, default=5, help='Number of partitions')
+    parser.add_argument('--partitions', type=int, default=5, help='Number of partitions for dales dataset')
     # Optional argument to set the overlap
-    parser.add_argument('--overlap', type=float, default=0.0, help='Overlap between partitions')
+    parser.add_argument('--overlap', type=float, default=0.0, help='Overlap between partitions for dales')
     # 4th argument enables intensity
-    parser.add_argument('--intensity', action='store_true', help='Use intensity data')
+    parser.add_argument('--intensity', action='store_true', help='Use intensity data for dales')
+    # Num points, by default None
+    parser.add_argument('--num_points', type=int, default=None, help='Number of points to downsample the point cloud')
+    # Rprob
+    parser.add_argument('--r_prob', type=float, default=0.25, help='Probability of random rotation')
 
     # Parse the arguments
     args = parser.parse_args()
 
-    dataset = DalesDataset(args.data_path, args.split, partitions=args.partitions, intensity=args.intensity, overlap=args.overlap)
+    if args.dataset == 's3dis':
+        print("Loading S3DIS dataset")
+        dataset = S3DIS(args.data_path, area_nums=args.areas, split=args.split, npoints=args.num_points, r_prob=args.r_prob, include_rgb=False)
+    elif args.dataset == 'dales':
+        print("Loading DALES dataset")
+        dataset = DalesDataset(args.data_path, args.split, partitions=args.partitions, intensity=args.intensity, overlap=args.overlap, npoints=args.num_points)
+    else:
+        raise ValueError(f"Invalid dataset {args.dataset}")
+
+    print(f"Number of point clouds in the dataset: {len(dataset)}")
 
     # Allow the user the possibility to navigate over different point clouds
     index = args.index
     while True:
+        print(f"Visualizing point cloud {index}")
         point_cloud, labels = dataset[index]
 
         print(f"Point cloud shape {point_cloud.shape}")
