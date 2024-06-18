@@ -60,7 +60,7 @@ def parse_args():
     parser.add_argument('--use_fps', action='store_true', default=False, help='use further point sampiling')
     parser.add_argument('--no_data_preprocess', action='store_true', default=False, help='preprocess the data or process it during the getitem call')
     # Model selection
-    parser.add_argument('--model', default='pointnet_v2_cls_msg', help='model name [default: pointnet_cls]')
+    parser.add_argument('--model', default='pointnet_cls', help='model name [default: pointnet_cls]')
     # Model parameters
     parser.add_argument('--epoch', default=100, type=int, help='number of epoch in training')
     parser.add_argument('--batch_size', type=int, default=hparams_for_args_to_evaluate['batch_size'], help='batch size in training')
@@ -190,8 +190,11 @@ def main(args):
         eval_mean_class_accuracy = checkpoint['eval_mean_class_accuracy']
         optim_learning_rate = checkpoint['optim_learning_rate']
         classifier.load_state_dict(checkpoint['model_state_dict'])
-        if checkpoint['optimizer_type'] == args.optimizer:
+        if checkpoint['optimizer_type'] == args.optimizer and checkpoint['scheduler_type'] == args.scheduler:
             optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+            scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+        else:
+            print('Not loading optimizer and scheduler because the saved states belong to a different type.')
         print('Using pretrained model')
     except:
         print('No existing checkpoint for model, starting training from scratch...')
@@ -309,6 +312,8 @@ def main(args):
                         'model_state_dict': classifier.state_dict(),
                         'optimizer_type': args.optimizer,
                         'optimizer_state_dict': optimizer.state_dict(),
+                        'scheduler_type': args.scheduler,
+                        'scheduler_state_dict': scheduler.state_dict()
                     }
                     torch.save(state, savepath)
                     if args.use_mlflow:

@@ -238,8 +238,11 @@ def main(args):
         best_eval_iou = eval_iou[-1]
         optim_learning_rate = checkpoint['optim_learning_rate']
         classifier.load_state_dict(checkpoint['model_state_dict'])
-        if checkpoint['optimizer_type'] == args.optimizer:
+        if checkpoint['optimizer_type'] == args.optimizer and checkpoint['scheduler_type'] == args.scheduler:
             optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+            scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+        else:
+            print('Not loading optimizer and scheduler because the saved states belong to a different type.')
         print('Use pretrain model')
     except:
         print('No existing model, starting training from scratch...')
@@ -373,6 +376,8 @@ def main(args):
                         'model_state_dict': classifier.state_dict(),
                         'optimizer_type': args.optimizer,
                         'optimizer_state_dict': optimizer.state_dict(),
+                        'scheduler_type': args.scheduler,
+                        'scheduler_state_dict': scheduler.state_dict()
                     }
                     torch.save(state, savepath)
 
