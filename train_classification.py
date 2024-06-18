@@ -10,7 +10,6 @@ from tqdm import tqdm
 import mlflow
 
 from torch.utils.data import DataLoader
-from data_utils.metrics import compute_iou
 from data_utils.model_net import ModelNetDataLoader
 import data_utils.augmentation as DataAugmentator
 
@@ -169,11 +168,9 @@ def main(args):
     start_epoch = 0
     train_loss = []
     train_accuracy = []
-    train_iou = []
     eval_loss = []
     eval_accuracy = []
     eval_mean_class_accuracy = []
-    eval_iou = []
     optim_learning_rate = []
     best_eval_acc = 0.0
     best_eval_class_acc = 0.0
@@ -188,11 +185,9 @@ def main(args):
         best_eval_class_acc = checkpoint['best_class_accuracy']
         train_loss = checkpoint['train_loss']
         train_accuracy = checkpoint['train_accuracy']
-        train_iou = checkpoint['train_iou']
         eval_loss = checkpoint['eval_loss']
         eval_accuracy = checkpoint['eval_accuracy']
         eval_mean_class_accuracy = checkpoint['eval_mean_class_accuracy']
-        eval_iou = checkpoint['eval_iou']
         optim_learning_rate = checkpoint['optim_learning_rate']
         classifier.load_state_dict(checkpoint['model_state_dict'])
         if checkpoint['optimizer_type'] == args.optimizer:
@@ -223,7 +218,6 @@ def main(args):
             print('Epoch %d (%d/%s):' % (global_epoch + 1, epoch + 1, args.epoch))
             train_instance_loss = []
             train_instance_acc = []
-            train_instance_iou = []
             classifier = classifier.train()
             
             for batch_id, (points, target) in tqdm(enumerate(trainDataLoader, 0), total=len(trainDataLoader), smoothing=0.9):
@@ -252,12 +246,8 @@ def main(args):
                 correct = pred_choice.eq(target.long().data).cpu().sum()
                 train_instance_acc.append(correct.item() / float(points.size()[0]))
 
-                iou = compute_iou(target, pred_choice)
-                train_instance_iou.append(iou.item())
-
             train_epoch_loss = np.mean(train_instance_loss)
             train_epoch_acc = np.mean(train_instance_acc)
-            train_epoch_iou = np.mean(train_instance_iou)
 
             current_lr = scheduler.get_last_lr()[0]
             optim_learning_rate.append(current_lr)
@@ -266,35 +256,29 @@ def main(args):
             if args.use_mlflow:
                 mlflow.log_metric("train_loss", train_epoch_loss, step=epoch)
                 mlflow.log_metric("train_accuracy", train_epoch_acc, step=epoch)
-                mlflow.log_metric("train_iou", train_epoch_iou, step=epoch)
                 mlflow.log_metric("learning_rate", current_lr, step=epoch)
 
             train_loss.append(train_epoch_loss)
             train_instance_acc = train_epoch_acc
             print('Train Instance Accuracy: %f' % train_instance_acc)
             train_accuracy.append(train_instance_acc)
-            train_iou.append(train_epoch_iou)
             
             # EVALUATING
             with torch.no_grad():
-                eval_epoch_loss, eval_epoch_acc, eval_epoch_mean_class_acc, eval_epoch_iou, loss_per_class, iou_per_class = evaluate_model(classifier.eval(), criterion, evalDataLoader, num_class=num_class)
+                eval_epoch_loss, eval_epoch_acc, eval_epoch_mean_class_acc, eval_epoch_loss_per_class = evaluate_model(classifier.eval(), criterion, evalDataLoader, num_class=num_class)
 
                 if args.use_mlflow:
                     mlflow.log_metric("eval_loss", eval_epoch_loss, step=epoch)
                     mlflow.log_metric("eval_accuracy", eval_epoch_acc, step=epoch)
                     mlflow.log_metric("eval_mean_class_accuracy", eval_epoch_mean_class_acc, step=epoch)
-                    mlflow.log_metric("eval_iou", eval_epoch_iou, step=epoch)
 
                      # Log per-class metrics
                     for class_idx in range(num_class):
-                        mlflow.log_metric(f"class_{class_idx}_loss", loss_per_class[class_idx], step=epoch)
-                        mlflow.log_metric(f"class_{class_idx}_iou", iou_per_class[class_idx], step=epoch)
-
+                        mlflow.log_metric(f"class_{class_idx}_loss", eval_epoch_loss_per_class[class_idx], step=epoch)
 
                 eval_loss.append(eval_epoch_loss)
                 eval_accuracy.append(eval_epoch_acc)
                 eval_mean_class_accuracy.append(eval_epoch_mean_class_acc)
-                eval_iou.append(eval_epoch_iou)
 
                 # Saving best accuracy values if achieved
                 if (eval_epoch_acc >= best_eval_acc):
@@ -318,12 +302,10 @@ def main(args):
                         'best_class_accuracy': best_eval_class_acc,
                         'train_loss': train_loss,
                         'train_accuracy': train_accuracy,
-                        'train_iou': train_iou,
                         'optim_learning_rate': optim_learning_rate,
                         'eval_loss': eval_loss,
                         'eval_accuracy': eval_accuracy,
                         'eval_mean_class_accuracy': eval_mean_class_accuracy,
-                        'eval_iou': eval_iou,
                         'model_state_dict': classifier.state_dict(),
                         'optimizer_type': args.optimizer,
                         'optimizer_state_dict': optimizer.state_dict(),
@@ -352,11 +334,9 @@ def evaluate_model(model, criterion, loader, num_class=40):
     # Array to store the batch accuracy (ratio of total correct predictions per batch)
     eval_instance_loss = []
     eval_instance_mean_acc = []
-    eval_instance_iou = []
 
     # Initialize arrays for class-wise loss and IoU
     class_loss = np.zeros(num_class)
-    class_iou = np.zeros(num_class)
     class_count = np.zeros(num_class)
     
     eval_classifier = model.eval()
@@ -386,17 +366,10 @@ def evaluate_model(model, criterion, loader, num_class=40):
             class_loss[curr_class] += loss.item()
             class_count[curr_class] += 1
 
-            # Compute IoU for current class
-            iou = compute_iou(target[target == curr_class], pred_choice[target == curr_class])
-            class_iou[curr_class] += iou.item()
-
-
         # Batch metrics calculation
         eval_instance_loss.append(loss.item())
         correct = pred_choice.eq(target.long().data).cpu().sum()
         eval_instance_mean_acc.append(correct.item() / float(points.size()[0]))
-        iou = compute_iou(target, pred_choice)
-        eval_instance_iou.append(iou.item())
 
     # Loss mean
     eval_epoch_loss_ = np.mean(eval_instance_loss)
@@ -409,14 +382,10 @@ def evaluate_model(model, criterion, loader, num_class=40):
     # Get the mean accuracy for all classes
     eval_epoch_mean_class_acc_ = np.mean(class_acc[:, 2])
 
-    # Calculate the mean iou
-    eval_epoch_iou_ = np.mean(eval_instance_iou)
-
     # Compute mean loss and IoU per class
-    mean_class_loss = class_loss / class_count
-    mean_class_iou = class_iou / class_count
+    eval_epoch_mean_class_loss = class_loss / class_count
 
-    return eval_epoch_loss_, eval_epoch_acc_, eval_epoch_mean_class_acc_, eval_epoch_iou_, mean_class_loss, mean_class_iou
+    return eval_epoch_loss_, eval_epoch_acc_, eval_epoch_mean_class_acc_, eval_epoch_mean_class_loss
 
 
 # =========================================================================================================================================================
