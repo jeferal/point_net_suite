@@ -52,11 +52,11 @@ class S3DIS(Dataset):
         self.data_paths = []
         for area_path in areas:
             if os.path.exists(area_path) and os.path.isdir(area_path):
-                for root, _, files in os.walk(area_path):
-                    if root == area_path:
+                for room, _, files in os.walk(area_path):
+                    if room == area_path:
                         continue  # Skip files directly in the area directory
                     for file in files:
-                        self.data_paths.append(os.path.join(root, file))
+                        self.data_paths.append(os.path.join(room, file))
 
         # get unique space identifiers (area_##\\spacename_##_)
         # TODO: This does not work
@@ -70,28 +70,38 @@ class S3DIS(Dataset):
         self.space_ids = list(set(self.space_ids))
 
         '''if self.split != 'test':
-            all_labels = np.array([], dtype=int)
-            for room_path in self.data_paths:
-                room_data = np.loadtxt(room_path)  # xyzrgbl
-                all_labels = np.append(all_labels, room_data[:, 6].astype(int))
-            self.labelweights = np.float32(compute_class_weight(class_weight="balanced", classes=np.unique(all_labels), y=all_labels))
-            print(self.labelweights)
+            labels_path = os.path.join(root, 'label_weights_sk.txt')
+            if os.path.exists(labels_path):
+                self.labelweights = np.loadtxt(labels_path)
+            else:
+                all_labels = np.array([], dtype=int)
+                for room_path in self.data_paths:
+                    room_data = np.loadtxt(room_path)  # xyzrgbl
+                    all_labels = np.append(all_labels, room_data[:, 6].astype(int))
+                self.labelweights = np.float32(compute_class_weight(class_weight="balanced", classes=np.unique(all_labels), y=all_labels))
+                #print(self.labelweights)
+                np.savetxt(labels_path, self.labelweights)
         else:
             self.labelweights = None'''
 
-        '''if self.split != 'test':
-            cat_weights = np.zeros(len(self.CATEGORIES))
-            for room_path in self.data_paths:
-                room_data = np.loadtxt(room_path)  # xyzrgbl
-                labels = room_data[:, 6]
-                tmp, _ = np.histogram(labels, range(len(self.CATEGORIES) + 1))
-                cat_weights += tmp
-            cat_weights = cat_weights.astype(np.float32)
-            cat_weights = cat_weights / np.sum(cat_weights)
-            self.labelweights = np.power(np.amax(cat_weights) / cat_weights, 1 / 3.0)
-            #print(self.labelweights)
-        else:'''
-        self.labelweights = None
+        if self.split != 'test':
+            labels_path = os.path.join(root, 'label_weights_custom.txt')
+            if os.path.exists(labels_path):
+                self.labelweights = np.loadtxt(labels_path)
+            else:
+                cat_weights = np.zeros(len(self.CATEGORIES))
+                for room_path in self.data_paths:
+                    room_data = np.loadtxt(room_path)  # xyzrgbl
+                    labels = room_data[:, 6]
+                    tmp, _ = np.histogram(labels, range(len(self.CATEGORIES) + 1))
+                    cat_weights += tmp
+                cat_weights = cat_weights.astype(np.float32)
+                cat_weights = cat_weights / np.sum(cat_weights)
+                self.labelweights = np.power(np.amax(cat_weights) / cat_weights, 1 / 3.0)
+                #print(self.labelweights)
+                np.savetxt(labels_path, self.labelweights)
+        else:
+            self.labelweights = None
         
         # TODO: review and retest.
         # Test to see if increasing the probability of minority classes increased the model results. It failed.

@@ -22,7 +22,8 @@ from data_utils.dales_dataset import DalesDataset
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 models_modules_dict = {'pointnet_sem_seg': 'models.point_net_sem_segmentation',
-                       'pointnet_v2_sem_seg_ssg': 'models.point_net_v2_sem_segmentation_ssg'}
+                       'pointnet_v2_sem_seg_ssg': 'models.point_net_v2_sem_segmentation_ssg',
+                       'pointnet_v2_sem_seg_msg': 'models.point_net_v2_sem_segmentation_msg'}
 
 '''hparams_for_args_default = {
     'num_point': 8192,
@@ -76,7 +77,7 @@ def parse_args():
     # Model selection
     parser.add_argument('--model', default='pointnet_v2_sem_seg_ssg', help='model name [default: pointnet_v2_sem_seg_ssg]')
     # Model parameters
-    parser.add_argument('--epoch', default=3, type=int, help='number of epoch in training')
+    parser.add_argument('--epoch', default=100, type=int, help='number of epoch in training')
     parser.add_argument('--batch_size', type=int, default=hparams_for_args_to_evaluate['batch_size'], help='batch size in training')
     parser.add_argument('--dropout', type=float, default=hparams_for_args_to_evaluate['dropout'], help='Dropout')
     parser.add_argument('--extra_feat_dropout', type=float, default=hparams_for_args_to_evaluate['extra_feat_dropout'], help='Extra Features Dropout to avoid the classifier rely on them')
@@ -152,18 +153,13 @@ def main(args):
     weights_for_loss = train_dataset.labelweights
     #weights_for_loss = np.array([0.37087864, 0.42041293, 0.25760815, 3.6725786, 3.7299068, 3.5086377, 1.2743168, 2.7200153, 1.5940105, 16.41685, 1.5278313, 6.501897, 17.408533, 0.66163313], dtype='float32') #Pre computed
     if weights_for_loss is not None:
-        weights_for_loss = torch.from_numpy(weights_for_loss)
+        weights_for_loss = torch.from_numpy(np.float32(weights_for_loss))
 
     trainDataLoader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     evalDataLoader = DataLoader(eval_dataset, batch_size=batch_size, shuffle=False)
 
     print("The length of the training data is: %d" % len(train_dataset))
     print("The length of the evaluation data is: %d" % len(eval_dataset))
-
-    train_class_distribution_file = os.path.join(exp_dir, 'train_class_distribution.png')
-    eval_class_distribution_file = os.path.join(exp_dir, 'eval_class_distribution.png')
-    plot_class_distribution(train_dataset, 'Training Set Class Distribution', show=False, save_path=train_class_distribution_file)
-    plot_class_distribution(eval_dataset, 'Evaluation Set Class Distribution', show=False, save_path=eval_class_distribution_file)
 
     # Get an example point to be able to know the input dimension of the data (xyz or xyz + extra features like rgb, normals, etc.)
     example_points, example_target = trainDataLoader.dataset[0]
@@ -249,6 +245,16 @@ def main(args):
         start_epoch = 0
 
     # ===============================================================
+    # PLOTTING CLASS DISTRIBUTION
+    # ===============================================================
+    # Only when starting a new model
+    if start_epoch == 0:
+        train_class_distribution_file = os.path.join(exp_dir, 'train_class_distribution.png')
+        eval_class_distribution_file = os.path.join(exp_dir, 'eval_class_distribution.png')
+        plot_class_distribution(train_dataset, 'Training Set Class Distribution', show=False, save_path=train_class_distribution_file)
+        plot_class_distribution(eval_dataset, 'Evaluation Set Class Distribution', show=False, save_path=eval_class_distribution_file)
+
+    # ===============================================================
     # MLFLOW TRACKING AND LOGGING
     # ===============================================================
     if args.use_mlflow:
@@ -306,7 +312,7 @@ def main(args):
                 accuracy = correct/float(batch_size*num_points)
                 iou_per_class = compute_iou_per_class(targets.cpu(), pred_choice.cpu(), num_classes)
 
-                print(f"Batch {i + 1}/{len(trainDataLoader)} - IOU per class: {iou_per_class}")
+                #print(f"Batch {i + 1}/{len(trainDataLoader)} - IOU per class: {iou_per_class}")
 
                 train_instance_loss.append(loss.item())
                 train_instance_accuracy.append(accuracy)
@@ -440,7 +446,7 @@ def evaluate_model(model, criterion, loader, batch_size, num_points, num_classes
         accuracy = correct/float(batch_size*num_points)
         iou_per_class = compute_iou_per_class(targets.cpu(), pred_choice.cpu(), num_classes)
 
-        print(f"Batch {i + 1}/{len(loader)} - IOU per class: {iou_per_class}")
+        #print(f"Batch {i + 1}/{len(loader)} - IOU per class: {iou_per_class}")
 
         # update epoch loss and accuracy
         eval_instance_loss.append(loss.item())

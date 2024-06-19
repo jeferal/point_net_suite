@@ -33,7 +33,7 @@ def compute_iou_per_class(targets, predictions, num_classes):
         else:
             iou = intersection / union
 
-        print(f"Class {cls}: Intersection = {intersection}, Union = {union}, IoU = {iou}")
+        #print(f"Class {cls}: Intersection = {intersection}, Union = {union}, IoU = {iou}")
 
         iou_per_class.append(iou)
 
@@ -101,6 +101,7 @@ def plot_metrics_by_class_grid(train_iou, eval_iou, show=True, save_path=None):
         plt.savefig(save_path)
 
 def plot_class_distribution(dataset, title, show=True, save_path=None):
+    print('Plotting ' + title + ".")
     labels = [sample[1] for sample in tqdm.tqdm(dataset)]
     labels = torch.cat(labels).cpu().numpy()
     unique, counts = np.unique(labels, return_counts=True)

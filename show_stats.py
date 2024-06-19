@@ -8,11 +8,12 @@ models_log_folder_dict = {'pointnet_cls': 'classification/pointnet_cls',
                           'pointnet2_cls_msg': 'classification/pointnet_v2_cls_msg',
                           'pointnet_sem_seg': 'semantic_seg/pointnet_sem_segmentation',
                           'pointnet2_sem_seg_ssg': 'semantic_seg/pointnet_v2_sem_seg_ssg',
-                          'pointnet2_sem_seg_msg': 'semantic_seg/pointnet_v2_sem_seg_msg'}
+                          'pointnet2_sem_seg_msg': 'semantic_seg/pointnet_v2_sem_seg_msg',
+                          'random': 'semantic_seg'}
 
 def parse_args():
     parser = argparse.ArgumentParser('show_stats')
-    parser.add_argument('--model', type=str, default='pointnet_cls', help='model name [default: pointnet_cls]')
+    parser.add_argument('--model', type=str, default='pointnet2_sem_seg_ssg', help='model name [default: pointnet_cls]')
 
     return parser.parse_args()
 

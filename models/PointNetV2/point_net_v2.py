@@ -327,7 +327,8 @@ class PointNetV2LossForSemanticSegmentation(nn.Module):
         if weights is None:
             self.cross_entropy_loss = nn.CrossEntropyLoss(label_smoothing=ce_label_smoothing)
         else:
-            print("With weights")
+            print("Loss will be calculated using weights:", end=" ")
+            print(weights)
             self.cross_entropy_loss = nn.CrossEntropyLoss(weight=weights)
 
     def forward(self, predictions, targets):
