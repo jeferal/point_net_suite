@@ -29,7 +29,7 @@ class S3DIS(Dataset):
         'clutter',
     ]
 
-    def __init__(self, root, area_nums, split='train', npoints=4096, r_prob=0.25, include_rgb=False):
+    def __init__(self, root, area_nums, split='train', npoints=4096, r_prob=0.25, include_rgb=False, weight_type=None):
         self.root = root
         self.area_nums = area_nums      # i.e. '1-4' # areas 1-4
         self.split = split.lower()      # use 'test' in order to bypass augmentations
@@ -69,58 +69,44 @@ class S3DIS(Dataset):
 
         self.space_ids = list(set(self.space_ids))
 
-        '''if self.split != 'test':
-            labels_path = os.path.join(root, 'label_weights_sk.txt')
-            if os.path.exists(labels_path):
-                self.labelweights = np.loadtxt(labels_path)
+        if weight_type == 'Sklearn':
+            if self.split != 'test':
+                labels_path = os.path.join(root, 'label_weights_sk.txt')
+                if os.path.exists(labels_path):
+                    self.labelweights = np.loadtxt(labels_path)
+                else:
+                    all_labels = np.array([], dtype=int)
+                    for room_path in self.data_paths:
+                        room_data = np.loadtxt(room_path)  # xyzrgbl
+                        all_labels = np.append(all_labels, room_data[:, 6].astype(int))
+                    self.labelweights = np.float32(compute_class_weight(class_weight="balanced", classes=np.unique(all_labels), y=all_labels))
+                    #print(self.labelweights)
+                    np.savetxt(labels_path, self.labelweights)
             else:
-                all_labels = np.array([], dtype=int)
-                for room_path in self.data_paths:
-                    room_data = np.loadtxt(room_path)  # xyzrgbl
-                    all_labels = np.append(all_labels, room_data[:, 6].astype(int))
-                self.labelweights = np.float32(compute_class_weight(class_weight="balanced", classes=np.unique(all_labels), y=all_labels))
-                #print(self.labelweights)
-                np.savetxt(labels_path, self.labelweights)
-        else:
-            self.labelweights = None'''
+                self.labelweights = None
 
-        if self.split != 'test':
-            labels_path = os.path.join(root, 'label_weights_custom.txt')
-            if os.path.exists(labels_path):
-                self.labelweights = np.loadtxt(labels_path)
+        elif weight_type == 'Custom':
+            if self.split != 'test':
+                labels_path = os.path.join(root, 'label_weights_custom.txt')
+                if os.path.exists(labels_path):
+                    self.labelweights = np.loadtxt(labels_path)
+                else:
+                    cat_weights = np.zeros(len(self.CATEGORIES))
+                    for room_path in self.data_paths:
+                        room_data = np.loadtxt(room_path)  # xyzrgbl
+                        labels = room_data[:, 6]
+                        tmp, _ = np.histogram(labels, range(len(self.CATEGORIES) + 1))
+                        cat_weights += tmp
+                    cat_weights = cat_weights.astype(np.float32)
+                    cat_weights = cat_weights / np.sum(cat_weights)
+                    self.labelweights = np.power(np.amax(cat_weights) / cat_weights, 1 / 3.0)
+                    #print(self.labelweights)
+                    np.savetxt(labels_path, self.labelweights)
             else:
-                cat_weights = np.zeros(len(self.CATEGORIES))
-                for room_path in self.data_paths:
-                    room_data = np.loadtxt(room_path)  # xyzrgbl
-                    labels = room_data[:, 6]
-                    tmp, _ = np.histogram(labels, range(len(self.CATEGORIES) + 1))
-                    cat_weights += tmp
-                cat_weights = cat_weights.astype(np.float32)
-                cat_weights = cat_weights / np.sum(cat_weights)
-                self.labelweights = np.power(np.amax(cat_weights) / cat_weights, 1 / 3.0)
-                #print(self.labelweights)
-                np.savetxt(labels_path, self.labelweights)
+                self.labelweights = None
+
         else:
             self.labelweights = None
-        
-        # TODO: review and retest.
-        # Test to see if increasing the probability of minority classes increased the model results. It failed.
-        '''if self.split != 'test':
-            label_probs = np.zeros(14)
-            for room_path in self.data_paths:
-                room_data = np.loadtxt(room_path)  # xyzrgbl
-                targets = room_data[:, 6]
-                unique_targets, counts_targets = np.unique(targets, return_counts=True)
-                for i, target in enumerate(unique_targets):
-                    label_probs[int(target)] += counts_targets[i]
-            label_probs = label_probs.astype(np.float32)
-            label_probs = label_probs / np.sum(label_probs)
-            beta_value = 3.0
-            self.label_probs_softmax = np.exp(beta_value * label_probs) / np.sum(np.exp(beta_value * label_probs))
-            #print(label_probs)
-            #print(self.label_probs_softmax)
-        else:
-            self.label_probs_softmax = np.ones(14) / 14'''
 
     def __getitem__(self, idx):
         space_data = np.loadtxt(self.data_paths[idx])
@@ -132,11 +118,6 @@ class S3DIS(Dataset):
 
         # down sample point cloud
         if self.npoints:
-            # TODO: review and retest.
-            # Test to see if increasing the probability of minority classes increased the model results. It failed.
-            '''if self.split != 'test':
-                points, targets = self.downsample_with_label_probs_softmax(points, targets)
-            else:'''
             points, targets = self.downsample(points, targets)
             #points, targets = self.downsample_farthest_point(points, targets)
 
@@ -232,71 +213,6 @@ class S3DIS(Dataset):
         targets = targets[choice]
 
         return points, targets
-    
-    # TODO: review and retest.
-    # Test to see if increasing the probability of minority classes increased the model results. It failed.
-    '''def downsample_with_label_probs_softmax(self, points, targets):
-        unique_targets = np.unique(targets)
-        probs_for_target = self.label_probs_softmax.copy()
-
-        # Share probabilities between the rest of targets if a target does not exist in this instance
-        empty_targets = []
-        for i in range(len(probs_for_target)):
-            if i not in unique_targets:
-                empty_targets.append(i)
-
-        probability_to_split = 0
-        for empty_target in empty_targets:
-            probability_to_split += probs_for_target[empty_target]
-            probs_for_target[empty_target] = 0.0
-
-        prob_to_add_each_target = probability_to_split / len(unique_targets)
-        for target in unique_targets:
-            probs_for_target[int(target)] += prob_to_add_each_target
-
-        # Calculate the number of points to sample for each target
-        points_to_sample_per_target = np.zeros(14)
-        total_allocated_points = 0
-        
-        for target in unique_targets:
-            # Calculate the number of points to sample for this target
-            num_points_to_sample = int(np.floor(self.npoints * probs_for_target[int(target)]))
-            points_to_sample_per_target[int(target)] = num_points_to_sample
-            total_allocated_points += num_points_to_sample
-        
-        # Add the remaining number of points to ensure the total is exactly self.npoints
-        while total_allocated_points < self.npoints:
-            for target in unique_targets:
-                if total_allocated_points < self.npoints:
-                    points_to_sample_per_target[int(target)] += 1
-                    total_allocated_points += 1
-                else:
-                    break
-
-        # Initialize lists to collect sampled points and targets
-        choice = np.array([], dtype=int)
-        #print("Starting sample:")
-        for target in unique_targets:
-            # Get the indices of all points belonging to the current target
-            target_indices = np.where(targets == target)[0]
-
-            num_points_to_sample = int(points_to_sample_per_target[int(target)])
-
-            #print(str(len(target_indices)) + " - " + str(num_points_to_sample))
-            
-            if len(target_indices) >= num_points_to_sample:
-                target_choice = np.random.choice(target_indices, num_points_to_sample, replace=False)
-            else:
-                target_choice = np.random.choice(target_indices, num_points_to_sample, replace=True)
-            
-            choice = np.concatenate((choice, target_choice), axis=None)
-        
-        np.random.shuffle(choice)
-
-        points = points[choice, :] 
-        targets = targets[choice]
-
-        return points, targets'''
 
     @staticmethod
     def random_rotate(points):

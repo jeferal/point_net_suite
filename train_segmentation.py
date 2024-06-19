@@ -31,6 +31,7 @@ models_modules_dict = {'pointnet_sem_seg': 'models.point_net_sem_segmentation',
     'dropout': 0.4,
     'extra_feat_dropout': 0.2,
     'label_smoothing': 0.0,
+    'weight_type': 'Sklearn',
     'optimizer': 'AdamW',  
     'learning_rate': 1e-3,
     'scheduler': 'Cosine'  
@@ -45,6 +46,7 @@ hparams_for_args_to_evaluate = {
     'dropout': 0.5,             #0.0, 0.2, 0.5
     'extra_feat_dropout': 0.2,  #0.0, 0.2, 0.5
     'label_smoothing': 0.1,     #0.0, 0.1, 0.2
+    'weight_type': 'Sklearn',   #Sklearn, Custom, None
     'optimizer': 'AdamW',       #AdamW, Adam, SGD
     'learning_rate': 1e-3,      #1e-2, 1e-3, 1e-4
     'scheduler': 'Cosine'       #Cosine, Cyclic, Step
@@ -82,6 +84,7 @@ def parse_args():
     parser.add_argument('--dropout', type=float, default=hparams_for_args_to_evaluate['dropout'], help='Dropout')
     parser.add_argument('--extra_feat_dropout', type=float, default=hparams_for_args_to_evaluate['extra_feat_dropout'], help='Extra Features Dropout to avoid the classifier rely on them')
     parser.add_argument('--label_smoothing', type=float, default=hparams_for_args_to_evaluate['label_smoothing'], help='Loss label smoothing used for the cross entropy')
+    parser.add_argument('--weight_type', type=str, default=hparams_for_args_to_evaluate['weight_type'], help='Weights used for the cross entropy [Sklearn, Custom, None]')
     # Optimizer parameters
     parser.add_argument('--optimizer', type=str, default=hparams_for_args_to_evaluate['optimizer'], help='optimizer for training [AdamW, Adam, SGD]')
     parser.add_argument('--learning_rate', type=float, default=hparams_for_args_to_evaluate['learning_rate'], help='learning rate in training')
@@ -135,11 +138,11 @@ def main(args):
     eval_dataset = None
     if args.dataset == 's3dis':
         print("Loading S3DIS dataset")
-        train_dataset = S3DIS(root=data_path, area_nums=args.train_area, split='train', npoints=num_points, r_prob=0.25, include_rgb=args.use_extra_features)
+        train_dataset = S3DIS(root=data_path, area_nums=args.train_area, split='train', npoints=num_points, r_prob=0.25, include_rgb=args.use_extra_features, weight_type=args.weight_type)
         eval_dataset = S3DIS(root=data_path, area_nums=args.test_area, split='test', npoints=num_points, r_prob=0.25, include_rgb=args.use_extra_features)
     elif args.dataset == 'dales':
         print(f"Loading Dales dataset with data path {data_path}")
-        train_dataset = DalesDataset(root=data_path, split='train', partitions=args.partitions, overlap=args.overlap, npoints=num_points)
+        train_dataset = DalesDataset(root=data_path, split='train', partitions=args.partitions, overlap=args.overlap, npoints=num_points, weight_type=args.weight_type)
         eval_dataset = DalesDataset(root=data_path, split='test', partitions=args.partitions, overlap=args.overlap, npoints=num_points)
     else:
         raise ValueError(f"Dataset {args.dataset} not supported")

@@ -12,7 +12,6 @@ import open3d as o3d
 
 import torch
 from torch.utils.data import Dataset
-from plyfile import PlyData
 
 from data_utils.point_cloud_utils import normalize_points, downsample
 
@@ -36,7 +35,7 @@ class DalesDataset(Dataset):
         'buildings'
     ]
 
-    def __init__(self, root : str, split : str, partitions = 1, intensity : bool = False, instance_seg : bool = False, overlap : float = 0.0, npoints : int = 20000):
+    def __init__(self, root : str, split : str, partitions = 1, intensity : bool = False, instance_seg : bool = False, overlap : float = 0.0, npoints : int = 20000, weight_type=None):
         self._root = root
         self._split = split
 
@@ -90,6 +89,46 @@ class DalesDataset(Dataset):
             # Add the tile map values to the split files list
             for _, value in tile_map.items():
                 self._split_files.append(value)
+
+        # TODO: IMPLEMENT LABEL WEIGHTS HERE
+        '''if weight_type == 'Sklearn':
+            if self.split != 'test':
+                labels_path = os.path.join(root, 'label_weights_sk.txt')
+                if os.path.exists(labels_path):
+                    self.labelweights = np.loadtxt(labels_path)
+                else:
+                    all_labels = np.array([], dtype=int)
+                    for room_path in self.data_paths:
+                        room_data = np.loadtxt(room_path)  # xyzrgbl
+                        all_labels = np.append(all_labels, room_data[:, 6].astype(int))
+                    self.labelweights = np.float32(compute_class_weight(class_weight="balanced", classes=np.unique(all_labels), y=all_labels))
+                    #print(self.labelweights)
+                    np.savetxt(labels_path, self.labelweights)
+            else:
+                self.labelweights = None
+
+        elif weight_type == 'Custom':
+            if self.split != 'test':
+                labels_path = os.path.join(root, 'label_weights_custom.txt')
+                if os.path.exists(labels_path):
+                    self.labelweights = np.loadtxt(labels_path)
+                else:
+                    cat_weights = np.zeros(len(self.CATEGORIES))
+                    for room_path in self.data_paths:
+                        room_data = np.loadtxt(room_path)  # xyzrgbl
+                        labels = room_data[:, 6]
+                        tmp, _ = np.histogram(labels, range(len(self.CATEGORIES) + 1))
+                        cat_weights += tmp
+                    cat_weights = cat_weights.astype(np.float32)
+                    cat_weights = cat_weights / np.sum(cat_weights)
+                    self.labelweights = np.power(np.amax(cat_weights) / cat_weights, 1 / 3.0)
+                    #print(self.labelweights)
+                    np.savetxt(labels_path, self.labelweights)
+            else:
+                self.labelweights = None
+
+        else:
+            self.labelweights = None'''
 
     def __len__(self):
         return len(self._split_files)
