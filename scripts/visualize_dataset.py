@@ -1,8 +1,8 @@
 import argparse
-import open3d as o3d
 
 from data_utils.dales_dataset import DalesDataset, visualize_pointcloud
 from data_utils.s3_dis_dataset import S3DIS
+from data_utils.point_cloud_utils import get_point_cloud_limits
 
 
 if __name__ == "__main__":
@@ -38,7 +38,7 @@ if __name__ == "__main__":
         dataset = S3DIS(args.data_path, area_nums=args.areas, split=args.split, npoints=args.num_points, r_prob=args.r_prob, include_rgb=False)
     elif args.dataset == 'dales':
         print("Loading DALES dataset")
-        dataset = DalesDataset(args.data_path, args.split, partitions=args.partitions, intensity=args.intensity, overlap=args.overlap, npoints=args.num_points)
+        dataset = DalesDataset(args.data_path, args.split, partitions=args.partitions, intensity=args.intensity, overlap=args.overlap, npoints=args.num_points, normalize=False)
     else:
         raise ValueError(f"Invalid dataset {args.dataset}")
 
@@ -52,6 +52,13 @@ if __name__ == "__main__":
 
         print(f"Point cloud shape {point_cloud.shape}")
         print(f"Labels shape {labels.shape}")
+
+        # Get the limits of the point cloud
+        min_values, max_values = get_point_cloud_limits(point_cloud)
+
+        print(f"X range [{min_values[0]} - {max_values[0]}], diff {max_values[0] - min_values[0]}")
+        print(f"Y range [{min_values[1]} - {max_values[1]}], diff {max_values[1] - min_values[1]}")
+        print(f"Z range [{min_values[2]} - {max_values[2]}], diff {max_values[2] - min_values[2]}")
 
         window_name = f"Tile {index} of {len(dataset)}. Press q to exit."
 
