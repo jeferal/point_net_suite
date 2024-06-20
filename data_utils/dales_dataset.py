@@ -35,11 +35,12 @@ class DalesDataset(Dataset):
         'buildings'
     ]
 
-    def __init__(self, root : str, split : str, partitions = 1, intensity : bool = False, instance_seg : bool = False, overlap : float = 0.0, npoints : int = 20000, weight_type=None):
+    def __init__(self, root : str, split : str, partitions = 1, intensity : bool = False, instance_seg : bool = False, overlap : float = 0.0, npoints : int = 20000, weight_type=None, normalize=True):
         self._root = root
         self._split = split
 
         self._npoints = npoints
+        self._normalize = normalize
 
         # Create the data directory
         self._data_dir = os.path.join(self._root, self._split)
@@ -147,7 +148,8 @@ class DalesDataset(Dataset):
 
         # Normalize Point Cloud to (0, 1)
         # This is also normalizing the intensity if it is present
-        points = normalize_points(points)
+        if self._normalize:
+            points = normalize_points(points)
         # Extract the labels, which is the 5th column
         targets = data[:, 4]
         # down sample point cloud
