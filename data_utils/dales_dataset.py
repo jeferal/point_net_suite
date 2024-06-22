@@ -2,6 +2,8 @@ import os
 
 from plyfile import PlyData
 
+import json
+
 import numpy as np
 from tqdm import tqdm
 from multiprocessing import Pool, cpu_count
@@ -13,7 +15,10 @@ import open3d as o3d
 import torch
 from torch.utils.data import Dataset
 
+from sklearn.utils import compute_class_weight
+
 from data_utils.point_cloud_utils import normalize_points, downsample
+from data_utils.metrics import compute_class_distribution
 
 
 def init_locks(l):
@@ -91,45 +96,38 @@ class DalesDataset(Dataset):
             for _, value in tile_map.items():
                 self._split_files.append(value)
 
-        # TODO: IMPLEMENT LABEL WEIGHTS HERE
-        '''if weight_type == 'Sklearn':
-            if self.split != 'test':
-                labels_path = os.path.join(root, 'label_weights_sk.txt')
-                if os.path.exists(labels_path):
-                    self.labelweights = np.loadtxt(labels_path)
-                else:
-                    all_labels = np.array([], dtype=int)
-                    for room_path in self.data_paths:
-                        room_data = np.loadtxt(room_path)  # xyzrgbl
-                        all_labels = np.append(all_labels, room_data[:, 6].astype(int))
-                    self.labelweights = np.float32(compute_class_weight(class_weight="balanced", classes=np.unique(all_labels), y=all_labels))
-                    #print(self.labelweights)
-                    np.savetxt(labels_path, self.labelweights)
+        # Compute the class distribution only once
+        class_distribution_file = os.path.join(self._data_dir, f"class_distribution.json")
+        if not os.path.exists(class_distribution_file):
+            print(f"The class distribution file {class_distribution_file} does not exist, computing it now...")
+            self._class_distribution = compute_class_distribution(self)
+            # Store the class distribution in a file for later use. Convert the tuple of unique, counts, labels to a dictionary
+            class_distribution_dict = {
+                "unique": self._class_distribution[0].tolist(),
+                "counts": self._class_distribution[1].tolist(),
+                "labels": self._class_distribution[2].tolist()
+            }
+            with open(class_distribution_file, 'w') as f:
+                json.dump(class_distribution_dict, f)
+        else:
+            with open(os.path.join(self._root, f"class_distribution.json"), 'r') as f:
+                class_distribution_dict = json.load(f)
+                self._class_distribution = (np.array(class_distribution_dict["unique"]), np.array(class_distribution_dict["counts"]), np.array(class_distribution_dict["labels"]))
+
+        # This should be done outside of the dataset
+        self.labelweights = None
+        if weight_type == 'Sklearn':
+            if self._split != 'test':
+                unique_labels, _, all_labels = self._class_distribution
+                self.labelweights = np.float32(compute_class_weight(class_weight="balanced", classes=unique_labels, y=all_labels))
             else:
                 self.labelweights = None
 
         elif weight_type == 'Custom':
-            if self.split != 'test':
-                labels_path = os.path.join(root, 'label_weights_custom.txt')
-                if os.path.exists(labels_path):
-                    self.labelweights = np.loadtxt(labels_path)
-                else:
-                    cat_weights = np.zeros(len(self.CATEGORIES))
-                    for room_path in self.data_paths:
-                        room_data = np.loadtxt(room_path)  # xyzrgbl
-                        labels = room_data[:, 6]
-                        tmp, _ = np.histogram(labels, range(len(self.CATEGORIES) + 1))
-                        cat_weights += tmp
-                    cat_weights = cat_weights.astype(np.float32)
-                    cat_weights = cat_weights / np.sum(cat_weights)
-                    self.labelweights = np.power(np.amax(cat_weights) / cat_weights, 1 / 3.0)
-                    #print(self.labelweights)
-                    np.savetxt(labels_path, self.labelweights)
-            else:
-                self.labelweights = None
+            raise NotImplementedError("Custom weights are not implemented yet")            
 
-        else:
-            self.labelweights = None'''
+    def get_class_distribution(self) -> tuple:
+        return self._class_distribution
 
     def __len__(self):
         return len(self._split_files)
