@@ -274,6 +274,8 @@ def main(args):
     # PLOTTING CLASS DISTRIBUTION
     # ===============================================================
     # Only when starting a new model
+    train_class_distribution_file = None
+    eval_class_distribution_file = None
     if start_epoch == 0:
         train_class_distribution_file = os.path.join(exp_dir, 'train_class_distribution.png')
         eval_class_distribution_file = os.path.join(exp_dir, 'eval_class_distribution.png')
@@ -297,8 +299,9 @@ def main(args):
         mlflow.log_artifact(command_file)
         mlflow.log_artifact(args_yml_file)
         # Log the class distribution plots
-        mlflow.log_artifact(train_class_distribution_file)
-        mlflow.log_artifact(eval_class_distribution_file)
+        if train_class_distribution_file:
+            mlflow.log_artifact(train_class_distribution_file)
+            mlflow.log_artifact(eval_class_distribution_file)
 
     # ===============================================================
     # MODEL TRAINING
@@ -356,11 +359,16 @@ def main(args):
             scheduler.step()
 
             if args.use_mlflow:
-                mlflow.log_metric('train_loss', train_epoch_loss, step=epoch)
-                mlflow.log_metric('train_accuracy', train_epoch_accuracy, step=epoch)
-                for cls in range(num_classes):
-                    mlflow.log_metric(f'train_iou_class_{cls}', train_epoch_iou[cls], step=epoch)
-                mlflow.log_metric("learning_rate", current_lr, step=epoch)
+                # Mlflow could fail if connection to the server is lost
+                # In that case, the training will continue but the metrics will not be logged
+                try:
+                    mlflow.log_metric('train_loss', train_epoch_loss, step=epoch)
+                    mlflow.log_metric('train_accuracy', train_epoch_accuracy, step=epoch)
+                    for cls in range(num_classes):
+                        mlflow.log_metric(f'train_iou_class_{cls}', train_epoch_iou[cls], step=epoch)
+                    mlflow.log_metric("learning_rate", current_lr, step=epoch)
+                except mlflow.MflowException as e:
+                    print(f"Error logging metrics to mlflow: {e}")
 
             train_loss.append(train_epoch_loss)
             train_accuracy.append(train_epoch_accuracy)
@@ -376,10 +384,13 @@ def main(args):
                 eval_epoch_loss, eval_epoch_acc, eval_epoch_iou = evaluate_model(classifier.eval(), criterion, evalDataLoader, batch_size, num_points, num_classes=num_classes)
 
                 if args.use_mlflow:
-                    mlflow.log_metric('eval_loss', eval_epoch_loss, step=epoch)
-                    mlflow.log_metric('eval_accuracy', eval_epoch_acc, step=epoch)
-                    for cls in range(num_classes):
-                        mlflow.log_metric(f'eval_iou_class_{cls}', eval_epoch_iou[cls], step=epoch)
+                    try:
+                        mlflow.log_metric('eval_loss', eval_epoch_loss, step=epoch)
+                        mlflow.log_metric('eval_accuracy', eval_epoch_acc, step=epoch)
+                        for cls in range(num_classes):
+                            mlflow.log_metric(f'eval_iou_class_{cls}', eval_epoch_iou[cls], step=epoch)
+                    except mlflow.MflowException as e:
+                        print(f"Error logging metrics to mlflow: {e}")
 
                 # Save the epoch evaluation metrics
                 eval_loss.append(eval_epoch_loss)
@@ -415,7 +426,10 @@ def main(args):
                     torch.save(state, savepath)
 
                     if args.use_mlflow:
-                        mlflow.log_artifact(savepath)
+                        try:
+                            mlflow.log_artifact(savepath)
+                        except mlflow.MflowException as e:
+                            print(f"Error saving the model to mlflow: {e}")
 
                 # Next epoch
                 global_epoch += 1
