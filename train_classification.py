@@ -205,7 +205,7 @@ def main(args):
     # ===============================================================
     if args.use_mlflow:
         # Export mlflow environment variables
-        os.environ['MLFLOW_TRACKING_URI'] = 'http://34.16.143.171:3389'
+        os.environ['MLFLOW_TRACKING_URI'] = 'http://34.77.117.226:9090'
         os.environ['MLFLOW_EXPERIMENT_NAME'] = 'pointnet_classification'
         os.environ['MLFLOW_ENABLE_SYSTEM_METRICS_LOGGING'] = 'true'
         mlflow.start_run()

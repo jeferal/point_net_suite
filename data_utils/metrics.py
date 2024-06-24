@@ -100,11 +100,22 @@ def plot_metrics_by_class_grid(train_iou, eval_iou, show=True, save_path=None):
         print(f"Saving figure in {os.path.abspath(save_path)}")
         plt.savefig(save_path)
 
-def plot_class_distribution(dataset, title, show=True, save_path=None):
-    print('Plotting ' + title + ".")
+def compute_class_distribution(dataset) -> tuple:
+    """
+        Given a dataset, this method iterates over all samples and returns the unique classes their counts and all labels.
+    """
     labels = [sample[1] for sample in tqdm.tqdm(dataset)]
     labels = torch.cat(labels).cpu().numpy()
     unique, counts = np.unique(labels, return_counts=True)
+    return unique, counts, labels
+
+def plot_class_distribution(dataset, title, show=True, save_path=None):
+    unique, counts = None, None
+    if hasattr(dataset, 'get_class_distribution') and callable(getattr(dataset, 'get_class_distribution')):
+        unique, counts, _ = dataset.get_class_distribution()
+    else:
+        unique, counts, _ = compute_class_distribution(dataset)
+
     plt.bar(unique, counts)
     plt.xlabel('Class')
     plt.ylabel('Number of samples')

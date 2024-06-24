@@ -94,7 +94,20 @@ def parse_args():
     parser.add_argument('--remove_checkpoint', action='store_true', default=False, help='remove last checkpoint train progress')
     parser.add_argument('--use_mlflow', action='store_true', default=False, help='Log train with mlflow')
     parser.add_argument('--mlflow_run_name', type=str, default='pointnet_sem_segmentation', help='Name of the mlflow run')
+    # Configuration file, to load the parameters from a yaml file. None by default
+    parser.add_argument('--config', type=str, default=None, help='Path to the configuration file')
     return parser.parse_args()
+
+def update_args_with_config(args):
+    if args.config:
+        print("Overriding arguments with the configuration file")
+        with open(args.config, 'r') as file:
+            config = yaml.safe_load(file)
+        for key, value in config.items():
+            if hasattr(args, key):
+                setattr(args, key, value)
+            else:
+                raise ValueError(f"Argument {key} not found in the arguments")
 
 def dump_args_to_yaml(args, yaml_file):
     args_dict = vars(args)  # Convert Namespace to dictionary
@@ -117,7 +130,13 @@ def main(args):
         print('Deleting existing checkpoint!')
         shutil.rmtree(exp_dir)
     exp_dir.mkdir(exist_ok=True)
-    
+
+    # Store the command used to run the script
+    command = " ".join(sys.argv)
+    command_file = os.path.join(exp_dir, 'command.txt')
+    with open(command_file, 'w') as f:
+        f.write(command)
+
     # ===============================================================
     # PARAMETERS SELECTED
     # ===============================================================
@@ -142,8 +161,11 @@ def main(args):
         eval_dataset = S3DIS(root=data_path, area_nums=args.test_area, split='test', npoints=num_points, r_prob=0.25, include_rgb=args.use_extra_features)
     elif args.dataset == 'dales':
         print(f"Loading Dales dataset with data path {data_path}")
-        train_dataset = DalesDataset(root=data_path, split='train', partitions=args.partitions, overlap=args.overlap, npoints=num_points, weight_type=args.weight_type)
-        eval_dataset = DalesDataset(root=data_path, split='test', partitions=args.partitions, overlap=args.overlap, npoints=num_points)
+        intensity = False
+        if args.use_extra_features:
+            intensity = True
+        train_dataset = DalesDataset(root=data_path, split='train', partitions=args.partitions, overlap=args.overlap, npoints=num_points, weight_type=args.weight_type, intensity=intensity)
+        eval_dataset = DalesDataset(root=data_path, split='test', partitions=args.partitions, overlap=args.overlap, npoints=num_points, intensity=intensity)
     else:
         raise ValueError(f"Dataset {args.dataset} not supported")
 
@@ -153,8 +175,9 @@ def main(args):
     num_classes = len(train_dataset.get_categories())
     print(f"Number of classes: {num_classes}")
 
+    # Get the label weights, if they do not exist, they would be None
     weights_for_loss = train_dataset.labelweights
-    #weights_for_loss = np.array([0.37087864, 0.42041293, 0.25760815, 3.6725786, 3.7299068, 3.5086377, 1.2743168, 2.7200153, 1.5940105, 16.41685, 1.5278313, 6.501897, 17.408533, 0.66163313], dtype='float32') #Pre computed
+
     if weights_for_loss is not None:
         weights_for_loss = torch.from_numpy(np.float32(weights_for_loss))
 
@@ -251,6 +274,8 @@ def main(args):
     # PLOTTING CLASS DISTRIBUTION
     # ===============================================================
     # Only when starting a new model
+    train_class_distribution_file = None
+    eval_class_distribution_file = None
     if start_epoch == 0:
         train_class_distribution_file = os.path.join(exp_dir, 'train_class_distribution.png')
         eval_class_distribution_file = os.path.join(exp_dir, 'eval_class_distribution.png')
@@ -262,7 +287,7 @@ def main(args):
     # ===============================================================
     if args.use_mlflow:
         # Export mlflow environment variables
-        os.environ['MLFLOW_TRACKING_URI'] = 'http://34.16.143.171:3389'
+        os.environ['MLFLOW_TRACKING_URI'] = 'http://34.77.117.226:9090'
         os.environ['MLFLOW_EXPERIMENT_NAME'] = 'pointnet_sem_segmentation'
         os.environ['MLFLOW_ENABLE_SYSTEM_METRICS_LOGGING'] = 'true'
         run_name = f"{args.mlflow_run_name}_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}"
@@ -271,10 +296,12 @@ def main(args):
         dump_args_to_yaml(args, args_yml_file)
 
         # Log the arguments
+        mlflow.log_artifact(command_file)
         mlflow.log_artifact(args_yml_file)
         # Log the class distribution plots
-        mlflow.log_artifact(train_class_distribution_file)
-        mlflow.log_artifact(eval_class_distribution_file)
+        if train_class_distribution_file:
+            mlflow.log_artifact(train_class_distribution_file)
+            mlflow.log_artifact(eval_class_distribution_file)
 
     # ===============================================================
     # MODEL TRAINING
@@ -332,11 +359,16 @@ def main(args):
             scheduler.step()
 
             if args.use_mlflow:
-                mlflow.log_metric('train_loss', train_epoch_loss, step=epoch)
-                mlflow.log_metric('train_accuracy', train_epoch_accuracy, step=epoch)
-                for cls in range(num_classes):
-                    mlflow.log_metric(f'train_iou_class_{cls}', train_epoch_iou[cls], step=epoch)
-                mlflow.log_metric("learning_rate", current_lr, step=epoch)
+                # Mlflow could fail if connection to the server is lost
+                # In that case, the training will continue but the metrics will not be logged
+                try:
+                    mlflow.log_metric('train_loss', train_epoch_loss, step=epoch)
+                    mlflow.log_metric('train_accuracy', train_epoch_accuracy, step=epoch)
+                    for cls in range(num_classes):
+                        mlflow.log_metric(f'train_iou_class_{cls}', train_epoch_iou[cls], step=epoch)
+                    mlflow.log_metric("learning_rate", current_lr, step=epoch)
+                except mlflow.MflowException as e:
+                    print(f"Error logging metrics to mlflow: {e}")
 
             train_loss.append(train_epoch_loss)
             train_accuracy.append(train_epoch_accuracy)
@@ -352,10 +384,13 @@ def main(args):
                 eval_epoch_loss, eval_epoch_acc, eval_epoch_iou = evaluate_model(classifier.eval(), criterion, evalDataLoader, batch_size, num_points, num_classes=num_classes)
 
                 if args.use_mlflow:
-                    mlflow.log_metric('eval_loss', eval_epoch_loss, step=epoch)
-                    mlflow.log_metric('eval_accuracy', eval_epoch_acc, step=epoch)
-                    for cls in range(num_classes):
-                        mlflow.log_metric(f'eval_iou_class_{cls}', eval_epoch_iou[cls], step=epoch)
+                    try:
+                        mlflow.log_metric('eval_loss', eval_epoch_loss, step=epoch)
+                        mlflow.log_metric('eval_accuracy', eval_epoch_acc, step=epoch)
+                        for cls in range(num_classes):
+                            mlflow.log_metric(f'eval_iou_class_{cls}', eval_epoch_iou[cls], step=epoch)
+                    except mlflow.MflowException as e:
+                        print(f"Error logging metrics to mlflow: {e}")
 
                 # Save the epoch evaluation metrics
                 eval_loss.append(eval_epoch_loss)
@@ -391,7 +426,10 @@ def main(args):
                     torch.save(state, savepath)
 
                     if args.use_mlflow:
-                        mlflow.log_artifact(savepath)
+                        try:
+                            mlflow.log_artifact(savepath)
+                        except mlflow.MflowException as e:
+                            print(f"Error saving the model to mlflow: {e}")
 
                 # Next epoch
                 global_epoch += 1
@@ -468,4 +506,6 @@ def evaluate_model(model, criterion, loader, batch_size, num_points, num_classes
 # =========================================================================================================================================================
 if __name__ == '__main__':
     args = parse_args()
+    # Update the arguments if there is a config file
+    update_args_with_config(args)
     main(args)
