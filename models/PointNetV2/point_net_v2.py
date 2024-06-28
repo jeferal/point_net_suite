@@ -217,14 +217,14 @@ class PointNetV2FeatureLearnerSemanticSegMultiScaleGrouping(nn.Module):
         self.extra_feat_dropout = extra_feat_dropout
 
         # 4 layers of PointNet Set Abstractions Multi Scale grouping:
-        self.sa1 = PointNetSetAbstractionMultiScaleGrouping(npoint=1024, radius=[0.05, 0.1], nsample=[16, 32], in_channel=input_dim,
-                                                            mlp_layers=[[16, 16, 32], [32, 32, 64]])
-        self.sa2 = PointNetSetAbstractionMultiScaleGrouping(npoint=256, radius=[0.1, 0.2], nsample=[16, 32], in_channel=64 + 32 + 3,
-                                                            mlp_layers=[[64, 64, 128], [64, 96, 128]])
-        self.sa3 = PointNetSetAbstractionMultiScaleGrouping(npoint=64, radius=[0.2, 0.4], nsample=[16, 32], in_channel=128 + 128 + 3,
-                                                            mlp_layers=[[128, 196, 256], [128, 196, 256]])
-        self.sa4 = PointNetSetAbstractionMultiScaleGrouping(npoint=16, radius=[0.4, 0.8], nsample=[16, 32], in_channel=256 + 256 + 3,
-                                                            mlp_layers=[[256, 256, 512], [256, 384, 512]])
+        self.sa1 = PointNetSetAbstractionMultiScaleGrouping(npoint=1024, radii_list=[0.05, 0.1], nsample_list=[16, 32], in_channel=input_dim,
+                                                            mlp_list=[[16, 16, 32], [32, 32, 64]])
+        self.sa2 = PointNetSetAbstractionMultiScaleGrouping(npoint=256, radii_list=[0.1, 0.2], nsample_list=[16, 32], in_channel=64 + 32 + 3,
+                                                            mlp_list=[[64, 64, 128], [64, 96, 128]])
+        self.sa3 = PointNetSetAbstractionMultiScaleGrouping(npoint=64, radii_list=[0.2, 0.4], nsample_list=[16, 32], in_channel=128 + 128 + 3,
+                                                            mlp_list=[[128, 196, 256], [128, 196, 256]])
+        self.sa4 = PointNetSetAbstractionMultiScaleGrouping(npoint=16, radii_list=[0.4, 0.8], nsample_list=[16, 32], in_channel=256 + 256 + 3,
+                                                            mlp_list=[[256, 256, 512], [256, 384, 512]])
 
     def forward(self, x, extra_features):
         # Pass through all the PointNet Set Abstractions

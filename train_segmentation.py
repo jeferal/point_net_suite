@@ -367,7 +367,7 @@ def main(args):
                     for cls in range(num_classes):
                         mlflow.log_metric(f'train_iou_class_{cls}', train_epoch_iou[cls], step=epoch)
                     mlflow.log_metric("learning_rate", current_lr, step=epoch)
-                except mlflow.MflowException as e:
+                except Exception as e:
                     print(f"Error logging metrics to mlflow: {e}")
 
             train_loss.append(train_epoch_loss)
@@ -389,7 +389,7 @@ def main(args):
                         mlflow.log_metric('eval_accuracy', eval_epoch_acc, step=epoch)
                         for cls in range(num_classes):
                             mlflow.log_metric(f'eval_iou_class_{cls}', eval_epoch_iou[cls], step=epoch)
-                    except mlflow.MflowException as e:
+                    except Exception as e:
                         print(f"Error logging metrics to mlflow: {e}")
 
                 # Save the epoch evaluation metrics
@@ -428,34 +428,36 @@ def main(args):
                     if args.use_mlflow:
                         try:
                             mlflow.log_artifact(savepath)
-                        except mlflow.MflowException as e:
+                        except Exception as e:
                             print(f"Error saving the model to mlflow: {e}")
 
                 # Next epoch
                 global_epoch += 1
 
-    finally:
-        metrics = {
-            "train_iou": [[float(iou) for iou in ious] for ious in train_iou],
-            "eval_iou": [[float(iou) for iou in ious] for ious in eval_iou]
-        }
+    except Exception as e:
+        print(f'Training interrupted! {e}')
 
-        metrics_file = os.path.join(exp_dir, 'iou_metrics.json')
-        with open(metrics_file, 'w') as f:
-            json.dump(metrics, f)
-        
-        # Generate a subplot with the metrics
-        iou_per_class_fig_path = os.path.join(exp_dir, 'iou_metrics.png')
-        plot_metrics_by_class_grid(train_iou, eval_iou, show=False, save_path=iou_per_class_fig_path)
+    metrics = {
+        "train_iou": [[float(iou) for iou in ious] for ious in train_iou],
+        "eval_iou": [[float(iou) for iou in ious] for ious in eval_iou]
+    }
 
-        if args.use_mlflow:
-            mlflow.log_artifact(metrics_file)
-            mlflow.log_artifact(iou_per_class_fig_path)
-            mlflow.end_run()
+    metrics_file = os.path.join(exp_dir, 'iou_metrics.json')
+    with open(metrics_file, 'w') as f:
+        json.dump(metrics, f)
+    
+    # Generate a subplot with the metrics
+    iou_per_class_fig_path = os.path.join(exp_dir, 'iou_metrics.png')
+    plot_metrics_by_class_grid(train_iou, eval_iou, show=False, save_path=iou_per_class_fig_path)
 
-        # End the MLflow run if use_mlflow is True
-        if args.use_mlflow:
-            mlflow.end_run()  
+    if args.use_mlflow:
+        mlflow.log_artifact(metrics_file)
+        mlflow.log_artifact(iou_per_class_fig_path)
+        mlflow.end_run()
+
+    # End the MLflow run if use_mlflow is True
+    if args.use_mlflow:
+        mlflow.end_run()  
 
     print('Training completed!')
 
