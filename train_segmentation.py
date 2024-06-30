@@ -84,7 +84,8 @@ def parse_args():
     parser.add_argument('--dropout', type=float, default=hparams_for_args_to_evaluate['dropout'], help='Dropout')
     parser.add_argument('--extra_feat_dropout', type=float, default=hparams_for_args_to_evaluate['extra_feat_dropout'], help='Extra Features Dropout to avoid the classifier rely on them')
     parser.add_argument('--label_smoothing', type=float, default=hparams_for_args_to_evaluate['label_smoothing'], help='Loss label smoothing used for the cross entropy')
-    parser.add_argument('--weight_type', type=str, default=hparams_for_args_to_evaluate['weight_type'], help='Weights used for the cross entropy [Sklearn, Custom, None]')
+    parser.add_argument('--weight_type', type=str, default=hparams_for_args_to_evaluate['weight_type'], help='Weights used for the cross entropy [Sklearn, Custom, EffectiveNumSamples, None]')
+    parser.add_argument('--ens_beta', type=float, default=0.999, help='Beta parameter of effective number of samples weighted loss')
     # Optimizer parameters
     parser.add_argument('--optimizer', type=str, default=hparams_for_args_to_evaluate['optimizer'], help='optimizer for training [AdamW, Adam, SGD]')
     parser.add_argument('--learning_rate', type=float, default=hparams_for_args_to_evaluate['learning_rate'], help='learning rate in training')
@@ -161,11 +162,13 @@ def main(args):
         eval_dataset = S3DIS(root=data_path, area_nums=args.test_area, split='test', npoints=num_points, r_prob=0.25, include_rgb=args.use_extra_features)
     elif args.dataset == 'dales':
         print(f"Loading Dales dataset with data path {data_path}")
-        intensity = False
-        if args.use_extra_features:
-            intensity = True
-        train_dataset = DalesDataset(root=data_path, split='train', partitions=args.partitions, overlap=args.overlap, npoints=num_points, weight_type=args.weight_type, intensity=intensity)
-        eval_dataset = DalesDataset(root=data_path, split='test', partitions=args.partitions, overlap=args.overlap, npoints=num_points, intensity=intensity)
+        intensity = args.use_extra_features
+        train_kwargs = {}
+        train_kwargs.update({'beta': args.ens_beta})
+        train_kwargs.update({'weight_type': args.weight_type})
+        train_dataset = DalesDataset(root=data_path, split='train', partitions=args.partitions, overlap=args.overlap, npoints=num_points, intensity=intensity, **train_kwargs)
+        eval_kwargs = {}
+        eval_dataset = DalesDataset(root=data_path, split='test', partitions=args.partitions, overlap=args.overlap, npoints=num_points, intensity=intensity, kwargs=eval_kwargs)
     else:
         raise ValueError(f"Dataset {args.dataset} not supported")
 

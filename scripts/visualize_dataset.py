@@ -38,7 +38,7 @@ if __name__ == "__main__":
         dataset = S3DIS(args.data_path, area_nums=args.areas, split=args.split, npoints=args.num_points, r_prob=args.r_prob, include_rgb=False)
     elif args.dataset == 'dales':
         print("Loading DALES dataset")
-        dataset = DalesDataset(args.data_path, args.split, partitions=args.partitions, intensity=args.intensity, overlap=args.overlap, npoints=args.num_points, normalize=False)
+        dataset = DalesDataset(args.data_path, args.split, partitions=args.partitions, intensity=args.intensity, overlap=args.overlap, npoints=args.num_points, normalize=True)
     else:
         raise ValueError(f"Invalid dataset {args.dataset}")
 
