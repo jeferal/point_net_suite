@@ -40,12 +40,16 @@ class DalesDataset(Dataset):
         'buildings'
     ]
 
-    def __init__(self, root : str, split : str, partitions = 1, intensity : bool = False, instance_seg : bool = False, overlap : float = 0.0, npoints : int = 20000, weight_type=None, normalize=True):
+    def __init__(self, root : str, split : str, partitions = 1, intensity : bool = False, instance_seg : bool = False, overlap : float = 0.0, npoints : int = 20000, normalize=True, **kwargs):
         self._root = root
         self._split = split
 
         self._npoints = npoints
         self._normalize = normalize
+
+        # Get the beta parameter
+        beta = kwargs.get('beta', 0.999)
+        weight_type = kwargs.get('weight_type', None)
 
         # Create the data directory
         self._data_dir = os.path.join(self._root, self._split)
@@ -120,6 +124,13 @@ class DalesDataset(Dataset):
             if self._split != 'test':
                 unique_labels, _, all_labels = self._class_distribution
                 self.labelweights = np.float32(compute_class_weight(class_weight="balanced", classes=unique_labels, y=all_labels))
+            else:
+                self.labelweights = None
+        if weight_type == 'EffectiveNumSamples':
+            if self._split != 'test':
+                unique_labels, counts, _ = self._class_distribution
+                effective_num = (1.0 - np.power(beta, counts)) / (1.0 - beta)
+                self.labelweights = 1 / effective_num
             else:
                 self.labelweights = None
 
