@@ -175,6 +175,8 @@ class DalesDataset(Dataset):
                 points, targets = downsample_biometric(points, targets, npoints=self._npoints)
             elif self._downsampling_method == 'combined':
                 points, targets = downsample_combined(points, targets, npoints=self._npoints)
+            elif self._downsampling_method == 'test':
+                points, targets = downsample_combined(points, targets, npoints=self._npoints)
             else:
                 raise ValueError(f"Unknown downsampling method {self._downsampling_method}")
         # Convert to tensor
