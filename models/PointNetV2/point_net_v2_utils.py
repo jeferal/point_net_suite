@@ -150,4 +150,3 @@ def sample_and_group_all(xyz, features):
         new_features = grouped_xyz
     return new_xyz, new_features
 
-k = 5
