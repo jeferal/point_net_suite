@@ -77,7 +77,7 @@ def downsample_voxel_grid(points: np.ndarray, targets: np.ndarray, voxel_size=0.
     return sampled_points, sampled_targets
 
 
-def downsample_inverse_planar_aware(points: np.ndarray, targets: np.ndarray, npoints: int, plane_threshold=0.9, lower_downsample_rate=0.8, higher_downsample_rate=0.2) -> tuple:
+def downsample_inverse_planar_aware(points: np.ndarray, targets: np.ndarray, npoints: int = 8000, plane_threshold=0.9, lower_downsample_rate=0.8, higher_downsample_rate=0.2) -> tuple:
     """
     Downsample the point cloud by reducing density in planar regions and preserving density in non-planar regions.
     """
@@ -111,7 +111,7 @@ def downsample_inverse_planar_aware(points: np.ndarray, targets: np.ndarray, npo
         sampled_targets = sampled_targets[choice]
     return sampled_points, sampled_targets
 
-def downsample_feature_based(points: np.ndarray, targets: np.ndarray, npoints: int, k=20, high_variance_threshold=0.05, low_variance_rate=0.5) -> tuple:
+def downsample_feature_based(points: np.ndarray, targets: np.ndarray, npoints: int = 8000, k=20, high_variance_threshold=0.05, low_variance_rate=0.5) -> tuple:
     """
     Downsample the point cloud by prioritizing points in high-variance regions.
     """
@@ -131,7 +131,6 @@ def downsample_feature_based(points: np.ndarray, targets: np.ndarray, npoints: i
 
     sampled_points = np.concatenate((high_variance_points, low_variance_points[low_variance_choice]))
     sampled_targets = np.concatenate((high_variance_targets, low_variance_targets[low_variance_choice]))
-
     if len(sampled_points) > npoints:
         choice = np.random.choice(len(sampled_points), npoints, replace=False)
         sampled_points = sampled_points[choice]
@@ -143,7 +142,7 @@ def downsample_feature_based(points: np.ndarray, targets: np.ndarray, npoints: i
 
     return sampled_points, sampled_targets
 
-def downsample_biometric(points: np.ndarray, targets: np.ndarray, npoints: int, edge_threshold=0.01, downsample_rate=0.5) -> tuple:
+def downsample_biometric(points: np.ndarray, targets: np.ndarray, npoints: int = 8000, edge_threshold=0.01, downsample_rate=0.5) -> tuple:
     """
     Downsample the point cloud by prioritizing edges and high-gradient areas.
     """
@@ -172,7 +171,7 @@ def downsample_biometric(points: np.ndarray, targets: np.ndarray, npoints: int, 
 
     return sampled_points, sampled_targets
 
-def downsample_combined(points: np.ndarray, targets: np.ndarray, final_npoints=2000) -> tuple:
+def downsample_combined(points: np.ndarray, targets: np.ndarray, npoints : int=2000) -> tuple:
     """
     Combine multiple downsampling methods to achieve a balanced downsampling.
     """
@@ -180,23 +179,23 @@ def downsample_combined(points: np.ndarray, targets: np.ndarray, final_npoints=2
     points, targets = downsample_voxel_grid(points, targets)
     
     # Apply inverse planar-aware downsampling
-    points, targets = downsample_inverse_planar_aware(points, targets, final_npoints)
+    points, targets = downsample_inverse_planar_aware(points, targets, npoints)
     
     # Apply biometric downsampling if needed
-    if len(points) > final_npoints:
-        points, targets = downsample_biometric(points, targets, final_npoints)
+    if len(points) > npoints:
+        points, targets = downsample_biometric(points, targets, npoints)
     
     # Apply feature-based downsampling if needed
-    if len(points) > final_npoints:
-        points, targets = downsample_feature_based(points, targets, final_npoints)
+    if len(points) > npoints:
+        points, targets = downsample_feature_based(points, targets, npoints)
     
     return points, targets
 
 
-def downsample_test(points: np.ndarray, targets: np.ndarray, voxel_size=0.1, final_npoints=2000, plane_threshold=0.02, higher_downsample_rate=0.5) -> tuple:
+def downsample_test(points: np.ndarray, targets: np.ndarray, npoints : int = 2000, voxel_size=0.1, plane_threshold=0.02, higher_downsample_rate=0.5) -> tuple:
     """
     Test downsampling combining voxel grid and planar aware methods.
     """
     points, targets = downsample_voxel_grid(points, targets, voxel_size)
-    points, targets = downsample_inverse_planar_aware(points, targets, final_npoints, plane_threshold, higher_downsample_rate)
+    points, targets = downsample_inverse_planar_aware(points, targets, npoints, plane_threshold, higher_downsample_rate)
     return points, targets
