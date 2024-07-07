@@ -44,7 +44,7 @@ def index_points(points, idx):
     return new_points
 
 
-def farthest_point_sample(xyz, npoint):
+def density_related_farthest_point_sample(xyz, npoint):
     """
     Input:
         xyz: pointcloud data, [B, N, 3]
@@ -62,8 +62,17 @@ def farthest_point_sample(xyz, npoint):
         centroids[:, i] = farthest
         centroid = xyz[batch_indices, farthest, :].view(B, 1, 3)
         dist = torch.sum((xyz - centroid) ** 2, -1)
-        mask = dist < distance
-        distance[mask] = dist[mask]
+
+        # Calculate density factor
+        _, knn_idx = torch.topk(dist, k, dim=1, largest=False)
+        density = torch.mean(dist.gather(1, knn_idx), dim=1)
+        
+        # Update distance with density factor
+        density_factor = 1.0 / (density + 1e-8)
+        adjusted_dist = dist * density_factor.unsqueeze(1)
+        
+        mask = adjusted_dist < distance
+        distance[mask] = adjusted_dist[mask]
         farthest = torch.max(distance, -1)[1]
     return centroids
 
@@ -105,7 +114,7 @@ def sample_and_group(npoint, radius, nsample, xyz, features, returnfps=False):
     """
     B, N, C = xyz.shape
     S = npoint
-    fps_idx = farthest_point_sample(xyz, npoint) # [B, npoint, C]
+    fps_idx = density_related_farthest_point_sample(xyz, npoint, k) # [B, npoint]
     new_xyz = index_points(xyz, fps_idx)
     idx = query_ball_point(radius, nsample, xyz, new_xyz)
     grouped_xyz = index_points(xyz, idx) # [B, npoint, nsample, C]
@@ -140,3 +149,5 @@ def sample_and_group_all(xyz, features):
     else:
         new_features = grouped_xyz
     return new_xyz, new_features
+
+k = 5
