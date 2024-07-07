@@ -64,6 +64,7 @@ def density_related_farthest_point_sample(xyz, npoint):
         dist = torch.sum((xyz - centroid) ** 2, -1)
 
         # Calculate density factor
+        k = 5
         _, knn_idx = torch.topk(dist, k, dim=1, largest=False)
         density = torch.mean(dist.gather(1, knn_idx), dim=1)
         
