@@ -17,7 +17,7 @@ from torch.utils.data import Dataset
 
 from sklearn.utils import compute_class_weight
 
-from data_utils.point_cloud_utils import normalize_points, downsample, downsample_planar_aware, downsample_biometric, downsample_combined, downsample_feature_based
+from data_utils.point_cloud_utils import normalize_points, downsample, downsample_planar_aware, downsample_biometric, downsample_combined, downsample_feature_based, downsample_test
 from data_utils.metrics import compute_class_distribution
 
 
@@ -176,10 +176,11 @@ class DalesDataset(Dataset):
             elif self._downsampling_method == 'combined':
                 points, targets = downsample_combined(points, targets, npoints=self._npoints)
             elif self._downsampling_method == 'test':
-                points, targets = downsample_combined(points, targets, npoints=self._npoints)
+                points, targets = downsample_test(points, targets, npoints=self._npoints)
             else:
                 raise ValueError(f"Unknown downsampling method {self._downsampling_method}")
         # Convert to tensor
+        print(f"The shape of points is {points.shape} and labels is {targets.shape}")
         points = torch.tensor(points, dtype=torch.float32)
         targets = torch.tensor(targets, dtype=torch.long)
 
