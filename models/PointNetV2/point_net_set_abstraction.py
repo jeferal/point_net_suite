@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from models.PointNetV2.point_net_v2_utils import sample_and_group, sample_and_group_all, index_points, farthest_point_sample, query_ball_point
+from models.PointNetV2.point_net_v2_utils import sample_and_group, sample_and_group_all, index_points, density_related_farthest_point_sample, query_ball_point
 
 
 class PointNetSetAbstractionSingleScaleGrouping(nn.Module):
@@ -90,7 +90,7 @@ class PointNetSetAbstractionMultiScaleGrouping(nn.Module):
 
         B, N, C = xyz.shape
         num_points = self.npoint
-        new_xyz = index_points(xyz, farthest_point_sample(xyz, num_points))
+        new_xyz = index_points(xyz, density_related_farthest_point_sample(xyz, num_points))
         new_features_list = []
         for i, radius in enumerate(self.radii_list):
             num_sample = self.nsample_list[i]
