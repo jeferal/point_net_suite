@@ -30,7 +30,7 @@ if __name__ == "__main__":
     # Rprob
     parser.add_argument('--r_prob', type=float, default=0.25, help='Probability of random rotation')
     # Sampling method, uniform by default
-    parser.add_argument('--downsampling_method', type=str, default='uniform', help='Sampling method [uniform, planar_aware, feature_based, biometric, combined]')
+    parser.add_argument('--downsampling_method', type=str, default='uniform', help='Sampling method [uniform, planar_aware, inverse_planar, feature_based, biometric, combined]')
 
     # Parse the arguments
     args = parser.parse_args()

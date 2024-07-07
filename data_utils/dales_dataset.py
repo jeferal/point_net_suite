@@ -17,7 +17,7 @@ from torch.utils.data import Dataset
 
 from sklearn.utils import compute_class_weight
 
-from data_utils.point_cloud_utils import normalize_points, downsample, downsample_planar_aware, downsample_biometric, downsample_combined, downsample_feature_based
+from data_utils.point_cloud_utils import normalize_points, downsample, downsample_combined, downsample_biometric, downsample_feature_based, downsample_inverse_planar_aware
 from data_utils.metrics import compute_class_distribution
 
 
@@ -50,7 +50,6 @@ class DalesDataset(Dataset):
         # Get the beta parameter
         beta = kwargs.get('beta', 0.999)
         weight_type = kwargs.get('weight_type', None)
-        self._downsampling_method = kwargs.get('downsampling_method', 'uniform')
 
         # Create the data directory
         self._data_dir = os.path.join(self._root, self._split)
@@ -157,28 +156,16 @@ class DalesDataset(Dataset):
             points = data[:, :3]
 
         # Normalize Point Cloud to (0, 1)
-        # This is also normalizing the intensity if it is present
         if self._normalize:
             points = normalize_points(points)
+
         # Extract the labels, which is the 5th column
         targets = data[:, 4]
-        # down sample point cloud
+
+        # Downsample point cloud
         if self._npoints:
-            print(f"Downsampling point cloud to {self._npoints} points with method {self._downsampling_method}...")
-            if self._downsampling_method == 'planar_aware':
-                points, targets = downsample_planar_aware(points, targets, npoints=self._npoints)
-            elif self._downsampling_method == 'uniform':
-                points, targets = downsample(points, targets, npoints=self._npoints)
-            elif self._downsampling_method == 'feature_based':
-                points, targets = downsample_feature_based(points, targets, npoints=self._npoints)
-            elif self._downsampling_method == 'biometric':
-                points, targets = downsample_biometric(points, targets, npoints=self._npoints)
-            elif self._downsampling_method == 'combined':
-                points, targets = downsample_combined(points, targets, npoints=self._npoints)
-            elif self._downsampling_method == 'test':
-                points, targets = downsample_combined(points, targets, npoints=self._npoints)
-            else:
-                raise ValueError(f"Unknown downsampling method {self._downsampling_method}")
+            points, targets = downsample_combined(points, targets, final_npoints=self._npoints)
+
         # Convert to tensor
         points = torch.tensor(points, dtype=torch.float32)
         targets = torch.tensor(targets, dtype=torch.long)
@@ -187,6 +174,8 @@ class DalesDataset(Dataset):
         targets -= 1
 
         return points, targets
+
+
 
     def get_categories(self):
         return self.CATEGORIES
