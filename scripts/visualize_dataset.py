@@ -30,8 +30,13 @@ if __name__ == "__main__":
     # Rprob
     parser.add_argument('--r_prob', type=float, default=0.25, help='Probability of random rotation')
     # Sampling method, uniform by default
-    parser.add_argument('--downsampling_method', type=str, default='uniform', help='Sampling method [uniform, planar_aware, inverse_planar, feature_based, biometric, combined]')
+    parser.add_argument('--downsampling_method', type=str, default='uniform', help='Sampling method [uniform, planar_aware, planar_aware, feature_based, biometric, combined, parallel_combined]')
+    # Normalize the pointcloud, True by default
+    parser.add_argument('--no-normalize', dest='normalize', action='store_false', help='Do not normalize the point cloud')
+    #parser.add_argument('--normalize', dest='normalize', action='store_false', help='Use normalization')
 
+    # Set default normalization to True
+    parser.set_defaults(normalize=True)
     # Parse the arguments
     args = parser.parse_args()
 
@@ -42,7 +47,7 @@ if __name__ == "__main__":
         print("Loading DALES dataset")
         train_kwargs = {}
         train_kwargs.update({'downsampling_method': args.downsampling_method})
-        dataset = DalesDataset(args.data_path, args.split, partitions=args.partitions, intensity=args.intensity, overlap=args.overlap, npoints=args.num_points, normalize=True, **train_kwargs)
+        dataset = DalesDataset(args.data_path, args.split, partitions=args.partitions, intensity=args.intensity, overlap=args.overlap, npoints=args.num_points, normalize=args.normalize, **train_kwargs)
     else:
         raise ValueError(f"Invalid dataset {args.dataset}")
 

@@ -40,7 +40,7 @@ class DalesDataset(Dataset):
         'buildings'
     ]
 
-    def __init__(self, root : str, split : str, partitions = 1, intensity : bool = False, instance_seg : bool = False, overlap : float = 0.0, npoints : int = 20000, normalize=True, **kwargs):
+    def __init__(self, root : str, split : str, partitions = 1, intensity : bool = False, instance_seg : bool = False, overlap : float = 0.0, npoints : int = 20000, normalize: bool = True, **kwargs):
         self._root = root
         self._split = split
 
@@ -157,8 +157,7 @@ class DalesDataset(Dataset):
             points = data[:, :3]
 
         # Normalize Point Cloud to (0, 1)
-        if self._normalize:
-            points = normalize_points(points)
+        points = normalize_points(points, normalize=self._normalize)
 
         # Extract the labels, which is the 5th column
         targets = data[:, 4]
@@ -178,6 +177,8 @@ class DalesDataset(Dataset):
                 points, targets = downsample_combined(points, targets, npoints=self._npoints)
             elif self._downsampling_method == 'test':
                 points, targets = downsample_test(points, targets, npoints=self._npoints)
+            elif self._downsampling_method == 'parallel_combined':
+                points, targets = downsample_parallel_combined(points, targets, npoints=self._npoints)
             else:
                 raise ValueError(f"Unknown downsampling method {self._downsampling_method}")
         # Convert to tensor
@@ -373,7 +374,7 @@ def visualize_pointcloud(point_cloud, labels, window_name : str = "DALES point c
 
     # Example color palette for semantic classes
     color_palette = np.array([
-        [1, 3, 117],    # Class 0: Unknown
+        #[1, 3, 117],    # Class 0: Unknown
         [1, 79, 156],   # Class 1: Blue: Ground
         [1, 114, 3],    # Class 2: Green: Vegetation
         [222, 47, 225], # Class 3: Pink: Cars
