@@ -30,7 +30,7 @@ TBC With Mariona!!!
 
 ## 2. Project <a name="2-project"></a>
 
-### 2.1. Data Preprocessing and Datasets <a name="21-data-preprocessing"></a>
+### 2.1. Data Preprocessing and Datasets <a name="21-data-preprocessing"></a>
 Talk about datasets and any preprocessing such as Areas script, dales dataset.
 
 ### 2.2. Experiments <a name="22-experiments"></a>
