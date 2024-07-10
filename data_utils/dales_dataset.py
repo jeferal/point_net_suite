@@ -114,7 +114,7 @@ class DalesDataset(Dataset):
             with open(class_distribution_file, 'w') as f:
                 json.dump(class_distribution_dict, f)
         else:
-            with open(os.path.join(self._root, f"class_distribution.json"), 'r') as f:
+            with open(class_distribution_file, 'r') as f:
                 class_distribution_dict = json.load(f)
                 self._class_distribution = (np.array(class_distribution_dict["unique"]), np.array(class_distribution_dict["counts"]), np.array(class_distribution_dict["labels"]))
 
