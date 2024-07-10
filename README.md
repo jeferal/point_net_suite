@@ -18,9 +18,9 @@ TBC With Mariona!!!
 
 - [3. Final application](#3-Final-application)
 - [4. How to run the code](#4-How-to-run-the-code)
-- [5. Conclusion](#4-conclusions)
+- [5. Conclusion](#5-conclusions)
 
-- [6. Acknowledgements](#5-Acknowledgements)
+- [6. Acknowledgements](#6-Acknowledgements)
 
 ## 1. Introduction <a name="1-intro"></a>
 
@@ -46,15 +46,15 @@ Each experiment must contain:
 3. Results
 4. Conclusions
 
-## 3. Final application <a name="22-Final-application"></a>
+## 3. Final application <a name="3-Final-application"></a>
 The Graphical User Interface
 
-## 4. How to run the code <a name="22-How-to-run-the-code"></a>
+## 4. How to run the code <a name="4-How-to-run-the-code"></a>
 It is mandatory to show how to run the code
 
-## 5. Conclusions <a name="22-conclusions"></a>
+## 5. Conclusions <a name="5-conclusions"></a>
 
-## 6. Acknowledgements <a name="22-Acknowledgements"></a>
+## 6. Acknowledgements <a name="6-Acknowledgements"></a>
 
 
 
