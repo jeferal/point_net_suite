@@ -12,7 +12,7 @@ TBC With Mariona!!!
     - [1.1. Motivation](#11-motivation)
     - [1.2. Milestones](#12-milestones)
 
-- [2. Project](#2-project)
+- [2. Implementation](#2-Implementation)
     - [2.1. Data Preprocessing and Datasets](#21-data-preprocessing)
     - [2.2. Experiments](#22-experiments)
 
@@ -28,12 +28,18 @@ TBC With Mariona!!!
 
 ### 1.2. Milestones <a name="12-milestones"></a>
 
-## 2. Project <a name="2-project"></a>
+## 2. Implementation <a name="2-Implementation"></a>
 
 ### 2.1. Data Preprocessing and Datasets <a name="21-data-preprocessing"></a>
-Talk about datasets and any preprocessing such as Areas script, dales dataset.
+Talk about datasets, their particularities and any preprocessing such as Areas script, dales dataset.
 
 ### 2.2. Experiments <a name="22-experiments"></a>
+
+Intro talking about:
+- mlflow to log
+- metrics we have logged
+- checkpoints and info logged into .pth
+
 Each experiment must contain:
 1. Hypothesis
 2. Experiment Setup / Implementation
