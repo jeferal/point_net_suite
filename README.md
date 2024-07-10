@@ -13,16 +13,14 @@ TBC With Mariona!!!
     - [1.2. Milestones](#12-milestones)
 
 - [2. Project](#2-project)
-    - [2.1. Data Preprocessing and Datasets](#21-Data Preprocessing and Datasets)
-    - [2.2. Experiments](#22-Experiments)
+    - [2.1. Data Preprocessing and Datasets](#21-data-preprocessing)
+    - [2.2. Experiments](#22-experiments)
 
-- [3. Final application](#3-Final application)
+- [3. Final application](#3-Final-application)
+- [4. How to run the code](#4-How-to-run-the-code)
+- [5. Conclusion](#4-conclusions)
 
-- [4. How to run the code](#3-How to run the code)
-
-- [5. Acknowledgements](#3-How to run the code)
-
-
+- [6. Acknowledgements](#5-Acknowledgements)
 
 ## 1. Introduction <a name="1-intro"></a>
 
@@ -32,25 +30,25 @@ TBC With Mariona!!!
 
 ## 2. Project <a name="2-project"></a>
 
-### 2.1. Data Preprocessing and Datasets <a name="21-Data Preprocessing and Datasets"></a>
+### 2.1. Data Preprocessing and Datasets <a name="21-data-preprocessing"></a>
 Talk about datasets and any preprocessing such as Areas script, dales dataset.
 
-### 2.2. Experiments <a name="22-Experiments"></a>
+### 2.2. Experiments <a name="22-experiments"></a>
 Each experiment must contain:
 1. Hypothesis
 2. Experiment Setup / Implementation
 3. Results
 4. Conclusions
 
-## 3. Final application
+## 3. Final application <a name="22-Final-application"></a>
 The Graphical User Interface
 
-## 4. How to run the code
+## 4. How to run the code <a name="22-How-to-run-the-code"></a>
 It is mandatory to show how to run the code
 
-## 4. Conclusions
+## 5. Conclusions <a name="22-conclusions"></a>
 
-## 5. Acknowledgements
+## 6. Acknowledgements <a name="22-Acknowledgements"></a>
 
 
 
