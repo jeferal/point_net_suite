@@ -1,3 +1,59 @@
+# AIDL24: Towards improving minority classes accuracy for Aerial Lidar Datasets
+TBC With Mariona!!!
+
+**Abstract here**
+
+### About
+**Mention the authors, who we are, etc.**
+
+## Table of Contents <a name="toc"></a>
+
+- [1. Introduction](#1-intro)
+    - [1.1. Motivation](#11-motivation)
+    - [1.2. Milestones](#12-milestones)
+
+- [2. Project](#2-project)
+    - [2.1. Data Preprocessing and Datasets](#21-Data Preprocessing and Datasets)
+    - [2.2. Experiments](#22-Experiments)
+
+- [3. Final application](#3-Final application)
+
+- [4. How to run the code](#3-How to run the code)
+
+- [5. Acknowledgements](#3-How to run the code)
+
+
+
+## 1. Introduction <a name="1-intro"></a>
+
+### 1.1. Motivation <a name="11-motivation"></a>
+
+### 1.2. Milestones <a name="12-milestones"></a>
+
+## 2. Project <a name="2-project"></a>
+
+### 2.1. Data Preprocessing and Datasets <a name="21-Data Preprocessing and Datasets"></a>
+Talk about datasets and any preprocessing such as Areas script, dales dataset.
+
+### 2.2. Experiments <a name="22-Experiments"></a>
+Each experiment must contain:
+1. Hypothesis
+2. Experiment Setup / Implementation
+3. Results
+4. Conclusions
+
+## 3. Final application
+The Graphical User Interface
+
+## 4. How to run the code
+It is mandatory to show how to run the code
+
+## 4. Conclusions
+
+## 5. Acknowledgements
+
+
+
 # The Point Net Suite
 
 ## Download and process datasets
