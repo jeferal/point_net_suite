@@ -21,6 +21,7 @@ Supervisor:
 
 - [2. Implementation](#2-Implementation)
     - [2.1. Data Preprocessing and Datasets](#21-data-preprocessing)
+        - [2.1.3. Dales Dataset](#213-dales-dataset)
     - [2.2. Models](#22-models)
         - [2.2.3. PointNet](#223-pointnet)
         - [2.2.4. PointNet++](#224-pointnetpp)
@@ -42,7 +43,26 @@ Supervisor:
 ## 2. Implementation <a name="2-Implementation"></a>
 
 ### 2.1. Data Preprocessing and Datasets <a name="21-data-preprocessing"></a>
-Talk about datasets, their particularities and any preprocessing such as Areas script, dales dataset.
+
+### 2.1.3. Dales Dataset <a name="213-dales-dataset"></a>
+The Dales Objects dataset is a Large Scale Benchmark Dataset for Segmentation and 
+Instance Segmentation of Aerial Lidar data. It contains close to half-bilion hand labeled points and the dataset covers over 10 square kilometers. The dataset contains the following classes with the following number of points:
+
+| Class Name  | Number of Points |
+|-------------|------------------|
+| Ground      | 246.9M           |
+| Vegetation  | 159M             |
+| Car         | 4.1M             |
+| Truck       | 879k             |
+| Powerline   | 994k             |
+| Fence       | 2.1M             |
+| Pole        | 262k             |
+| Buildings   | 78.7M            |
+
+If we attend to the number of points per class, we can see that the dataset is highly unbalanced. Most of the points belong to the 
+classes ground and vegetation, while the classes truck, powerline, fence and pole have a very low number of points. This is a problem
+that we will try to address in this project.
+
 
 ### 2.2. Models <a name="22-models"></a>
 
@@ -50,9 +70,17 @@ Talk about datasets, their particularities and any preprocessing such as Areas s
 
 <p align="center">
   <img src="assets/pointnet.png">
+  <br>
+  <em>Figure <number>: PointNet architecture.</em>
 </p>
 
 #### 2.2.4. PointNet++ <a name="224-pointnetpp"></a>
+
+<p align="center">
+  <img src="assets/pointnetpp.png">
+  <br>
+  <em>Figure <number>: PointNet++ architecture.</em>
+</p>
 
 ### 2.3. Sampling <a name="23-sampling"></a>
 
@@ -108,6 +136,13 @@ Each experiment must contain:
 2. Experiment Setup / Implementation
 3. Results
 4. Conclusions
+
+<p align="center">
+  <img src="assets/mlflow.png">
+  <br>
+  <em>Figure <number>: Mlflow server.</em>
+</p>
+
 
 ## 3. Final application <a name="3-Final-application"></a>
 The Graphical User Interface
