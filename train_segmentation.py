@@ -97,6 +97,8 @@ def parse_args():
     parser.add_argument('--mlflow_run_name', type=str, default='pointnet_sem_segmentation', help='Name of the mlflow run')
     # Configuration file, to load the parameters from a yaml file. None by default
     parser.add_argument('--config', type=str, default=None, help='Path to the configuration file')
+    # Downsampling method
+    parser.add_argument('--downsampling_method', type=str, default='uniform', help='Downsampling method [FPS, random]')
     return parser.parse_args()
 
 def update_args_with_config(args):
@@ -166,6 +168,7 @@ def main(args):
         train_kwargs = {}
         train_kwargs.update({'beta': args.ens_beta})
         train_kwargs.update({'weight_type': args.weight_type})
+        train_kwargs.update({'downsampling_method': args.downsampling_method})
         train_dataset = DalesDataset(root=data_path, split='train', partitions=args.partitions, overlap=args.overlap, npoints=num_points, intensity=intensity, **train_kwargs)
         eval_kwargs = {}
         eval_dataset = DalesDataset(root=data_path, split='test', partitions=args.partitions, overlap=args.overlap, npoints=num_points, intensity=intensity, kwargs=eval_kwargs)
