@@ -46,7 +46,7 @@ Supervisor:
 
 ### 2.1.3. Dales Dataset <a name="213-dales-dataset"></a>
 The Dales Objects dataset is a Large Scale Benchmark Dataset for Segmentation and 
-Instance Segmentation of Aerial Lidar data. It contains close to half-bilion hand labeled points and the dataset covers over 10 square kilometers. The dataset contains the following classes with the following number of points:
+Instance Segmentation of Aerial Lidar data. It contains close to half-bilion hand labeled points and the dataset covers over 10 square kilometers. Each point also contains an intensity value. The dataset contains the following classes with the following number of points:
 
 | Class Name  | Number of Points |
 |-------------|------------------|
@@ -63,6 +63,20 @@ If we attend to the number of points per class, we can see that the dataset is h
 classes ground and vegetation, while the classes truck, powerline, fence and pole have a very low number of points. This is a problem
 that we will try to address in this project.
 
+The dataset is divided into 2 splits: train and test. The train split contains 58 .ply files, which consist of tiles of 500 x 500 meters and the test split contains 22 .ply files.
+
+Each tile contains around 12M points. This is a very large number of points and it is not feasible to train a model with all
+the points at once. First of all, we might not have enough GPU memory to store all the points, we would have to downsample the points
+heavily and we would lose a lot of information. For these reasons we decided to partition the tiles into smaller tiles.
+
+The partitiong of the tiles also depends in an overlap parameter [0-1], which determines how much overlap there is between the tiles
+to ensure that the objects are not cut. Partitioning these large point clouds takes very long CPU time. We have devided a tile into
+chunks so that each core of the CPU can process a chunk in parallel and store the information in a file. This way the process takes considerably less time.
+
+The partitioning is part of the class Dataset, where if the dataset with a certain partition parameter and overlap is not found in 
+disk, then it will create it and store it in disk. Every time the client calls the method getitem, then the dataset will load from disk the file of the particular partition for the given index and will return the points and the labels.
+
+#### Images of the partitions
 
 ### 2.2. Models <a name="22-models"></a>
 
