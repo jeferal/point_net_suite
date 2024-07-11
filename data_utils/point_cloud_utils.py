@@ -39,7 +39,7 @@ def get_point_cloud_limits(points: torch.Tensor) -> tuple:
     max_values = points.max(dim=0)[0]
     return min_values, max_values
 
-def downsample_voxel_grid(points: np.ndarray, targets: np.ndarray, voxel_size=0.05) -> tuple:
+def downsample_voxel_grid(points: np.ndarray, targets: np.ndarray, voxel_size=0.027) -> tuple:
     """
     Downsample the point cloud using a voxel grid approach.
     """
@@ -89,14 +89,17 @@ def downsample_inverse_planar_aware(points: np.ndarray, targets: np.ndarray, npo
     Increasing plane_threshold will identify larger planar regions 
     Increasing lower_downsample_rate will retain more points in planar regions
     Increasing higher_downsample_rate will retain more points in non-planar regions
-    Downsample the point cloud by reducing density in planar regions and preserving density in non-planar regions.
-    This version accounts for planar regions with thickness using PCA and explained variances.
-    with NOT normalized data, these work fine: planethreshold = 40     lower downsample 0.4     higher downsample 0.9
+    Downsample the point cloud by reducing density in planar regions and preserving density in non-planar regions
+    This version accounts for planar regions with thickness using PCA and explained variances
+    With NOT normalized data, these work fine: planethreshold = 40     lower downsample 0.4     higher downsample 0.9
+    With NORMALIZED data, these work fine: planethreshold = 40     lower downsample 0.4     higher downsample 0.9
 
     """
     print("Applying inverse planar-aware downsampling...")
     print(f"Initial point cloud has: {points.shape[0]} points")
     print(f"Using plane_threshold of: {plane_threshold}")
+    print(f"Using lower_downsample_rate of: {lower_downsample_rate}")
+    print(f"Using higher_downsample_rate of: {higher_downsample_rate}")
     
     # Apply DBSCAN to identify clusters
     clustering = DBSCAN(eps=plane_threshold, min_samples=10).fit(points)
@@ -127,6 +130,9 @@ def downsample_inverse_planar_aware(points: np.ndarray, targets: np.ndarray, npo
 
             non_planar_points = label_points[~planar_mask]
             non_planar_targets = label_targets[~planar_mask]
+
+            print(f"planar points: {len(planar_points)}")
+            print(f"non planar points: {len(non_planar_points)}")
 
             # Adjust downsample rates based on explained variances
             planar_downsample_rate = lower_downsample_rate * explained_variances[2]
@@ -163,6 +169,79 @@ def downsample_inverse_planar_aware(points: np.ndarray, targets: np.ndarray, npo
     print(f"Returned sampled points are: {sampled_points.shape[0]}")
     return sampled_points, sampled_targets
 
+def estimate_curvature(points, k=20):
+    """
+    Estimate the curvature of each point in the point cloud.
+    """
+    nbrs = NearestNeighbors(n_neighbors=k).fit(points)
+    distances, _ = nbrs.kneighbors(points)
+    curvatures = distances.var(axis=1)
+    return curvatures
+
+def downsample_curvature_based(points: np.ndarray, targets: np.ndarray, npoints: int = 15000, curvature_threshold=0.5, min_cluster_size=10, eps=0.5, high_curvature_rate=0.3, low_curvature_rate=0.15) -> tuple:
+    """
+    Downsample the point cloud by prioritizing points in high-curvature regions (e.g., vehicles).
+    """
+    print("Applying curvature-based downsampling...")
+    print(f"Initial point cloud has: {points.shape[0]} points")
+    print(f"Using curvature threshold of: {curvature_threshold}")
+    
+    # Estimate curvature
+    curvatures = estimate_curvature(points, k=20)
+    
+    high_curvature_mask = curvatures > curvature_threshold
+    high_curvature_points = points[high_curvature_mask]
+    high_curvature_targets = targets[high_curvature_mask]
+    
+    low_curvature_points = points[~high_curvature_mask]
+    low_curvature_targets = targets[~high_curvature_mask]
+    
+    # Apply DBSCAN to identify clusters in high-curvature points
+    clustering = DBSCAN(eps=eps, min_samples=min_cluster_size).fit(high_curvature_points)
+    labels = clustering.labels_
+    unique_labels = set(labels)
+
+    sampled_points = []
+    sampled_targets = []
+
+    for label in unique_labels:
+        label_mask = (labels == label)
+        label_points = high_curvature_points[label_mask]
+        label_targets = high_curvature_targets[label_mask]
+
+        if label != -1:
+            # Sample points from clusters with high curvature
+            n_samples = max(1, int(len(label_points) * high_curvature_rate))
+            choice = np.random.choice(len(label_points), n_samples, replace=False)
+            sampled_points.extend(label_points[choice])
+            sampled_targets.extend(label_targets[choice])
+        else:
+            # Sample from noise points (label == -1)
+            n_samples = max(1, int(len(label_points) * low_curvature_rate))
+            choice = np.random.choice(len(label_points), n_samples, replace=False)
+            sampled_points.extend(label_points[choice])
+            sampled_targets.extend(label_targets[choice])
+
+    # Sample points from low-curvature regions
+    n_low_curvature_samples = max(1, int(len(low_curvature_points) * low_curvature_rate))
+    low_curvature_choice = np.random.choice(len(low_curvature_points), n_low_curvature_samples, replace=False)
+    sampled_points.extend(low_curvature_points[low_curvature_choice])
+    sampled_targets.extend(low_curvature_targets[low_curvature_choice])
+    
+    sampled_points = np.array(sampled_points)
+    sampled_targets = np.array(sampled_targets)
+    print(f"Sampled points: {sampled_points.shape[0]}")
+
+    #if len(sampled_points) > npoints:
+    #    choice = np.random.choice(len(sampled_points), npoints, replace=False)
+    #    sampled_points = sampled_points[choice]
+    #    sampled_targets = sampled_targets[choice]
+
+    print(f"Returned sampled points: {sampled_points.shape[0]}")
+    return sampled_points, sampled_targets
+
+
+
 def downsample_feature_based(points: np.ndarray, targets: np.ndarray, npoints: int = 8000, k=20, high_variance_threshold=0.05, low_variance_rate=0.5) -> tuple:
     """
     Downsample the point cloud by prioritizing points in high-variance regions.
@@ -196,13 +275,13 @@ def downsample_feature_based(points: np.ndarray, targets: np.ndarray, npoints: i
 
     return sampled_points, sampled_targets
 
-def downsample_biometric(points: np.ndarray, targets: np.ndarray, npoints: int = 8000, edge_threshold=5, downsample_rate=0.5) -> tuple:
+def downsample_biometric(points: np.ndarray, targets: np.ndarray, npoints: int = 2000, edge_threshold=30, downsample_rate=0.6) -> tuple:
     """
     Increase edge_threshold makes the algorithm more selective about what considers edges, so only points with very high gradients will be considered edges.
     Increase downsample_rate allows more non-edge points to be sampled.
     Downsample the point cloud by prioritizing edges and high-gradient areas.
     """
-    print("Applying biometric downsampling...")
+    print("Applying biometric downsampling...1")
     print(f"Initial point cloud has: {points.shape[0]} points")
 
     # Calculate gradients using the Sobel operator
@@ -237,14 +316,8 @@ def downsample_biometric(points: np.ndarray, targets: np.ndarray, npoints: int =
 
     return sampled_points, sampled_targets
 
-# Example usage:
-points = np.random.rand(10000, 3) * 100  # Simulated raw data with larger scale
-targets = np.random.randint(0, 10, 10000)
 
-sampled_points, sampled_targets = downsample_biometric(points, targets, npoints=8000, edge_threshold=5, downsample_rate=0.4)
-print(sampled_points.shape, sampled_targets.shape)
-
-def downsample_combined(points: np.ndarray, targets: np.ndarray, npoints : int=2000) -> tuple:
+def downsample_combined(points: np.ndarray, targets: np.ndarray, npoints : int=7500) -> tuple:
     """
     Combine multiple downsampling methods to achieve a balanced downsampling.
     """
@@ -261,7 +334,7 @@ def downsample_combined(points: np.ndarray, targets: np.ndarray, npoints : int=2
 
     # Apply biometric downsampling if needed
     if len(points) > npoints:
-        print("Applying biometric downsampling...")
+        print("Applying biometric downsampling...2")
         points, targets = downsample_biometric(points, targets, npoints)
         print(f"After biometric downsampling: {points.shape[0]} points")
     
@@ -294,7 +367,7 @@ def downsample_parallel_combined(points: np.ndarray, targets: np.ndarray, npoint
     print(f"After inverse planar-aware downsampling: {planar_points.shape[0]} points")
 
     # Apply biometric downsampling
-    print("Applying biometric downsampling...")
+    print("Applying biometric downsampling...3")
     biometric_points, biometric_targets = downsample_biometric(points, targets, npoints)
     print(f"After biometric downsampling: {biometric_points.shape[0]} points")
 

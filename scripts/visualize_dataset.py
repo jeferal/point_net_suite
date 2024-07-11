@@ -40,6 +40,8 @@ if __name__ == "__main__":
     # Parse the arguments
     args = parser.parse_args()
 
+    print("Hello world")
+
     if args.dataset == 's3dis':
         print("Loading S3DIS dataset")
         dataset = S3DIS(args.data_path, area_nums=args.areas, split=args.split, npoints=args.num_points, r_prob=args.r_prob, include_rgb=False)
