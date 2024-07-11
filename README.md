@@ -4,7 +4,14 @@ TBC With Mariona!!!
 **Abstract here**
 
 ### About
-**Mention the authors, who we are, etc.**
+Final project of the Postgraduate Course in Artificial Intelligence with Deep Learning. Authors:
+- Sergio Calzón Molina
+- Flavia Diletta Caudana
+- Jesús Ferrándiz Alarcón
+- Jorge Ruiz Vázquez
+
+Supervisor:
+- Mariona Carós Roca
 
 ## Table of Contents <a name="toc"></a>
 
@@ -14,7 +21,11 @@ TBC With Mariona!!!
 
 - [2. Implementation](#2-Implementation)
     - [2.1. Data Preprocessing and Datasets](#21-data-preprocessing)
-    - [2.2. Experiments](#22-experiments)
+    - [2.2. Models](#22-models)
+        - [2.2.3. PointNet](#223-pointnet)
+        - [2.2.4. PointNet++](#224-pointnetpp)
+    - [2.3. Sampling](#223-sampling)
+    - [2.4. Experiments](#24-experiments)
 
 - [3. Final application](#3-Final-application)
 - [4. How to run the code](#4-How-to-run-the-code)
@@ -33,7 +44,15 @@ TBC With Mariona!!!
 ### 2.1. Data Preprocessing and Datasets <a name="21-data-preprocessing"></a>
 Talk about datasets, their particularities and any preprocessing such as Areas script, dales dataset.
 
-### 2.2. Experiments <a name="22-experiments"></a>
+### 2.2. Models <a name="22-models"></a>
+
+#### 2.2.3. PointNet <a name="223-pointnet"></a>
+
+#### 2.2.4. PointNet++ <a name="224-pointnetpp"></a>
+
+### 2.3. Sampling <a name="23-sampling"></a>
+
+### 2.4. Experiments <a name="24-Experiments"></a>
 
 Intro talking about:
 - mlflow to log
