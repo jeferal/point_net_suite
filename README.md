@@ -48,15 +48,59 @@ Talk about datasets, their particularities and any preprocessing such as Areas s
 
 #### 2.2.3. PointNet <a name="223-pointnet"></a>
 
+<p align="center">
+  <img src="assets/pointnet.png">
+</p>
+
 #### 2.2.4. PointNet++ <a name="224-pointnetpp"></a>
 
 ### 2.3. Sampling <a name="23-sampling"></a>
 
 ### 2.4. Experiments <a name="24-Experiments"></a>
 
+#### 2.4.1. Experiment logging <a name="241-experiment-logging"></a>
+We have conducted different experiments using different models and hyperparameters. We decided to log the metrics of every 
+experiment in Mlflow because it is a widely used open source application that can help us keep track of the experiments, understand
+the results and better choose the hyperparameters.
+
+The Mlflow server was running in a Google Cloud instance so that every member of the team can access to it from any machine.
+In order to run the mlflow server in the Google Cloud instance, the machine needs to have docker installed. After installing docker, 
+the Mlflow application can be run like this:
+```bash
+docker run -it --name mlflow -p <host_port>:5000 -v <mlruns_host_path>:/mlruns -v <mlartifacts_host_path>:/mlartifacts ghcr.io/mlflow/mlflow:v2.13.0 mlflow ui --host 0.0.0.0
+```
+To access from any other machine via http, we have to change the firewall rules of the virtual machine in Google Cloud so that the port is exposed to the internet. Further work should involve changing the security of the communication to https.
+
+For this experiment we have logged the following metrics:
+
+**Classification task**:
+- train_loss
+- eval_loss
+- train_mean_accuracy
+- eval_mean_accuracy
+- train_per_class_loss
+- eval_per_class_loss
+
+**Segmentation task**:
+- train_loss
+- eval_loss
+- train_accuracy
+- eval_accuracy
+- train_per_class_iou
+- eval_per_class_iou
+
+We have also logged **system metrics** which some of them are:
+- System memory usage
+- GPU memory usage
+- CPU utilization percentage
+
+And other information that is helpful for us:
+- A checkpoint of the best model so far in the format .pth
+- A plot with train and eval classes distribution
+- The command the script was run
+- The arguments the train was created with for reproducibility 
+
 Intro talking about:
-- mlflow to log
-- metrics we have logged
 - checkpoints and info logged into .pth
 
 Each experiment must contain:
