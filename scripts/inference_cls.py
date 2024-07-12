@@ -20,12 +20,11 @@ def main(args):
     model.eval()  # Set the model to evaluation mode
     root_data_path = args.data_path
 
-    loader_args = type('', (), {})()
-    loader_args.num_point = args.num_points
-    loader_args.use_uniform_sample = False
-    loader_args.use_normals = False
-    loader_args.num_category = 40
-    test_dataset = ModelNetDataLoader(root=root_data_path, args=loader_args, split='test', pre_process_data=False)
+    test_dataset = ModelNetDataLoader(
+        root=root_data_path,
+        split='test',
+        pre_process_data=False,
+        num_point=args.num_points)
 
     # Get a random idx from test dataset
     idx = random.randint(0, len(test_dataset))

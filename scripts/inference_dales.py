@@ -7,8 +7,9 @@ import time
 
 import open3d as o3d
 
-from models.pointnet_sem_segmentation import get_model
-from data_utils.dales_dataset import DalesDataset
+from models.point_net_v2_sem_segmentation_msg import get_model
+
+from data_utils.dales_dataset import DalesDataset, visualize_pointcloud
 
 
 CATEGORIES = {
@@ -24,15 +25,27 @@ CATEGORIES = {
 NUM_CLASSES = len(CATEGORIES)
 
 def main(args):
-    model = get_model(num_points=args.num_points, m=NUM_CLASSES)
+    # Get the shape of the first layer of the model
+    # to know if the architecture accepts extra features (intensity) or not
     checkpoint = torch.load(args.model_path)
+    first_layer_shape = checkpoint['model_state_dict']['classificator.feature_learner.sa1.conv_blocks.0.0.weight'].shape
+    input_dim = first_layer_shape[1]
+
+    model = get_model(num_points=args.num_points, m=NUM_CLASSES, input_dim=input_dim)
     model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()  # Set the model to evaluation mode
 
     print("Loaded model")
 
+    intensity = False
+    if input_dim == 4:
+        intensity = True
+
     root_data_path = args.data_path
-    test_dataset = DalesDataset(root_data_path, 'test', partitions=10, intensity=False, overlap=0.1, npoints=args.num_points)
+    test_dataset = DalesDataset(
+        root_data_path, 'test',
+        partitions=args.partitions, overlap=args.overlap,
+        intensity=intensity, npoints=args.num_points)
 
     # Get a random idx from test dataset
     idx = random.randint(0, len(test_dataset))
@@ -59,14 +72,10 @@ def main(args):
     # Pred has the shape [1, point_number, num_classes]
     # We want to get the class with the highest probability for each point
     pred = pred.argmax(dim=2)
-    point_cloud = o3d.geometry.PointCloud()
-    point_cloud.points = o3d.utility.Vector3dVector(points)
-    # Create a color map for the classes
-    colors = np.zeros((points.shape[0], 3))
-    for i in range(NUM_CLASSES):
-        colors[pred[0] == i] = np.array([random.random(), random.random(), random.random()])
-    point_cloud.colors = o3d.utility.Vector3dVector(colors)
-    o3d.visualization.draw_geometries([point_cloud], window_name=f"Inference took {inference_time:.2f} seconds")
+
+    window_name=f"Inference took {inference_time:.2f} seconds"
+    visualize_pointcloud(points, pred.squeeze(), window_name)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Inference for semantic segmentation')
@@ -76,6 +85,10 @@ if __name__ == '__main__':
     parser.add_argument('data_path', type=str, help='Path to the dataset, for example data/stanford_indoor3d')
     # Another argument that is the number of points, by default 4096
     parser.add_argument('--num_points', type=int, default=4096, help='Number of points in each sample')
+    # Argument that is the number of partitions, by default 10
+    parser.add_argument('--partitions', type=int, default=10, help='Number of partitions in the dataset')
+    # Argument that is the overlap, by default 0.1
+    parser.add_argument('--overlap', type=float, default=0.1, help='Overlap between partitions')
 
     args = parser.parse_args()
 
