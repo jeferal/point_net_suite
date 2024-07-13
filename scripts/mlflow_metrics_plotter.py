@@ -112,6 +112,12 @@ def main(args):
 
     # Plot the per class iou metrics
     save_path = os.path.join(run_id, f"{run_id}_iou.png")
+    # Test if train_iou and eval_iou have the same length, if not, remove the last elements from the longest one
+    # until they have the same length
+    while len(train_iou) > len(eval_iou):
+        train_iou.pop()
+    while len(eval_iou) > len(train_iou):
+        eval_iou.pop()
     plot_metrics_by_class_grid(train_iou, eval_iou, show=False, save_path=save_path)
 
 

@@ -144,8 +144,17 @@ And other information that is helpful for us:
 
 #### 2.4.2. Experiments with Dales PointNet++ semantic segmentation <a name="242-experiments-dales-pointnetpp"></a>
 
-**Experiment Base Hyper Parameters:**
+Experiment template
+**Experiment Name:**
+- Params table
+**Hypothesis:**
+- Describe the hypothesis here.
+**Results:**
+- Describe the results here.
+**Conclusions:**
+- Describe the conclusions here.
 
+**Experiment Base Hyper Parameters:**
 | Learning Rate | Optimizer | Batch Size | Num Points | Grouping Method | Dropout | Scheduler | Label Smoothing | Extra Feature Dropout |
 |---------------|-----------|------------|------------|-----------------|---------|-----------|------------------|-----------------------|
 | 0.001         | AdamW     | 8          | 8192       | MSG             | 0.5     | Cosine    | 0.1              | 0.2                   |
@@ -178,12 +187,66 @@ that is green could be classified as vegetation. We want to avoid that and make 
   <em>Figure <number>: IoU.</em>
 </p>
 
+**Conclusions:**
+- Describe the conclusions here.
 
+**Experiment Increased Batch size and used SSG:**
+
+| Learning Rate | Optimizer | Batch Size | Num Points | Grouping Method | Dropout | Scheduler | Label Smoothing | Extra Feature Dropout |
+|---------------|-----------|------------|------------|-----------------|---------|-----------|------------------|-----------------------|
+| 0.001         | AdamW     | 16          | 8192       | SSG             | 0.5     | Cosine    | 0.1              | 0.2                   |
+
+**Hypothesis:**
+
+**Results:**
+
+<p align="center">
+  <img src="assets/experiment_dales_2/caa5682dd5a5462a8426d207c01b6be8_loss.png">
+  <br>
+  <em>Figure <number>: Loss.</em>
+</p>
+
+<p align="center">
+  <img src="assets/experiment_dales_2/caa5682dd5a5462a8426d207c01b6be8_accuracy.png">
+  <br>
+  <em>Figure <number>: Accuracy.</em>
+</p>
+
+<p align="center">
+  <img src="assets/experiment_dales_2/caa5682dd5a5462a8426d207c01b6be8_iou.png" width="60%">
+  <br>
+  <em>Figure <number>: IoU.</em>
+</p>
 
 **Conclusions:**
 - Describe the conclusions here.
 
+**Experiment Decreased Number of Points**
+| Learning Rate | Optimizer | Batch Size | Num Points | Grouping Method | Dropout | Scheduler | Label Smoothing | Extra Feature Dropout |
+|---------------|-----------|------------|------------|-----------------|---------|-----------|------------------|-----------------------|
+| 0.001         | AdamW     | 8          | 4096       | MSG             | 0.5     | Cosine    | 0.1              | 0.2                   |
 
+**Hypothesis:**
+
+**Results:**
+
+<p align="center">
+  <img src="assets/experiment_dales_3/e6befa89190c4d268413bfc58df4caef_loss.png">
+  <br>
+  <em>Figure <number>: Loss.</em>
+</p>
+
+<p align="center">
+  <img src="assets/experiment_dales_3/e6befa89190c4d268413bfc58df4caef_accuracy.png">
+  <br>
+  <em>Figure <number>: Accuracy.</em>
+</p>
+
+<p align="center">
+  <img src="assets/experiment_dales_3/e6befa89190c4d268413bfc58df4caef_iou.png" width="60%">
+  <br>
+  <em>Figure <number>: IoU.</em>
+</p>
 
 Intro talking about:
 - checkpoints and info logged into .pth
