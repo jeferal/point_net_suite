@@ -113,6 +113,12 @@ docker run -it --name mlflow -p <host_port>:5000 -v <mlruns_host_path>:/mlruns -
 ```
 To access from any other machine via http, we have to change the firewall rules of the virtual machine in Google Cloud so that the port is exposed to the internet. Further work should involve changing the security of the communication to https.
 
+<p align="center">
+  <img src="assets/mlflow.png">
+  <br>
+  <em>Figure <number>: Mlflow server.</em>
+</p>
+
 For this experiment we have logged the following metrics:
 
 **Classification task**:
@@ -167,7 +173,8 @@ value of the data. As in the model could learn to create a map between intensity
 that is green could be classified as vegetation. We want to avoid that and make the model pay attention to geometrical features too.
 
 **Results:**
-- Describe the results here.
+- We show a comparison between the train and evaluation loss, accuracy and IoU to
+understand if the model is overfitting or not and how good it is performing with each class.
 
 <div style="display: flex; justify-content: center;">
   <div style="flex: 50%; padding: 10px;">
@@ -193,7 +200,10 @@ that is green could be classified as vegetation. We want to avoid that and make 
 </p>
 
 **Conclusions:**
-- Describe the conclusions here.
+- The model does not seem to overfit, both train and evaluation loss are decreassing
+until the steabilize. Finally, we can see that there are certain classes that the model
+is not able to classify well, like class 3, 5 and 6. These classes are the ones with the
+least number of points in the dataset.
 
 **Experiment Increased Batch size and used SSG:**
 
@@ -202,6 +212,8 @@ that is green could be classified as vegetation. We want to avoid that and make 
 | 0.001         | AdamW     | 16          | 8192       | SSG             | 0.5     | Cosine    | 0.1              | 0.2                   |
 
 **Hypothesis:**
+Increasing the batch size should make the train faster because we are using more data at
+once.
 
 **Results:**
 
@@ -237,6 +249,10 @@ that is green could be classified as vegetation. We want to avoid that and make 
 | 0.001         | AdamW     | 8          | 4096       | MSG             | 0.5     | Cosine    | 0.1              | 0.2                   |
 
 **Hypothesis:**
+By decreasing the number of points, perhaps the model is able to pay more attention to
+very small objects or very local features. However, decreasing the number of points also
+means that the first random downsampling of the points will eliminate more information.
+We also want to know how much this parameter affects the performance of the model.
 
 **Results:**
 
@@ -264,12 +280,8 @@ that is green could be classified as vegetation. We want to avoid that and make 
 </p>
 
 **Conclusions:**
-
-<p align="center">
-  <img src="assets/mlflow.png">
-  <br>
-  <em>Figure <number>: Mlflow server.</em>
-</p>
+The results seem quite similar to the previous experiment, where the model still struggles
+to classify the classes with the least number of points.
 
 **Experiment Effective Number of Samples**
 | Learning Rate | Optimizer | Batch Size | Num Points | Grouping Method | Dropout | Scheduler | Label Smoothing | Extra Feature Dropout |
@@ -279,6 +291,9 @@ that is green could be classified as vegetation. We want to avoid that and make 
 ens_beta: 0.99999
 
 **Hypothesis:**
+Effective Number of Samples is a technique to deal with unbalanced datasets. The
+idea is to give more weight to the minority classes so that the model pays more
+attention to them following a specific formula.
 
 **Results:**
 
@@ -306,6 +321,10 @@ ens_beta: 0.99999
 </p>
 
 **Conclusions:**
+It has taken fewer epochs for the model to start learning underrepresented classes. We can
+see this in class 3 and 6 by comparing with previous experiments. However, after a while,
+the results are similar to the previous experiments, but the evaluation IoU of this experiment is tending to increase, so perhaps with longer training, the results regarding
+minority classes could be better.
 
 **Experiment Weighted Loss**
 | Learning Rate | Optimizer | Batch Size | Num Points | Grouping Method | Dropout | Scheduler | Label Smoothing | Extra Feature Dropout |
@@ -313,6 +332,8 @@ ens_beta: 0.99999
 | 0.001         | AdamW     | 16          | 8192       | MSG             | 0.5     | Cosine    | 0.0              | 0.2                   |
 
 **Hypothesis:**
+Same as the previous experiment, we expect that weighting the loss will help the model
+to pay more attention to the minority classes.
 
 **Results:**
 
@@ -340,8 +361,13 @@ ens_beta: 0.99999
 </p>
 
 **Conclusions:**
+The model still struggles with the minority classes and comparing this experiment with
+using Effective Number of Samples, ENS seems to get better results.
 
 **Experiment No Weighted Loss or Label Smoothing**
+With this experiment we expect to see that because the dataset is highly unbalanced, the
+model will not be able to learn the minority classes well.
+
 | Learning Rate | Optimizer | Batch Size | Num Points | Grouping Method | Dropout | Scheduler | Label Smoothing | Extra Feature Dropout |
 |---------------|-----------|------------|------------|-----------------|---------|-----------|------------------|-----------------------|
 | 0.001         | AdamW     | 16          | 8192       | MSG             | 0.5     | Cosine    | 0.0              | 0.2                   |
@@ -373,6 +399,7 @@ ens_beta: 0.99999
 </p>
 
 **Conclusions**
+This training stopped too early to reach a conclusion. However, comparing the first 10 epochs of this experiment with previous ones, the evaluation loss is much more unstable.
 
 **Experiment Dense Farthest Point Sampling**
 | Learning Rate | Optimizer | Batch Size | Num Points | Grouping Method | Dropout | Scheduler | Label Smoothing | Extra Feature Dropout |
@@ -381,6 +408,11 @@ ens_beta: 0.99999
 Partitions 10
 
 **Hypothesis:**
+We hypothesize that incorporating a density-related farthest point sampling algorithm into the PointNet++ architecture will enhance its ability to capture local features, resulting in improved classification accuracy for point cloud data. Specifically, we expect the density-related sampling method to better represent the geometric distribution of the points, particularly in areas with varying densities, leading to better performance on classification tasks.
+
+**Experiment Setup**
+PointNet++ Backbone: The core network architecture will be PointNet++, which builds on PointNet by adding hierarchical feature learning and local neighborhood information.
+Sampling Algorithm: We will replace the traditional farthest point sampling (FPS) algorithm with the proposed density-related farthest point sampling (DFPS) algorithm.
 
 **Results:**
 <div style="display: flex; justify-content: center;">
@@ -407,6 +439,7 @@ Partitions 10
 </p>
 
 **Conclusions**
+The implementation and principle of PointNet++ and proposes a density-dependent farthest point sampling algorithm by analyzing the limitations of the traditional farthest point sampling algorithm, solves them to a certain extent. However, the model seems to performe worsew will class 6. Perhaps the model needs more points.
 
 **Experiment DFPS Increasing Number of Points**
 | Learning Rate | Optimizer | Batch Size | Num Points | Grouping Method | Dropout | Scheduler | Label Smoothing | Extra Feature Dropout |
@@ -415,6 +448,8 @@ Partitions 10
 Partitions 10
 
 **Hypothesis:**
+Increasing the number of points that we input to the model. We expect that because we
+add more information to the model, it should be able to learn better.
 
 **Results:**
 <div style="display: flex; justify-content: center;">
@@ -441,6 +476,8 @@ Partitions 10
 </p>
 
 **Conclusions**
+The evaluation loss and accuracy are much more stable than in the previous experiment.
+Also, the model does better at learning the minority classes than in the pervious experiment. Adding more points has helped the model to learn better with DFPS. 
 
 **Experiment More Dropout Extra Features, Weighted Loss**
 | Learning Rate | Optimizer | Batch Size | Num Points | Grouping Method | Dropout | Scheduler | Label Smoothing | Extra Feature Dropout |
@@ -449,6 +486,8 @@ Partitions 10
 Partitions 10
 
 **Hypothesis:**
+By adding more dropout to the extra features, we expect the model not to overfit to the
+intensity signal of the data. Also we are using weighted loss as a last attempt to make the model learn the minority classes better.
 
 **Results:**
 <div style="display: flex; justify-content: center;">
@@ -475,17 +514,9 @@ Partitions 10
 </p>
 
 **Conclusions**
-
-
-Intro talking about:
-- checkpoints and info logged into .pth
-
-Each experiment must contain:
-1. Hypothesis
-2. Experiment Setup / Implementation
-3. Results
-4. Conclusions
-
+The evaluation accuracy has dropped considerably compared to previous experiments. Even
+compared to the one where weighted loss was used. Perhaps this amount of dropout is too
+much for this model and for this dataset in particular.
 
 ## 3. Final application <a name="3-Final-application"></a>
 The Graphical User Interface
