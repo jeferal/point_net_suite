@@ -161,7 +161,7 @@ The process can be described as:
 
 1. **Random Selection:**
 
-    Generate a random sample of indices $ S $ of size $ M$ from the set $(1, 2, \ldots, N)$ without replacement.
+    Generate a random sample of indices $S$ of size $M$ from the set $(1, 2, \ldots, N)$ without replacement.
     
     $$S = \{i_1, i_2, \ldots, i_M\} \quad \text{where} \quad i_j \in \{1, 2, \ldots, N\} \quad \text{and} \quad |S| = M$$
 
@@ -178,28 +178,28 @@ The process can be described as:
 
 Voxel grid downsampling divides the point cloud into a 3D grid of small cubes, also called voxels. Within each voxel, points are averaged to create a single representative point. The voxel size can be modified in order to adjust the density in the output point cloud. This method reduces the number of points while preserving to some extent the spatial structure of the data, it also helps in reducing noise and computational complexity.
 
-Given a point cloud and a voxel size $ v $:
+Given a point cloud and a voxel size $v$:
 
 1. **Voxelization:**
 
-    Compute the voxel index for each point $p_i = (x_i, y_i, z_i) $:
+    Compute the voxel index for each point $p_i = (x_i, y_i, z_i)$:
 
-    $$ \text{voxel\_index}(p_i) = \left( \left\lfloor \frac{x_i}{v} \right\rfloor, \left\lfloor \frac{y_i}{v} \right\rfloor, \left\lfloor \frac{z_i}{v} \right\rfloor \right) $$
+    $$\text{voxel\_index}(p_i) = \left( \left\lfloor \frac{x_i}{v} \right\rfloor, \left\lfloor \frac{y_i}{v} \right\rfloor, \left\lfloor \frac{z_i}{v} \right\rfloor \right)$$
 
 
 2. **Averaging:**
 
     For each voxel, compute the centroid of the points within that voxel:
 
-    $$ p_{\text{centroid}} = \frac{1}{|V_k|} \sum_{p \in V_k} p $$
+    $$p_{\text{centroid}} = \frac{1}{|V_k|} \sum_{p \in V_k} p$$
 
-    where $ V_k $ is the set of points in the $ k $-th voxel.
+    where $V_k$ is the set of points in the $k$-th voxel.
 
 3. **Downsampled Point Cloud:**
 
-    The downsampled point cloud $ P' $ is the set of centroids of all non-empty voxels:
+    The downsampled point cloud $P'$ is the set of centroids of all non-empty voxels:
 
-    $$ P' = \{ p_{\text{centroid}_1}, p_{\text{centroid}_2}, \ldots, p_{\text{centroid}_M} \} $$
+    $$P' = \{ p_{\text{centroid}_1}, p_{\text{centroid}_2}, \ldots, p_{\text{centroid}_M} \}$$
 
 #### 2.3.4. Inverse Planar-Aware Downsampling <a name="234-inverse-planar"></a>
 Inverse planar-aware downsampling reduces the density of points in planar regions while preserving the density in non-planar regions, thus aiming to maintain complex features while hollowing out planar regions. In this way it can retain more relevant information about a point cloud with a lower amount of points, making it more effective in terms of computational cost. 
