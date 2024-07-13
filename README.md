@@ -694,17 +694,36 @@ but PointNet++ is much better for large scenes.
 The Graphical User Interface
 
 ## 4. How to run the code <a name="4-How-to-run-the-code"></a>
-It is mandatory to show how to run the code
 
-## 5. Conclusions <a name="5-conclusions"></a>
+### 4.1. Installation
+1. **Clone the Repository:**
+```bash
+git clone https://github.com/jeferal/point_net_suite.git
+cd point_net_suite
+```
 
-## 6. Acknowledgements <a name="6-Acknowledgements"></a>
+2. **Install the dependencies**
 
+#### Option 1: via pip and requirements.txt
+If you are using a virtual environment or python environment within a docker container or
+a python interpreter, you can clone and install the requirements with pip.
+```bash
+pip3 install -r requirements.txt
+pip3 install -e .
+```
 
+#### Option 2: Conda Environment via yaml file
 
-# The Point Net Suite
+**Create the Conda Environment:**
+```bash
+conda env create -f conda_env_backup.yaml
+```
+**Activate the Environment:**
+```bash
+conda activate pointnet_thesis
+```
 
-## Download and process datasets
+### 4.2. Download and process datasets
 * Dataset [ModelNet](https://shapenet.cs.stanford.edu/media/modelnet40_normal_resampled.zip):
 ```bash
 wget https://shapenet.cs.stanford.edu/media/modelnet40_normal_resampled.zip --no-check-certificate
@@ -723,64 +742,7 @@ Use the script to process the areas of the dataset:
 python3 point_net_suite/data_utils/s3_dis_data_gen.py <path_to_the_Area>
 ```
 
-## Installation
-
-### Option 1: pip3 venv via requirements.txt 
-1. **Clone the Repository:**
-    ```bash
-    git clone https://github.com/jeferal/point_net_suite.git
-    cd point_net_suite
-    ```
-
-2. **Install Requirements:**
-    ```bash
-    pip3 install -r requirements.txt
-    pip3 install -e .
-    ```
-### Option 2: Conda Environment via yaml file
-
-1. **Clone the Repository:**
-    ```bash
-    git clone https://github.com/jeferal/point_net_suite.git
-    cd point_net_suite
-    ```
-
-2. **Create the Conda Environment:**
-    ```bash
-    conda env create -f conda_env_backup.yaml
-    ```
-
-3. **Activate the Environment:**
-    ```bash
-    conda activate pointnet_thesis
-    ```
-
-## Train a model
-```bash
-python3 point_net_suite/train_classification.py
-```
-
-```bash
-python3 point_net_suite/train_segmentation.py
-```
-
-The trainings will be monitored by mlflow if
-using the argument --use_mlflow.
-
-## Inference
-Classification:
-```bash
-python3 scripts/inference_cls.py <model_path> <dataset_path>
-```
-![Alt text](./assets/point_net_inference_cls.png)
-
-Semantic Segmentation:
-![Alt text](./assets/point_net_inference_seg.png)
-```bash
-python3 scripts/inference_seg.py <model_path> <dataset_path>
-```
-
-## DALES dataset
+* DALES Dataset:
 The dales dataset is composed of files with very large point clouds. These
 point clouds must be partitioned into tiles so that we can use them for training.
 The script `scripts/visualize_dales.py` can be used to visualize the tiles of the
@@ -793,8 +755,109 @@ python3 scripts/visualize_dales.py data/DALESObjects <split_name> <index> --part
 <img src="./assets/dales_tile_example_1.png" alt="Alt text" style="width:50%;">
 <img src="./assets/dales_tile_example_2.png" alt="Alt text" style="width:50%;">
 
-## Test
+### 4.3. How to run the scripts
+We have added an argument parser to any script that we have created. The first thing to understand
+how to run any script is asking for help to the parser by executing:
+```bash
+python3 <script_name>.py --help
+```
+The output will show what positional arguments, key arguments and flags the script acceps and a brief
+description of what the arguments are for.
+
+We have created the following scripts:
+1. **train_segmentation.py**:
+This script is used to train a model for semantic segmentation. We have used this script to train
+PointNet and PointNet++ for the S3DIS and Dales datasets. The script accepts arguments as in what
+model to train, what hyperparameters, etc. It is also possible to pass the arguments via a yaml file,
+for example:
+```yaml
+batch_size: 16
+dataset: dales
+dataset_path: data/DALESObjects
+dropout: 0.5
+epoch: 100
+extra_feat_dropout: 0.5
+label_smoothing: 0.0
+learning_rate: 0.001
+mlflow_run_name: run_extra_features_more_dropout
+model: pointnet_v2_sem_seg_msg
+num_point: 8192
+optimizer: AdamW
+overlap: 0.1
+partitions: 10
+remove_checkpoint: true
+scheduler: Cosine
+test_area:
+- 3
+train_area:
+- 1
+- 2
+- 4
+use_cpu: false
+use_extra_features: true
+use_mlflow: true
+weight_type: Sklearn
+ens_beta: 0.99999
+```
+And then run the script like this:
+```bash
+python3 train_segmentation.py --config <path_to_the_yaml_file>.yaml
+```
+In any training script, if the argument use_mlflow is set to true, the script will log the metrics
+in a mlflow server.
+
+2. **train_classification.py**:
+This script is used to train a model for classification. It can be run as follows (this would run
+the script with the default parameters, to understand what the parameters are, run the script with --help):
+```bash
+python3 train_classification.py
+```
+
+Within the scripts folder, there are also scripts to run inference with the trained models, visualize
+the data, etc.
+3. **inference_cls.py**:
+This script is used to run inference with a trained model for classification. It can be run as follows:
+```bash
+python3 inference_cls.py <path_to_the_model> <path_to_the_dataset> --num_points <optional_number_of_points>
+```
+![Alt text](./assets/point_net_inference_cls.png)
+
+4. **inference_seg.py**:
+This script is used to run inference with a trained model for semantic segmentation for the S3DIS dataset. It can be run as follows:
+```bash
+python3 inference_seg.py <path_to_the_model> <path_to_the_dataset> --num_points <optional_number_of_points>
+```
+![Alt text](./assets/point_net_inference_seg.png)
+
+5. **inference_dales.py**:
+This script is used to£ run inference with a trained model for semantic segmentation for the Dales dataset. It can be run as follows:
+```bash
+python3 inference_seg.py <path_to_the_model> <path_to_the_dataset> --num_points <optional_number_of_points> --partitions <number_of_partitions> --overlap <overlap_from_0_to_1> --intensity
+```
+This is an example of the expected output, a point cloud where each point is colored according to the
+class the model has predicted:
+<p align="center">
+  <img src="assets/inference_dales.png" width="100%">
+  <br>
+  <em>Figure <number>: Inference with dales dataset.</em>
+</p>
+
+6. **visualize_dataset.py**:
+This script is used to visualize the data of the S3DIS or DALES dataset. It can be run as follows:
+```bash
+python3 visualize_dataset.py <dataset_name> <path_to_the_dataset> <split_name> <index> --areas <list_of_areas_s3dis> --partitions <number_of_partitions> --overlap <overlap_from_0_to_1> --intensity 
+--r_prob <r_prob>
+```
+
+### 4.3. Testing
+We have implemented tests to check the functionality of the processing of the Dales dataset.
+Implementing tests help us to make sure that the code is working as expected and also
+to help the development of new features without breaking the old functionality.
 The tests are located in the test folder. All the tests can be run with the following command:
 ```bash
-python -m unittest discover -s test -p 'test_*.py' -v
+python3 -m unittest discover -s test -p 'test_*.py' -v
 ```
+
+## 5. Conclusions <a name="5-conclusions"></a>
+
+## 6. Acknowledgements <a name="6-Acknowledgements"></a>
