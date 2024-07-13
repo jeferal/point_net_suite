@@ -44,6 +44,13 @@ Supervisor:
 
 ### 2.1. Data Preprocessing and Datasets <a name="21-data-preprocessing"></a>
 
+### 2.1.2. S3DIS Dataset <a name="212-s3dis-dataset"></a>
+<p align="center">
+  <img src="assets/s3dis_train_distribution.jpeg">
+  <br>
+  <em>Figure <number>: S3DIS Dataset train distribution.</em>
+</p>
+
 ### 2.1.3. Dales Dataset <a name="213-dales-dataset"></a>
 The Dales Objects dataset is a Large Scale Benchmark Dataset for Segmentation and 
 Instance Segmentation of Aerial Lidar data. It contains close to half-bilion hand labeled points and the dataset covers over 10 square kilometers. Each point also contains an intensity value. The dataset contains the following classes with the following number of points:
@@ -148,13 +155,49 @@ And other information that is helpful for us:
 - The command the script was run
 - The arguments the train was created with for reproducibility 
 
-#### 2.4.2. Experiments with Dales PointNet++ semantic segmentation <a name="242-experiments-dales-pointnetpp"></a>
+#### 2.4.2. Experiments with S3Dis PointNet semantic segmentation <a name="242-experiments-s3dis-pointnet"></a>
+
+**Experiment PointNet with base hyper parameters:**
+**Hypothesis:**
+- The model should be able to learn the classes of the S3DIS dataset with the base parameters.
+**Experiment Setup:**
+- PointNet is trained in the S3Dis dataset.
+**Results:**
+<p align="center">
+  <img src="assets/s3dis_experiment_1_no_wloss.jpeg">
+  <br>
+  <em>Figure <number>: IoU by Class.</em>
+</p>
+
+**Conclusions:**
+- The model is able to learn the classes that have the higher number of points. PointNet struggles
+to classify points of classes with a low number of points such as class 4, 5, 9, etc. This figure and
+the figure that shows the data distribution of the train data shows a correlation.
+
+**Experiment PointNet with Weighted Loss:**
+**Hypothesis:**
+- The idea behing the weighted loss is to penalize more the minority classes so that the model
+learns to classify them better.
+**Results:**
+<p align="center">
+  <img src="assets/s3dis_experiment_2_wloss.jpeg">
+  <br>
+  <em>Figure <number>: IoU by Class.</em>
+</p>
+
+**Conclusions:**
+- With weighted loss, the plot shows that PointNet is actually learning to classify minority classes.
+This is a huge improvement over the previous experiment.
+
+#### 2.4.3. Experiments with Dales PointNet++ semantic segmentation <a name="243-experiments-dales-pointnetpp"></a>
 
 Experiment template
 **Experiment Name:**
 - Params table
 **Hypothesis:**
 - Describe the hypothesis here.
+**Experiment Setup:**
+- Describe the experiment setup here.
 **Results:**
 - Describe the results here.
 **Conclusions:**
