@@ -169,17 +169,22 @@ that is green could be classified as vegetation. We want to avoid that and make 
 **Results:**
 - Describe the results here.
 
-<p align="center">
-  <img src="assets/experiment_dales_1/3fb3c811994643fcbb435d886be7074d_loss.png">
-  <br>
-  <em>Figure <number>: Loss.</em>
-</p>
-
-<p align="center">
-  <img src="assets/experiment_dales_1/3fb3c811994643fcbb435d886be7074d_accuracy.png">
-  <br>
-  <em>Figure <number>: Accuracy.</em>
-</p>
+<div style="display: flex; justify-content: center;">
+  <div style="flex: 50%; padding: 10px;">
+    <p align="center">
+      <img src="assets/experiment_dales_1/3fb3c811994643fcbb435d886be7074d_loss.png">
+      <br>
+      <em>Figure <number>: Loss.</em>
+    </p>
+  </div>
+  <div style="flex: 50%; padding: 10px;">
+    <p align="center">
+      <img src="assets/experiment_dales_1/3fb3c811994643fcbb435d886be7074d_accuracy.png">
+      <br>
+      <em>Figure <number>: Accuracy.</em>
+    </p>
+  </div>
+</div>
 
 <p align="center">
   <img src="assets/experiment_dales_1/3fb3c811994643fcbb435d886be7074d_iou.png" width="60%">
@@ -200,17 +205,22 @@ that is green could be classified as vegetation. We want to avoid that and make 
 
 **Results:**
 
-<p align="center">
-  <img src="assets/experiment_dales_2/caa5682dd5a5462a8426d207c01b6be8_loss.png">
-  <br>
-  <em>Figure <number>: Loss.</em>
-</p>
-
-<p align="center">
-  <img src="assets/experiment_dales_2/caa5682dd5a5462a8426d207c01b6be8_accuracy.png">
-  <br>
-  <em>Figure <number>: Accuracy.</em>
-</p>
+<div style="display: flex; justify-content: center;">
+  <div style="flex: 50%; padding: 10px;">
+    <p align="center">
+      <img src="assets/experiment_dales_2/caa5682dd5a5462a8426d207c01b6be8_loss.png">
+      <br>
+      <em>Figure <number>: Loss.</em>
+    </p>
+  </div>
+  <div style="flex: 50%; padding: 10px;">
+    <p align="center">
+      <img src="assets/experiment_dales_2/caa5682dd5a5462a8426d207c01b6be8_accuracy.png">
+      <br>
+      <em>Figure <number>: Accuracy.</em>
+    </p>
+  </div>
+</div>
 
 <p align="center">
   <img src="assets/experiment_dales_2/caa5682dd5a5462a8426d207c01b6be8_iou.png" width="60%">
@@ -230,17 +240,22 @@ that is green could be classified as vegetation. We want to avoid that and make 
 
 **Results:**
 
-<p align="center">
-  <img src="assets/experiment_dales_3/e6befa89190c4d268413bfc58df4caef_loss.png">
-  <br>
-  <em>Figure <number>: Loss.</em>
-</p>
-
-<p align="center">
-  <img src="assets/experiment_dales_3/e6befa89190c4d268413bfc58df4caef_accuracy.png">
-  <br>
-  <em>Figure <number>: Accuracy.</em>
-</p>
+<div style="display: flex; justify-content: center;">
+  <div style="flex: 50%; padding: 10px;">
+    <p align="center">
+      <img src="assets/experiment_dales_3/e6befa89190c4d268413bfc58df4caef_loss.png">
+      <br>
+      <em>Figure <number>: Loss.</em>
+    </p>
+  </div>
+  <div style="flex: 50%; padding: 10px;">
+    <p align="center">
+      <img src="assets/experiment_dales_3/e6befa89190c4d268413bfc58df4caef_accuracy.png">
+      <br>
+      <em>Figure <number>: Accuracy.</em>
+    </p>
+  </div>
+</div>
 
 <p align="center">
   <img src="assets/experiment_dales_3/e6befa89190c4d268413bfc58df4caef_iou.png" width="60%">
@@ -267,17 +282,22 @@ ens_beta: 0.99999
 
 **Results:**
 
-<p align="center">
-  <img src="assets/experiment_dales_4/0954e43dbed74719aaf3557c031f2725_loss.png">
-  <br>
-  <em>Figure <number>: Loss.</em>
-</p>
-
-<p align="center">
-  <img src="assets/experiment_dales_4/0954e43dbed74719aaf3557c031f2725_accuracy.png">
-  <br>
-  <em>Figure <number>: Accuracy.</em>
-</p>
+<div style="display: flex; justify-content: center;">
+  <div style="flex: 50%; padding: 10px;">
+    <p align="center">
+      <img src="assets/experiment_dales_4/0954e43dbed74719aaf3557c031f2725_loss.png">
+      <br>
+      <em>Figure <number>: Loss.</em>
+    </p>
+  </div>
+  <div style="flex: 50%; padding: 10px;">
+    <p align="center">
+      <img src="assets/experiment_dales_4/0954e43dbed74719aaf3557c031f2725_accuracy.png">
+      <br>
+      <em>Figure <number>: Accuracy.</em>
+    </p>
+  </div>
+</div>
 
 <p align="center">
   <img src="assets/experiment_dales_4/0954e43dbed74719aaf3557c031f2725_iou.png" width="60%">
@@ -296,17 +316,22 @@ ens_beta: 0.99999
 
 **Results:**
 
-<p align="center">
-  <img src="assets/experiment_dales_5/ae440146c8e8450e8b5d08381de36d1b_loss.png">
-  <br>
-  <em>Figure <number>: Loss.</em>
-</p>
-
-<p align="center">
-  <img src="assets/experiment_dales_5/ae440146c8e8450e8b5d08381de36d1b_accuracy.png">
-  <br>
-  <em>Figure <number>: Accuracy.</em>
-</p>
+<div style="display: flex; justify-content: center;">
+  <div style="flex: 50%; padding: 10px;">
+    <p align="center">
+      <img src="assets/experiment_dales_5/ae440146c8e8450e8b5d08381de36d1b_loss.png">
+      <br>
+      <em>Figure <number>: Loss.</em>
+    </p>
+  </div>
+  <div style="flex: 50%; padding: 10px;">
+    <p align="center">
+      <img src="assets/experiment_dales_5/ae440146c8e8450e8b5d08381de36d1b_accuracy.png">
+      <br>
+      <em>Figure <number>: Accuracy.</em>
+    </p>
+  </div>
+</div>
 
 <p align="center">
   <img src="assets/experiment_dales_5/ae440146c8e8450e8b5d08381de36d1b_iou.png" width="60%">
@@ -324,17 +349,22 @@ ens_beta: 0.99999
 **Hypothesis:**
 
 **Results:**
-<p align="center">
-  <img src="assets/experiment_dales_6/d703527719d04997ade2633e9dc4da68_loss.png">
-  <br>
-  <em>Figure <number>: Loss.</em>
-</p>
-
-<p align="center">
-  <img src="assets/experiment_dales_6/d703527719d04997ade2633e9dc4da68_accuracy.png">
-  <br>
-  <em>Figure <number>: Accuracy.</em>
-</p>
+<div style="display: flex; justify-content: center;">
+  <div style="flex: 50%; padding: 10px;">
+    <p align="center">
+      <img src="assets/experiment_dales_6/d703527719d04997ade2633e9dc4da68_loss.png">
+      <br>
+      <em>Figure <number>: Loss.</em>
+    </p>
+  </div>
+  <div style="flex: 50%; padding: 10px;">
+    <p align="center">
+      <img src="assets/experiment_dales_6/d703527719d04997ade2633e9dc4da68_accuracy.png">
+      <br>
+      <em>Figure <number>: Accuracy.</em>
+    </p>
+  </div>
+</div>
 
 <p align="center">
   <img src="assets/experiment_dales_6/d703527719d04997ade2633e9dc4da68_iou.png" width="60%">
@@ -353,17 +383,22 @@ Partitions 10
 **Hypothesis:**
 
 **Results:**
-<p align="center">
-  <img src="assets/experiment_dales_7/41420aa1515b480ea782325192904eca_loss.png">
-  <br>
-  <em>Figure <number>: Loss.</em>
-</p>
-
-<p align="center">
-  <img src="assets/experiment_dales_7/41420aa1515b480ea782325192904eca_accuracy.png">
-  <br>
-  <em>Figure <number>: Accuracy.</em>
-</p>
+<div style="display: flex; justify-content: center;">
+  <div style="flex: 50%; padding: 10px;">
+    <p align="center">
+      <img src="assets/experiment_dales_7/41420aa1515b480ea782325192904eca_loss.png">
+      <br>
+      <em>Figure <number>: Loss.</em>
+    </p>
+  </div>
+  <div style="flex: 50%; padding: 10px;">
+    <p align="center">
+      <img src="assets/experiment_dales_7/41420aa1515b480ea782325192904eca_accuracy.png">
+      <br>
+      <em>Figure <number>: Accuracy.</em>
+    </p>
+  </div>
+</div>
 
 <p align="center">
   <img src="assets/experiment_dales_7/41420aa1515b480ea782325192904eca_iou.png" width="60%">
@@ -382,17 +417,22 @@ Partitions 10
 **Hypothesis:**
 
 **Results:**
-<p align="center">
-  <img src="assets/experiment_dales_8/0b26dfaa0264411c8f994ef70c74fdd0_loss.png">
-  <br>
-  <em>Figure <number>: Loss.</em>
-</p>
-
-<p align="center">
-  <img src="assets/experiment_dales_8/0b26dfaa0264411c8f994ef70c74fdd0_accuracy.png">
-  <br>
-  <em>Figure <number>: Accuracy.</em>
-</p>
+<div style="display: flex; justify-content: center;">
+  <div style="flex: 50%; padding: 10px;">
+    <p align="center">
+      <img src="assets/experiment_dales_8/0b26dfaa0264411c8f994ef70c74fdd0_loss.png">
+      <br>
+      <em>Figure <number>: Loss.</em>
+    </p>
+  </div>
+  <div style="flex: 50%; padding: 10px;">
+    <p align="center">
+      <img src="assets/experiment_dales_8/0b26dfaa0264411c8f994ef70c74fdd0_accuracy.png">
+      <br>
+      <em>Figure <number>: Accuracy.</em>
+    </p>
+  </div>
+</div>
 
 <p align="center">
   <img src="assets/experiment_dales_8/0b26dfaa0264411c8f994ef70c74fdd0_iou.png" width="60%">
@@ -411,17 +451,22 @@ Partitions 10
 **Hypothesis:**
 
 **Results:**
-<p align="center">
-  <img src="assets/experiment_dales_9/fe091c7ee5e44adca90d100aab9f0330_loss.png">
-  <br>
-  <em>Figure <number>: Loss.</em>
-</p>
-
-<p align="center">
-  <img src="assets/experiment_dales_9/fe091c7ee5e44adca90d100aab9f0330_accuracy.png">
-  <br>
-  <em>Figure <number>: Accuracy.</em>
-</p>
+<div style="display: flex; justify-content: center;">
+  <div style="flex: 50%; padding: 10px;">
+    <p align="center">
+      <img src="assets/experiment_dales_9/fe091c7ee5e44adca90d100aab9f0330_loss.png">
+      <br>
+      <em>Figure <number>: Loss.</em>
+    </p>
+  </div>
+  <div style="flex: 50%; padding: 10px;">
+    <p align="center">
+      <img src="assets/experiment_dales_9/fe091c7ee5e44adca90d100aab9f0330_accuracy.png">
+      <br>
+      <em>Figure <number>: Accuracy.</em>
+    </p>
+  </div>
+</div>
 
 <p align="center">
   <img src="assets/experiment_dales_9/fe091c7ee5e44adca90d100aab9f0330_iou.png" width="60%">
