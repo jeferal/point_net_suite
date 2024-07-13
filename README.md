@@ -173,7 +173,7 @@ that is green could be classified as vegetation. We want to avoid that and make 
 </p>
 
 <p align="center">
-  <img src="assets/experiment_dales_1/3fb3c811994643fcbb435d886be7074d_iou.png">
+  <img src="assets/experiment_dales_1/3fb3c811994643fcbb435d886be7074d_iou.png" width="60%">
   <br>
   <em>Figure <number>: IoU.</em>
 </p>
