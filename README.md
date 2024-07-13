@@ -551,6 +551,48 @@ The evaluation accuracy has dropped considerably compared to previous experiment
 compared to the one where weighted loss was used. Perhaps this amount of dropout is too
 much for this model and for this dataset in particular.
 
+**Experiment Using PointNet with Dales**
+| Learning Rate | Optimizer | Batch Size | Num Points | Grouping Method | Dropout | Scheduler | Label Smoothing | Extra Feature Dropout |
+|---------------|-----------|------------|------------|-----------------|---------|-----------|------------------|-----------------------|
+| 0.001         | AdamW     | 16          | 8192       | MSG             | 0.5     | Cosine    | 0.0              | 0.5                   |
+
+**Hypothesis:**
+PointNet is much worse than PointNet++ in terms of extracting local features since PointNet++ adds
+the hierarchical feature extractors. We expect that PointNet reaches a lower accuracy than PointNet++
+in this experiment and would like to confirm it.
+
+**Experiment Setup**
+Model PointNet is trained with the Dales dataset.
+
+**Results:**
+<div style="display: flex; justify-content: center;">
+  <div style="flex: 50%; padding: 10px;">
+    <p align="center">
+      <img src="assets/experiment_dales_10/ba33398dc8a649fdb13207f16dce7fd3_loss.png">
+      <br>
+      <em>Figure <number>: Loss.</em>
+    </p>
+  </div>
+  <div style="flex: 50%; padding: 10px;">
+    <p align="center">
+      <img src="assets/experiment_dales_10/ba33398dc8a649fdb13207f16dce7fd3_accuracy.png">
+      <br>
+      <em>Figure <number>: Accuracy.</em>
+    </p>
+  </div>
+</div>
+
+<p align="center">
+  <img src="assets/experiment_dales_10/ba33398dc8a649fdb13207f16dce7fd3_iou.png" width="60%">
+  <br>
+  <em>Figure <number>: IoU.</em>
+</p>
+
+**Conclusions**
+Compared to the previous experiments, PoinNet reaches considerably worse evaluation loss and accuracy
+as it was expected. PointNet might be reasonably good for small objects without so much noise,
+but PointNet++ is much better for large scenes.
+
 ## 3. Final application <a name="3-Final-application"></a>
 The Graphical User Interface
 
