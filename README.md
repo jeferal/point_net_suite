@@ -11,7 +11,7 @@ Final project of the Postgraduate Course in Artificial Intelligence with Deep Le
 - Jorge Ruiz Vázquez
 
 Supervisor:
-- Mariona Carós Roca
+- Mariona Carós Roca - PhD Candidate in Computer Vision at University of Barcelona
 
 ## Table of Contents <a name="toc"></a>
 
@@ -60,6 +60,11 @@ After working with the ModelNet dataset, we've learned that not all points in a 
 
 The importance of critical points becomes even more apparent in the context of downsampling techniques. Downsampling helps on reducing the computational load by decreasing the number of points in a point cloud while retaining the most informative ones. This process is paramount when feeding very large point clouds to networks like PointNet++ for training, as it ensures that the network focuses on the most relevant features, leading to more efficient and accurate learning and relevant feature extraction.
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/jeferal/point_net_suite/implementing_read_me_as_report/assets/pointnet_examples.gif">
+  <br>
+  <em>Figure 1: Examples of PointNet application.</em>
+</p>
 
 
 ### 2.1.2. Stanford indoors 3D <a name="212-dales-dataset"></a>
