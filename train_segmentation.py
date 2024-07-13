@@ -71,10 +71,10 @@ def parse_args():
     # TO DO: DATA PREPROCESSING
     #parser.add_argument('--no_data_preprocess', action='store_true', default=False, help='preprocess the data or process it during the getitem call')
     # Dataset selection
-    parser.add_argument('--dataset', default='s3dis', help='dataset name, options are [s3dis, dales]')
-    parser.add_argument('--dataset_path', default='data/stanford_indoor3d', help='Path to the dataset [default: data/stanford_indoor3d]')
+    parser.add_argument('--dataset', default='dales', help='dataset name, options are [s3dis, dales]')
+    parser.add_argument('--dataset_path', default='data/dales', help='Path to the dataset [default: data/stanford_indoor3d], options are [data/stanford_indoor3d, data/dales]')
     # Specific parameters for dales dataset
-    parser.add_argument('--partitions', type=int, default=10, help='Number of partitions to split the data')
+    parser.add_argument('--partitions', type=int, default=20, help='Number of partitions to split the data')
     parser.add_argument('--overlap', type=float, default=0.1, help='Overlap between partitions')
     # Model selection
     parser.add_argument('--model', default='pointnet_v2_sem_seg_ssg', help='model name [default: pointnet_v2_sem_seg_ssg]')
