@@ -164,7 +164,7 @@ And other information that is helpful for us:
 - PointNet is trained in the S3Dis dataset.
 **Results:**
 <p align="center">
-  <img src="assets/experiments_s3dis/s3dis_experiment_1_no_wloss.jpeg">
+  <img src="assets/experiments_s3dis/s3dis_experiment_1_no_wloss.jpeg" width=70%>
   <br>
   <em>Figure <number>: IoU by Class.</em>
 </p>
@@ -180,7 +180,7 @@ the figure that shows the data distribution of the train data shows a correlatio
 learns to classify them better.
 **Results:**
 <p align="center">
-  <img src="assets/experiments_s3dis/s3dis_experiment_2_wloss.jpeg">
+  <img src="assets/experiments_s3dis/s3dis_experiment_2_wloss.jpeg" width=70%>
   <br>
   <em>Figure <number>: IoU by Class.</em>
 </p>
