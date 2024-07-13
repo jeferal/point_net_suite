@@ -61,11 +61,10 @@ After working with the ModelNet dataset, we've learned that not all points in a 
 The importance of critical points becomes even more apparent in the context of downsampling techniques. Downsampling helps on reducing the computational load by decreasing the number of points in a point cloud while retaining the most informative ones. This process is paramount when feeding very large point clouds to networks like PointNet++ for training, as it ensures that the network focuses on the most relevant features, leading to more efficient and accurate learning and relevant feature extraction.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/jeferal/point_net_suite/adding_sergio_stuff_readme/assets/pointnet_examples.gif">
+  <img src="assets/pointnet_examples.gif">
   <br>
   <em>Figure 1: ModelNet examples and PointNet application. Critical points are represented with Red.</em>
 </p>
-
 
 ### 2.1.2. Stanford indoors 3D <a name="212-3dindoors-dataset"></a>
 The Stanford 3D Indoor Scenes Dataset (S3DIS) is a comprehensive dataset for 3D semantic segmentation and scene understanding in indoor environments. It is akin to the benchmark for indoor point cloud segmentation tasks. The dataset consists of high-resolution point cloud data from six different indoor areas within three buildings, capturing a variety of scenes such as offices, conference rooms, and hallways. Each point in the dataset includes XYZ coordinates, RGB color values, and a semantic label, providing detailed annotations for over 215 million points.
@@ -86,7 +85,7 @@ The S3DIS dataset has also highlighted the importance of handling large scale da
  We have seen that effective segmentation must account for various object types, densities, and occlusions common in indoor scenes. Working with this dataset has driven a deeper understanding towards developing models that not only consider point-wise features but also capture the broader context and relationships within the scene.
 
  <p align="center">
-  <img src="https://raw.githubusercontent.com/jeferal/point_net_suite/adding_sergio_stuff_readme/assets/MUST UPDATE>
+  <img src="https://raw.githubusercontent.com/jeferal/point_net_suite/adding_sergio_stuff_readme/assets/MUST UPDATE">
   <br>
   <em>Figure 1: ModelNet examples and PointNet application. Critical points are represented with Red.</em>
 </p>
