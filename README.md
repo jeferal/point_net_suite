@@ -160,6 +160,26 @@ that is green could be classified as vegetation. We want to avoid that and make 
 **Results:**
 - Describe the results here.
 
+<p align="center">
+  <img src="assets/experiment_dales_1/3fb3c811994643fcbb435d886be7074d_loss.png">
+  <br>
+  <em>Figure <number>: Loss.</em>
+</p>
+
+<p align="center">
+  <img src="assets/experiment_dales_1/3fb3c811994643fcbb435d886be7074d_accuracy.png">
+  <br>
+  <em>Figure <number>: Accuracy.</em>
+</p>
+
+<p align="center">
+  <img src="assets/experiment_dales_1/3fb3c811994643fcbb435d886be7074d_iou.png">
+  <br>
+  <em>Figure <number>: IoU.</em>
+</p>
+
+
+
 **Conclusions:**
 - Describe the conclusions here.
 

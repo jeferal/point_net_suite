@@ -81,6 +81,7 @@ def main(args):
     eval_loss = get_metric(client, run_id, "eval_loss")
 
     plt.figure(figsize=(15, 5))
+    plt.title("Train vs Eval Loss")
     plt.plot(train_loss, label="Train Loss")
     plt.plot(eval_loss, label="Eval Loss")
     plt.xlabel("Epochs")
@@ -88,13 +89,14 @@ def main(args):
     plt.grid()
     plt.legend()
 
-    plt.savefig(os.path.join(run_id, "loss.png"))
+    plt.savefig(os.path.join(run_id, f"{run_id}_loss.png"))
 
     # Create a plot that shows the train accuracy and eval accuracy
     train_accuracy = get_metric(client, run_id, "train_accuracy")
     eval_accuracy = get_metric(client, run_id, "eval_accuracy")
 
     plt.figure(figsize=(15, 5))
+    plt.title("Train vs Eval Accuracy")
     plt.plot(train_accuracy, label="Train Accuracy")
     plt.plot(eval_accuracy, label="Eval Accuracy")
     plt.xlabel("Epochs")
@@ -102,14 +104,14 @@ def main(args):
     plt.grid()
     plt.legend()
 
-    plt.savefig(os.path.join(run_id, "accuracy.png"))
+    plt.savefig(os.path.join(run_id, f"{run_id}_accuracy.png"))
 
     # Get the per class iou metrics
     train_iou = get_metrics_for_epochs(client, run_id, train_iou_per_class_metric_name)
     eval_iou = get_metrics_for_epochs(client, run_id, eval_iou_per_class_metric_name)
 
     # Plot the per class iou metrics
-    save_path = os.path.join(run_id, "iou.png")
+    save_path = os.path.join(run_id, f"{run_id}_iou.png")
     plot_metrics_by_class_grid(train_iou, eval_iou, show=False, save_path=save_path)
 
 
