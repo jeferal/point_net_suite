@@ -172,6 +172,9 @@ Extra features true.
 value of the data. As in the model could learn to create a map between intensity and semantic segmentation as in any point 
 that is green could be classified as vegetation. We want to avoid that and make the model pay attention to geometrical features too.
 
+**Experiment Setup**
+Experiment using PointNet++ and the Dales Dataset.
+
 **Results:**
 - We show a comparison between the train and evaluation loss, accuracy and IoU to
 understand if the model is overfitting or not and how good it is performing with each class.
@@ -213,7 +216,12 @@ least number of points in the dataset.
 
 **Hypothesis:**
 Increasing the batch size should make the train faster because we are using more data at
-once.
+once. Single Scale Grouping should make the model learn worse with datasets where the density of points is not uniform.
+We would like to confirm this.
+
+**Experiment Setup**
+Experiment using PointNet++ with Single Scale Grouping training with Dales Dataset. We have implemented the training script so that
+to change between SSG and MSG it is just changing a parameter.
 
 **Results:**
 
@@ -241,7 +249,8 @@ once.
 </p>
 
 **Conclusions:**
-- Describe the conclusions here.
+- The results seem quite similar to the previous experiment. Perhaps there is not much difference between MSG and SSG for this
+particular dataset or we can not appreciate the difference because of the number of points used, downsampling, etc.
 
 **Experiment Decreased Number of Points**
 | Learning Rate | Optimizer | Batch Size | Num Points | Grouping Method | Dropout | Scheduler | Label Smoothing | Extra Feature Dropout |
@@ -253,6 +262,11 @@ By decreasing the number of points, perhaps the model is able to pay more attent
 very small objects or very local features. However, decreasing the number of points also
 means that the first random downsampling of the points will eliminate more information.
 We also want to know how much this parameter affects the performance of the model.
+
+**Experiment Setup**
+PointNet++ trained with Dales. Decreasing the number of points is changing an argument to the training script.
+This will increase the downsample that we do to the raw point cloud to the one that we input to the model. This 
+downsample is done with random sampling.
 
 **Results:**
 
@@ -295,6 +309,10 @@ Effective Number of Samples is a technique to deal with unbalanced datasets. The
 idea is to give more weight to the minority classes so that the model pays more
 attention to them following a specific formula.
 
+**Experiment Setup**
+We have implemented the Effective Number of Samples formula given the class balance of the dataset. This experiment is done
+with the Dales dataset and PointNet++.
+
 **Results:**
 
 <div style="display: flex; justify-content: center;">
@@ -335,6 +353,9 @@ minority classes could be better.
 Same as the previous experiment, we expect that weighting the loss will help the model
 to pay more attention to the minority classes.
 
+**Experiment Setup**
+We have implemented the Weighted Loss using Sklearn. This experiment is done with the Dales dataset and PointNet++.
+
 **Results:**
 
 <div style="display: flex; justify-content: center;">
@@ -371,6 +392,10 @@ model will not be able to learn the minority classes well.
 | Learning Rate | Optimizer | Batch Size | Num Points | Grouping Method | Dropout | Scheduler | Label Smoothing | Extra Feature Dropout |
 |---------------|-----------|------------|------------|-----------------|---------|-----------|------------------|-----------------------|
 | 0.001         | AdamW     | 16          | 8192       | MSG             | 0.5     | Cosine    | 0.0              | 0.2                   |
+
+**Experiment Setup**
+This experiment is done by changing parameters of the training script. Label loss to 0 and weighted loss to None.
+PointNet++ is trained with the Dales dataset.
 
 **Hypothesis:**
 
@@ -451,6 +476,9 @@ Partitions 10
 Increasing the number of points that we input to the model. We expect that because we
 add more information to the model, it should be able to learn better.
 
+**Experiment Setup**
+This is done just by changing the number of points parameter. By increasing the number of points, the downsample that we do to the raw point cloud is less agressive. PointNet++ is trained with the Dales Dataset. 
+
 **Results:**
 <div style="display: flex; justify-content: center;">
   <div style="flex: 50%; padding: 10px;">
@@ -488,6 +516,11 @@ Partitions 10
 **Hypothesis:**
 By adding more dropout to the extra features, we expect the model not to overfit to the
 intensity signal of the data. Also we are using weighted loss as a last attempt to make the model learn the minority classes better.
+
+**Experiment Setup**
+We changed the extra features dropout from 0.2 to 0.5 and we are using weighted loss. PointNet++ is trained with the Dales Dataset.
+The extra features in this case is the intensity signal that the Dales dataset provides for each point. The points would have shape 4
+(x,y,z, intensity).
 
 **Results:**
 <div style="display: flex; justify-content: center;">
