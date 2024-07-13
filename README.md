@@ -360,13 +360,13 @@ Partitions 10
 </p>
 
 <p align="center">
-  <img src="assets/experiment_dales_6/41420aa1515b480ea782325192904eca_accuracy.png">
+  <img src="assets/experiment_dales_7/41420aa1515b480ea782325192904eca_accuracy.png">
   <br>
   <em>Figure <number>: Accuracy.</em>
 </p>
 
 <p align="center">
-  <img src="assets/experiment_dales_6/41420aa1515b480ea782325192904eca_iou.png" width="60%">
+  <img src="assets/experiment_dales_7/41420aa1515b480ea782325192904eca_iou.png" width="60%">
   <br>
   <em>Figure <number>: IoU.</em>
 </p>
@@ -412,19 +412,19 @@ Partitions 10
 
 **Results:**
 <p align="center">
-  <img src="assets/experiment_dales_8/fe091c7ee5e44adca90d100aab9f0330_loss.png">
+  <img src="assets/experiment_dales_9/fe091c7ee5e44adca90d100aab9f0330_loss.png">
   <br>
   <em>Figure <number>: Loss.</em>
 </p>
 
 <p align="center">
-  <img src="assets/experiment_dales_8/fe091c7ee5e44adca90d100aab9f0330_accuracy.png">
+  <img src="assets/experiment_dales_9/fe091c7ee5e44adca90d100aab9f0330_accuracy.png">
   <br>
   <em>Figure <number>: Accuracy.</em>
 </p>
 
 <p align="center">
-  <img src="assets/experiment_dales_8/fe091c7ee5e44adca90d100aab9f0330_iou.png" width="60%">
+  <img src="assets/experiment_dales_9/fe091c7ee5e44adca90d100aab9f0330_iou.png" width="60%">
   <br>
   <em>Figure <number>: IoU.</em>
 </p>
