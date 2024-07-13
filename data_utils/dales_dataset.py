@@ -1,4 +1,5 @@
 import os
+import time
 
 from plyfile import PlyData
 
@@ -415,5 +416,20 @@ def visualize_pointcloud(point_cloud, labels, window_name : str = "DALES point c
 
 
     # Visualize the point cloud
-    o3d.visualization.draw_geometries([o3d_point_cloud],
-                                       window_name=window_name)
+    # Visualization with rotation
+    vis = o3d.visualization.Visualizer()
+    vis.create_window(window_name=window_name)
+    vis.add_geometry(o3d_point_cloud)
+
+    # Rotate the view
+    ctr = vis.get_view_control()
+    ctr.rotate(0.0, 75.0)  # Set the initial tilt angle
+    for _ in range(360):
+        ctr.rotate(0.0, 10.0)  # Rotate by 10 degrees on each iteration around the Z-axis
+        vis.update_geometry(o3d_point_cloud)
+        vis.poll_events()
+        vis.update_renderer()
+        time.sleep(0.1)  # Pause for 0.1 seconds to slow down the rotation
+
+    vis.run()
+    vis.destroy_window()
