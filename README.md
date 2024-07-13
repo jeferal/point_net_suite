@@ -165,7 +165,11 @@ Experiment template
 |---------------|-----------|------------|------------|-----------------|---------|-----------|------------------|-----------------------|
 | 0.001         | AdamW     | 8          | 8192       | MSG             | 0.5     | Cosine    | 0.1              | 0.2                   |
 
-Extra features true.
+Other parameters:
+- Partitions: 20
+- Overlap: 0.1
+- Use extra features: true
+- Weight type: None
 
 **Hypothesis:**
 - Parameters very similar to the ones used in the papers. Adding dropout to extra features to avoid overfitting to the intensity
@@ -214,6 +218,12 @@ least number of points in the dataset.
 |---------------|-----------|------------|------------|-----------------|---------|-----------|------------------|-----------------------|
 | 0.001         | AdamW     | 16          | 8192       | SSG             | 0.5     | Cosine    | 0.1              | 0.2                   |
 
+Other parameters:
+- Partitions: 20
+- Overlap: 0.1
+- Use extra features: true
+- Weight type: None
+
 **Hypothesis:**
 - Increasing the batch size should make the train faster because we are using more data at
 once. Single Scale Grouping should make the model learn worse with datasets where the density of points is not uniform.
@@ -256,6 +266,12 @@ particular dataset or we can not appreciate the difference because of the number
 | Learning Rate | Optimizer | Batch Size | Num Points | Grouping Method | Dropout | Scheduler | Label Smoothing | Extra Feature Dropout |
 |---------------|-----------|------------|------------|-----------------|---------|-----------|------------------|-----------------------|
 | 0.001         | AdamW     | 8          | 4096       | MSG             | 0.5     | Cosine    | 0.1              | 0.2                   |
+
+Other parameters:
+- Partitions: 20
+- Overlap: 0.1
+- Use extra features: true
+- Weight type: None
 
 **Hypothesis:**
 - By decreasing the number of points, perhaps the model is able to pay more attention to
@@ -302,7 +318,12 @@ to classify the classes with the least number of points.
 |---------------|-----------|------------|------------|-----------------|---------|-----------|------------------|-----------------------|
 | 0.001         | AdamW     | 16          | 8192       | MSG             | 0.5     | Cosine    | 0.0              | 0.2                   |
 
-ens_beta: 0.99999
+Other parameters:
+- Partitions: 20
+- Overlap: 0.1
+- Use extra features: true
+- Weight type: EffectiveNumSamples
+- ens_beta: 0.99999
 
 **Hypothesis:**
 - Effective Number of Samples is a technique to deal with unbalanced datasets. The
@@ -349,6 +370,12 @@ minority classes could be better.
 |---------------|-----------|------------|------------|-----------------|---------|-----------|------------------|-----------------------|
 | 0.001         | AdamW     | 16          | 8192       | MSG             | 0.5     | Cosine    | 0.0              | 0.2                   |
 
+Other parameters:
+- Partitions: 20
+- Overlap: 0.1
+- Use extra features: true
+- Weight type: Sklearn
+
 **Hypothesis:**
 - Same as the previous experiment, we expect that weighting the loss will help the model
 to pay more attention to the minority classes.
@@ -393,6 +420,12 @@ model will not be able to learn the minority classes well.
 |---------------|-----------|------------|------------|-----------------|---------|-----------|------------------|-----------------------|
 | 0.001         | AdamW     | 16          | 8192       | MSG             | 0.5     | Cosine    | 0.0              | 0.2                   |
 
+Other parameters:
+- Partitions: 20
+- Overlap: 0.1
+- Use extra features: true
+- Weight type: None
+
 **Experiment Setup**
 - This experiment is done by changing parameters of the training script. Label loss to 0 and weighted loss to None.
 PointNet++ is trained with the Dales dataset.
@@ -430,7 +463,12 @@ PointNet++ is trained with the Dales dataset.
 | Learning Rate | Optimizer | Batch Size | Num Points | Grouping Method | Dropout | Scheduler | Label Smoothing | Extra Feature Dropout |
 |---------------|-----------|------------|------------|-----------------|---------|-----------|------------------|-----------------------|
 | 0.001         | AdamW     | 16          | 8192       | MSG             | 0.5     | Cosine    | 0.1              | 0.2                   |
-Partitions 10
+
+Other parameters:
+- Partitions: 10
+- Overlap: 0.1
+- Use extra features: true
+- Weight type: None
 
 **Hypothesis:**
 - We hypothesize that incorporating a density-related farthest point sampling algorithm into the PointNet++ architecture will enhance its ability to capture local features, resulting in improved classification accuracy for point cloud data. Specifically, we expect the density-related sampling method to better represent the geometric distribution of the points, particularly in areas with varying densities, leading to better performance on classification tasks.
@@ -470,7 +508,12 @@ Sampling Algorithm: We will replace the traditional farthest point sampling (FPS
 | Learning Rate | Optimizer | Batch Size | Num Points | Grouping Method | Dropout | Scheduler | Label Smoothing | Extra Feature Dropout |
 |---------------|-----------|------------|------------|-----------------|---------|-----------|------------------|-----------------------|
 | 0.001         | AdamW     | 16          | 16000       | MSG             | 0.5     | Cosine    | 0.1              | 0.2                   |
-Partitions 10
+
+Other parameters:
+- Partitions: 10
+- Overlap: 0.1
+- Use extra features: true
+- Weight type: None
 
 **Hypothesis:**
 - Increasing the number of points that we input to the model. We expect that because we
@@ -511,7 +554,12 @@ Also, the model does better at learning the minority classes than in the perviou
 | Learning Rate | Optimizer | Batch Size | Num Points | Grouping Method | Dropout | Scheduler | Label Smoothing | Extra Feature Dropout |
 |---------------|-----------|------------|------------|-----------------|---------|-----------|------------------|-----------------------|
 | 0.001         | AdamW     | 16          | 8192       | MSG             | 0.5     | Cosine    | 0.0              | 0.5                   |
-Partitions 10
+
+Other parameters:
+- Partitions: 10
+- Overlap: 0.1
+- Use extra features: true
+- Weight type: Sklearn
 
 **Hypothesis:**
 - By adding more dropout to the extra features, we expect the model not to overfit to the
@@ -555,6 +603,12 @@ much for this model and for this dataset in particular.
 | Learning Rate | Optimizer | Batch Size | Num Points | Grouping Method | Dropout | Scheduler | Label Smoothing | Extra Feature Dropout |
 |---------------|-----------|------------|------------|-----------------|---------|-----------|------------------|-----------------------|
 | 0.001         | AdamW     | 16          | 8192       | MSG             | 0.5     | Cosine    | 0.0              | 0.5                   |
+
+Other parameters:
+- Partitions: 10
+- Overlap: 0.1
+- Use extra features: false
+- Weight type: None
 
 **Hypothesis:**
 - PointNet is much worse than PointNet++ in terms of extracting local features since PointNet++ adds
