@@ -44,6 +44,28 @@ Supervisor:
 
 ### 2.1. Data Preprocessing and Datasets <a name="21-data-preprocessing"></a>
 
+### 2.1.1. ModelNet <a name="211-dales-dataset"></a>
+The ModelNet dataset is a widely-used dataset for 3D object classification and recognition. It is similar to the MNIST of pointcloud object classification. It includes a comprehensive collection of 3D CAD models, featuring 662 object categories ranging from everyday items like chairs, guns and tables to complex structures like airplanes and cars. The dataset is divided into two main subsets: ModelNet10 and ModelNet40. ModelNet10 includes 10 categories with around 5,000 models, while ModelNet40 comprises 40 categories with approximately 12,000 models. Each model is consistently scaled and oriented, ensuring a standardized basis for algorithm comparison which is paramount for speeding up the learning process in pointcloud classification.
+
+**Key Features:**
+
+- Categories: 662 object categories.
+- Subsets: ModelNet10 (10 categories) and ModelNet40 (40 categories).
+- Number of Models: Over 17,000 CAD models.
+- Applications: 3D object classification, recognition, and retrieval.
+
+**What have we learned?**
+
+After working with the ModelNet dataset, we've learned that not all points in a point cloud are equally important. Some points carry more significant information and are crucial for classification tasks. These critical points can hugely impact the performance of Deep Learning models. Identifying and focusing on these key points is essential, especially when dealing with large point clouds as we faced on the DALES dataset.
+
+The importance of critical points becomes even more apparent in the context of downsampling techniques. Downsampling helps on reducing the computational load by decreasing the number of points in a point cloud while retaining the most informative ones. This process is paramount when feeding very large point clouds to networks like PointNet++ for training, as it ensures that the network focuses on the most relevant features, leading to more efficient and accurate learning and relevant feature extraction.
+
+
+
+### 2.1.2. Stanford indoors 3D <a name="212-dales-dataset"></a>
+The Dales Objects dataset is a Large Scale Benchmark Dataset for Segmentation and 
+Instance Segmentation of Aerial Lidar data. It contains close to half-bilion hand labeled points and the dataset covers over 10 square kilometers. Each point also contains an intensity value. The dataset contains the following classes with the following number of points:
+
 ### 2.1.3. Dales Dataset <a name="213-dales-dataset"></a>
 The Dales Objects dataset is a Large Scale Benchmark Dataset for Segmentation and 
 Instance Segmentation of Aerial Lidar data. It contains close to half-bilion hand labeled points and the dataset covers over 10 square kilometers. Each point also contains an intensity value. The dataset contains the following classes with the following number of points:
@@ -60,7 +82,7 @@ Instance Segmentation of Aerial Lidar data. It contains close to half-bilion han
 | Buildings   | 78.7M            |
 
 If we attend to the number of points per class, we can see that the dataset is highly unbalanced. Most of the points belong to the 
-classes ground and vegetation, while the classes truck, powerline, fence and pole have a very low number of points. This is a problem
+classes ground and vegetation, while the classes truck, powerline, fence and pole have very few points in comparison, effectively making them part of a group called minority classes. Minority classes are more difficult to train and normally present lower convergence ratios. This is a problem
 that we will try to address in this project.
 
 The dataset is divided into 2 splits: train and test. The train split contains 58 .ply files, which consist of tiles of 500 x 500 meters and the test split contains 22 .ply files.
