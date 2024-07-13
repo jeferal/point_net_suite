@@ -418,14 +418,14 @@ Partitions 10
 
 **Results:**
 <div style="display: flex; justify-content: center;">
-  <div style="flex: 50%; padding: 10px;">
+  <div style="flex: 30%; padding: 10px;">
     <p align="center">
       <img src="assets/experiment_dales_8/0b26dfaa0264411c8f994ef70c74fdd0_loss.png">
       <br>
       <em>Figure <number>: Loss.</em>
     </p>
   </div>
-  <div style="flex: 50%; padding: 10px;">
+  <div style="flex: 30%; padding: 10px;">
     <p align="center">
       <img src="assets/experiment_dales_8/0b26dfaa0264411c8f994ef70c74fdd0_accuracy.png">
       <br>
