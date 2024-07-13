@@ -150,8 +150,12 @@ And other information that is helpful for us:
 |---------------|-----------|------------|------------|-----------------|---------|-----------|------------------|-----------------------|
 | 0.001         | AdamW     | 8          | 8192       | MSG             | 0.5     | Cosine    | 0.1              | 0.2                   |
 
+Extra features true.
+
 **Hypothesis:**
-- Describe the hypothesis here.
+- Parameters very similar to the ones used in the papers. Adding dropout to extra features to avoid overfitting to the intensity
+value of the data. As in the model could learn to create a map between intensity and semantic segmentation as in any point 
+that is green could be classified as vegetation. We want to avoid that and make the model pay attention to geometrical features too.
 
 **Results:**
 - Describe the results here.
