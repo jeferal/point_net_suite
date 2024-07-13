@@ -215,12 +215,12 @@ least number of points in the dataset.
 | 0.001         | AdamW     | 16          | 8192       | SSG             | 0.5     | Cosine    | 0.1              | 0.2                   |
 
 **Hypothesis:**
-Increasing the batch size should make the train faster because we are using more data at
+- Increasing the batch size should make the train faster because we are using more data at
 once. Single Scale Grouping should make the model learn worse with datasets where the density of points is not uniform.
 We would like to confirm this.
 
 **Experiment Setup**
-Experiment using PointNet++ with Single Scale Grouping training with Dales Dataset. We have implemented the training script so that
+- Experiment using PointNet++ with Single Scale Grouping training with Dales Dataset. We have implemented the training script so that
 to change between SSG and MSG it is just changing a parameter.
 
 **Results:**
@@ -258,13 +258,13 @@ particular dataset or we can not appreciate the difference because of the number
 | 0.001         | AdamW     | 8          | 4096       | MSG             | 0.5     | Cosine    | 0.1              | 0.2                   |
 
 **Hypothesis:**
-By decreasing the number of points, perhaps the model is able to pay more attention to
+- By decreasing the number of points, perhaps the model is able to pay more attention to
 very small objects or very local features. However, decreasing the number of points also
 means that the first random downsampling of the points will eliminate more information.
 We also want to know how much this parameter affects the performance of the model.
 
 **Experiment Setup**
-PointNet++ trained with Dales. Decreasing the number of points is changing an argument to the training script.
+- PointNet++ trained with Dales. Decreasing the number of points is changing an argument to the training script.
 This will increase the downsample that we do to the raw point cloud to the one that we input to the model. This 
 downsample is done with random sampling.
 
@@ -294,7 +294,7 @@ downsample is done with random sampling.
 </p>
 
 **Conclusions:**
-The results seem quite similar to the previous experiment, where the model still struggles
+- The results seem quite similar to the previous experiment, where the model still struggles
 to classify the classes with the least number of points.
 
 **Experiment Effective Number of Samples**
@@ -305,12 +305,12 @@ to classify the classes with the least number of points.
 ens_beta: 0.99999
 
 **Hypothesis:**
-Effective Number of Samples is a technique to deal with unbalanced datasets. The
+- Effective Number of Samples is a technique to deal with unbalanced datasets. The
 idea is to give more weight to the minority classes so that the model pays more
 attention to them following a specific formula.
 
 **Experiment Setup**
-We have implemented the Effective Number of Samples formula given the class balance of the dataset. This experiment is done
+- We have implemented the Effective Number of Samples formula given the class balance of the dataset. This experiment is done
 with the Dales dataset and PointNet++.
 
 **Results:**
@@ -339,7 +339,7 @@ with the Dales dataset and PointNet++.
 </p>
 
 **Conclusions:**
-It has taken fewer epochs for the model to start learning underrepresented classes. We can
+- It has taken fewer epochs for the model to start learning underrepresented classes. We can
 see this in class 3 and 6 by comparing with previous experiments. However, after a while,
 the results are similar to the previous experiments, but the evaluation IoU of this experiment is tending to increase, so perhaps with longer training, the results regarding
 minority classes could be better.
@@ -350,11 +350,11 @@ minority classes could be better.
 | 0.001         | AdamW     | 16          | 8192       | MSG             | 0.5     | Cosine    | 0.0              | 0.2                   |
 
 **Hypothesis:**
-Same as the previous experiment, we expect that weighting the loss will help the model
+- Same as the previous experiment, we expect that weighting the loss will help the model
 to pay more attention to the minority classes.
 
 **Experiment Setup**
-We have implemented the Weighted Loss using Sklearn. This experiment is done with the Dales dataset and PointNet++.
+- We have implemented the Weighted Loss using Sklearn. This experiment is done with the Dales dataset and PointNet++.
 
 **Results:**
 
@@ -382,11 +382,11 @@ We have implemented the Weighted Loss using Sklearn. This experiment is done wit
 </p>
 
 **Conclusions:**
-The model still struggles with the minority classes and comparing this experiment with
+- The model still struggles with the minority classes and comparing this experiment with
 using Effective Number of Samples, ENS seems to get better results.
 
 **Experiment No Weighted Loss or Label Smoothing**
-With this experiment we expect to see that because the dataset is highly unbalanced, the
+- With this experiment we expect to see that because the dataset is highly unbalanced, the
 model will not be able to learn the minority classes well.
 
 | Learning Rate | Optimizer | Batch Size | Num Points | Grouping Method | Dropout | Scheduler | Label Smoothing | Extra Feature Dropout |
@@ -394,7 +394,7 @@ model will not be able to learn the minority classes well.
 | 0.001         | AdamW     | 16          | 8192       | MSG             | 0.5     | Cosine    | 0.0              | 0.2                   |
 
 **Experiment Setup**
-This experiment is done by changing parameters of the training script. Label loss to 0 and weighted loss to None.
+- This experiment is done by changing parameters of the training script. Label loss to 0 and weighted loss to None.
 PointNet++ is trained with the Dales dataset.
 
 **Hypothesis:**
@@ -424,7 +424,7 @@ PointNet++ is trained with the Dales dataset.
 </p>
 
 **Conclusions**
-This training stopped too early to reach a conclusion. However, comparing the first 10 epochs of this experiment with previous ones, the evaluation loss is much more unstable.
+- This training stopped too early to reach a conclusion. However, comparing the first 10 epochs of this experiment with previous ones, the evaluation loss is much more unstable.
 
 **Experiment Dense Farthest Point Sampling**
 | Learning Rate | Optimizer | Batch Size | Num Points | Grouping Method | Dropout | Scheduler | Label Smoothing | Extra Feature Dropout |
@@ -433,10 +433,10 @@ This training stopped too early to reach a conclusion. However, comparing the fi
 Partitions 10
 
 **Hypothesis:**
-We hypothesize that incorporating a density-related farthest point sampling algorithm into the PointNet++ architecture will enhance its ability to capture local features, resulting in improved classification accuracy for point cloud data. Specifically, we expect the density-related sampling method to better represent the geometric distribution of the points, particularly in areas with varying densities, leading to better performance on classification tasks.
+- We hypothesize that incorporating a density-related farthest point sampling algorithm into the PointNet++ architecture will enhance its ability to capture local features, resulting in improved classification accuracy for point cloud data. Specifically, we expect the density-related sampling method to better represent the geometric distribution of the points, particularly in areas with varying densities, leading to better performance on classification tasks.
 
 **Experiment Setup**
-PointNet++ Backbone: The core network architecture will be PointNet++, which builds on PointNet by adding hierarchical feature learning and local neighborhood information.
+- PointNet++ Backbone: The core network architecture will be PointNet++, which builds on PointNet by adding hierarchical feature learning and local neighborhood information.
 Sampling Algorithm: We will replace the traditional farthest point sampling (FPS) algorithm with the proposed density-related farthest point sampling (DFPS) algorithm.
 
 **Results:**
@@ -464,7 +464,7 @@ Sampling Algorithm: We will replace the traditional farthest point sampling (FPS
 </p>
 
 **Conclusions**
-The implementation and principle of PointNet++ and proposes a density-dependent farthest point sampling algorithm by analyzing the limitations of the traditional farthest point sampling algorithm, solves them to a certain extent. However, the model seems to performe worsew will class 6. Perhaps the model needs more points.
+- The implementation and principle of PointNet++ and proposes a density-dependent farthest point sampling algorithm by analyzing the limitations of the traditional farthest point sampling algorithm, solves them to a certain extent. However, the model seems to performe worsew will class 6. Perhaps the model needs more points.
 
 **Experiment DFPS Increasing Number of Points**
 | Learning Rate | Optimizer | Batch Size | Num Points | Grouping Method | Dropout | Scheduler | Label Smoothing | Extra Feature Dropout |
@@ -473,11 +473,11 @@ The implementation and principle of PointNet++ and proposes a density-dependent 
 Partitions 10
 
 **Hypothesis:**
-Increasing the number of points that we input to the model. We expect that because we
+- Increasing the number of points that we input to the model. We expect that because we
 add more information to the model, it should be able to learn better.
 
 **Experiment Setup**
-This is done just by changing the number of points parameter. By increasing the number of points, the downsample that we do to the raw point cloud is less agressive. PointNet++ is trained with the Dales Dataset. 
+- This is done just by changing the number of points parameter. By increasing the number of points, the downsample that we do to the raw point cloud is less agressive. PointNet++ is trained with the Dales Dataset. 
 
 **Results:**
 <div style="display: flex; justify-content: center;">
@@ -504,7 +504,7 @@ This is done just by changing the number of points parameter. By increasing the 
 </p>
 
 **Conclusions**
-The evaluation loss and accuracy are much more stable than in the previous experiment.
+- The evaluation loss and accuracy are much more stable than in the previous experiment.
 Also, the model does better at learning the minority classes than in the pervious experiment. Adding more points has helped the model to learn better with DFPS. 
 
 **Experiment More Dropout Extra Features, Weighted Loss**
@@ -514,11 +514,11 @@ Also, the model does better at learning the minority classes than in the perviou
 Partitions 10
 
 **Hypothesis:**
-By adding more dropout to the extra features, we expect the model not to overfit to the
+- By adding more dropout to the extra features, we expect the model not to overfit to the
 intensity signal of the data. Also we are using weighted loss as a last attempt to make the model learn the minority classes better.
 
 **Experiment Setup**
-We changed the extra features dropout from 0.2 to 0.5 and we are using weighted loss. PointNet++ is trained with the Dales Dataset.
+- We changed the extra features dropout from 0.2 to 0.5 and we are using weighted loss. PointNet++ is trained with the Dales Dataset.
 The extra features in this case is the intensity signal that the Dales dataset provides for each point. The points would have shape 4
 (x,y,z, intensity).
 
@@ -547,7 +547,7 @@ The extra features in this case is the intensity signal that the Dales dataset p
 </p>
 
 **Conclusions**
-The evaluation accuracy has dropped considerably compared to previous experiments. Even
+- The evaluation accuracy has dropped considerably compared to previous experiments. Even
 compared to the one where weighted loss was used. Perhaps this amount of dropout is too
 much for this model and for this dataset in particular.
 
@@ -557,12 +557,12 @@ much for this model and for this dataset in particular.
 | 0.001         | AdamW     | 16          | 8192       | MSG             | 0.5     | Cosine    | 0.0              | 0.5                   |
 
 **Hypothesis:**
-PointNet is much worse than PointNet++ in terms of extracting local features since PointNet++ adds
+- PointNet is much worse than PointNet++ in terms of extracting local features since PointNet++ adds
 the hierarchical feature extractors. We expect that PointNet reaches a lower accuracy than PointNet++
 in this experiment and would like to confirm it.
 
 **Experiment Setup**
-Model PointNet is trained with the Dales dataset.
+- Model PointNet is trained with the Dales dataset.
 
 **Results:**
 <div style="display: flex; justify-content: center;">
@@ -589,7 +589,7 @@ Model PointNet is trained with the Dales dataset.
 </p>
 
 **Conclusions**
-Compared to the previous experiments, PoinNet reaches considerably worse evaluation loss and accuracy
+- Compared to the previous experiments, PoinNet reaches considerably worse evaluation loss and accuracy
 as it was expected. PointNet might be reasonably good for small objects without so much noise,
 but PointNet++ is much better for large scenes.
 
