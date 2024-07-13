@@ -339,6 +339,24 @@ def get_tile(x : float, y : float, x_min : float, y_min : float, x_interval : fl
 
     return valid_tiles
 
+def rotate_around_z(ctr, angle_deg):
+    angle_rad = np.deg2rad(angle_deg)
+    R = np.array([[np.cos(angle_rad), -np.sin(angle_rad), 0, 0],
+                  [np.sin(angle_rad),  np.cos(angle_rad), 0, 0],
+                  [0,                 0,                  1, 0],
+                  [0,                 0,                  0, 1]])
+    
+    # Get the current view matrix
+    view_matrix = np.asarray(ctr.convert_to_pinhole_camera_parameters().extrinsic)
+    
+    # Apply the z-axis rotation
+    view_matrix = np.dot(R, view_matrix)
+    
+    # Set the updated view matrix back
+    params = ctr.convert_to_pinhole_camera_parameters()
+    params.extrinsic = view_matrix
+    ctr.convert_from_pinhole_camera_parameters(params)
+
 def visualize_pointcloud(point_cloud, labels, window_name : str = "DALES point cloud"):
 
     # Extract the data
@@ -423,9 +441,12 @@ def visualize_pointcloud(point_cloud, labels, window_name : str = "DALES point c
 
     # Rotate the view
     ctr = vis.get_view_control()
-    ctr.rotate(0.0, 75.0)  # Set the initial tilt angle
+    # Set the initial tilt angle
+    ctr.rotate(0.0, 60.0)
+
+    # Rotate around the z-axis
     for _ in range(360):
-        ctr.rotate(0.0, 10.0)  # Rotate by 10 degrees on each iteration around the Z-axis
+        rotate_around_z(ctr, 1)
         vis.update_geometry(o3d_point_cloud)
         vis.poll_events()
         vis.update_renderer()
