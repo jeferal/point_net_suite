@@ -184,14 +184,14 @@ Given a point cloud and a voxel size $v$:
 
     Compute the voxel index for each point $p_i = (x_i, y_i, z_i)$:
 
-    $$\text{voxel\_index}(p_i) = \left( \left\lfloor \frac{x_i}{v} \right\rfloor, \left\lfloor \frac{y_i}{v} \right\rfloor, \left\lfloor \frac{z_i}{v} \right\rfloor \right)$$
+    $$\text{voxel index}(p_i) = \left( \left\lfloor \frac{x_i}{v} \right\rfloor, \left\lfloor \frac{y_i}{v} \right\rfloor, \left\lfloor \frac{z_i}{v} \right\rfloor \right)$$
 
 
 2. **Averaging:**
 
     For each voxel, compute the centroid of the points within that voxel:
 
-    $$p_{\text{centroid}} = \frac{1}{|V_k|} \sum_{p \in V_k} p$$
+    $$p_{\text{centroid}} = \frac{1}{|V_k|} \sum_{p \in V_k}p$$
 
     where $V_k$ is the set of points in the $k$-th voxel.
 
