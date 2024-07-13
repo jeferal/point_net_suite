@@ -142,6 +142,25 @@ And other information that is helpful for us:
 - The command the script was run
 - The arguments the train was created with for reproducibility 
 
+#### 2.4.2. Experiments with Dales PointNet++ semantic segmentation <a name="242-experiments-dales-pointnetpp"></a>
+
+**Experiment Base Hyper Parameters:**
+
+| Learning Rate | Optimizer | Batch Size | Num Points | Grouping Method | Dropout | Scheduler | Label Smoothing | Extra Feature Dropout |
+|---------------|-----------|------------|------------|-----------------|---------|-----------|------------------|-----------------------|
+| 0.001         | AdamW     | 8          | 8192       | MSG             | 0.5     | Cosine    | 0.1              | 0.2                   |
+
+**Hypothesis:**
+- Describe the hypothesis here.
+
+**Results:**
+- Describe the results here.
+
+**Conclusions:**
+- Describe the conclusions here.
+
+
+
 Intro talking about:
 - checkpoints and info logged into .pth
 
