@@ -44,7 +44,7 @@ Supervisor:
 
 ### 2.1. Data Preprocessing and Datasets <a name="21-data-preprocessing"></a>
 
-### 2.1.1. ModelNet <a name="211-dales-dataset"></a>
+### 2.1.1. ModelNet <a name="211-modelnet-dataset"></a>
 The ModelNet dataset is a widely-used dataset for 3D object classification and recognition. It is similar to the MNIST of pointcloud object classification. It includes a comprehensive collection of 3D CAD models, featuring 662 object categories ranging from everyday items like chairs, guns and tables to complex structures like airplanes and cars. The dataset is divided into two main subsets: ModelNet10 and ModelNet40. ModelNet10 includes 10 categories with around 5,000 models, while ModelNet40 comprises 40 categories with approximately 12,000 models. Each model is consistently scaled and oriented, ensuring a standardized basis for algorithm comparison which is paramount for speeding up the learning process in pointcloud classification.
 
 **Key Features:**
@@ -61,15 +61,35 @@ After working with the ModelNet dataset, we've learned that not all points in a 
 The importance of critical points becomes even more apparent in the context of downsampling techniques. Downsampling helps on reducing the computational load by decreasing the number of points in a point cloud while retaining the most informative ones. This process is paramount when feeding very large point clouds to networks like PointNet++ for training, as it ensures that the network focuses on the most relevant features, leading to more efficient and accurate learning and relevant feature extraction.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/jeferal/point_net_suite/implementing_read_me_as_report/assets/pointnet_examples.gif">
+  <img src="https://raw.githubusercontent.com/jeferal/point_net_suite/adding_sergio_stuff_readme/assets/pointnet_examples.gif">
   <br>
-  <em>Figure 1: Examples of PointNet application.</em>
+  <em>Figure 1: ModelNet examples and PointNet application. Critical points are represented with Red.</em>
 </p>
 
 
-### 2.1.2. Stanford indoors 3D <a name="212-dales-dataset"></a>
-The Dales Objects dataset is a Large Scale Benchmark Dataset for Segmentation and 
-Instance Segmentation of Aerial Lidar data. It contains close to half-bilion hand labeled points and the dataset covers over 10 square kilometers. Each point also contains an intensity value. The dataset contains the following classes with the following number of points:
+### 2.1.2. Stanford indoors 3D <a name="212-3dindoors-dataset"></a>
+The Stanford 3D Indoor Scenes Dataset (S3DIS) is a comprehensive dataset for 3D semantic segmentation and scene understanding in indoor environments. It is akin to the benchmark for indoor point cloud segmentation tasks. The dataset consists of high-resolution point cloud data from six different indoor areas within three buildings, capturing a variety of scenes such as offices, conference rooms, and hallways. Each point in the dataset includes XYZ coordinates, RGB color values, and a semantic label, providing detailed annotations for over 215 million points.
+
+**Key Features:**
+
+- Total Points: Over 215 million labeled points.
+- Coverage: Six areas across three buildings, like office areas, conference rooms, hallways, etc.
+- Point Information: XYZ coordinates, RGB values, semantic labels.
+- Applications: 3D semantic segmentation and indoor scene understanding.
+
+**What have we learned?**
+
+Working with the S3DIS dataset has provided great insights into the complexities of  scene segmentation. We've learned that accurate segmentation relies heavily on understanding the spatial relationships and contextual information within a scene. This dataset has shown that in indoor environments, the relationships between objects (e.g., chairs around a table) play a crucial role in effective segmentation.
+
+The S3DIS dataset has also highlighted the importance of handling large scale data efficiently as we were dealing with point clouds containing over a million points on this dataset. Given the vast number of points and high-resolution nature of the dataset, it was crucial to develop methods that can process this data without compromising on detail. Techniques such as downsampling, which reduce the number of points while preserving essential features, are vital for making the dataset manageable. These techniques ensure that the computational load is reduced while maintaining the integrity and structure of the scenes, which is paramount for training advanced neural networks like PointNet++.
+
+ We have seen that effective segmentation must account for various object types, densities, and occlusions common in indoor scenes. Working with this dataset has driven a deeper understanding towards developing models that not only consider point-wise features but also capture the broader context and relationships within the scene.
+
+ <p align="center">
+  <img src="https://raw.githubusercontent.com/jeferal/point_net_suite/adding_sergio_stuff_readme/assets/MUST UPDATE>
+  <br>
+  <em>Figure 1: ModelNet examples and PointNet application. Critical points are represented with Red.</em>
+</p>
 
 ### 2.1.3. Dales Dataset <a name="213-dales-dataset"></a>
 The Dales Objects dataset is a Large Scale Benchmark Dataset for Segmentation and 
@@ -124,6 +144,89 @@ disk, then it will create it and store it in disk. Every time the client calls t
 </p>
 
 ### 2.3. Sampling <a name="23-sampling"></a>
+
+#### 2.3.1. Normalization <a name="231-normalization"></a>
+
+Normalization is often the first step in processing point cloud data. It involves adjusting the values of the points so that they fall within a specific range, typically between 0 and 1. This is done using min/max normalization, which scales the points based on the minimum and maximum values along each axis.
+
+#### 2.3.2. Random Downsampling <a name="232-normalization"></a>
+
+Random downsampling is the most straightforward technique. It involves randomly selecting a subset of points from the original point cloud. This method is all about speed and simplicity.
+
+- Advantages: It is incredibly easy to implement and runs very quickly. It is a great choice when reducing a dataset size. By randomly sampling points, this technique reduces the dataset uniformly, which can be useful if the point cloud presents a relatively homogeneous distribution.
+- Disadvantages: Possible loss of details and features since the selection process is entirely random. By not considering the spatial arrangement between the points, it may lead to not gathering relevant geometric information or relationships, which can be problematic for more complex datasets. 
+
+Given a point cloud $P = \{p_1, p_2, \ldots, p_N\}$, where $N$ is the total number of points, the goal of random downsampling is to select a subset $P' \subset P$ such that $|P'| = M$ where $M < N$.
+
+The process can be described as:
+
+1. **Random Selection:**
+
+    Generate a random sample of indices \( S \) of size \( M \) from the set \( \{1, 2, \ldots, N\} \) without replacement.
+    
+    $$ S = \{i_1, i_2, \ldots, i_M\} \quad \text{where} \quad i_j \in \{1, 2, \ldots, N\} \quad \text{and} \quad |S| = M $$
+
+2. **Downsampled Point Cloud:**
+
+    Construct the downsampled point cloud \( P' \) using the indices \( S \).
+    
+    $$ P' = \{p_{i_1}, p_{i_2}, \ldots, p_{i_M}\} $$
+
+
+#### 2.3.3. Voxel Grid Downsampling <a name="233-voxel grid"></a>
+
+### Voxel Grid Downsampling
+
+Voxel grid downsampling divides the point cloud into a 3D grid of small cubes, also called voxels. Within each voxel, points are averaged to create a single representative point. The voxel size can be modified in order to adjust the density in the output point cloud. This method reduces the number of points while preserving to some extent the spatial structure of the data, it also helps in reducing noise and computational complexity.
+
+Given a point cloud and a voxel size $ v $:
+
+1. **Voxelization:**
+
+    Compute the voxel index for each point $p_i = (x_i, y_i, z_i) $:
+
+    $$ \text{voxel\_index}(p_i) = \left( \left\lfloor \frac{x_i}{v} \right\rfloor, \left\lfloor \frac{y_i}{v} \right\rfloor, \left\lfloor \frac{z_i}{v} \right\rfloor \right) $$
+
+
+2. **Averaging:**
+
+    For each voxel, compute the centroid of the points within that voxel:
+
+    $$ p_{\text{centroid}} = \frac{1}{|V_k|} \sum_{p \in V_k} p $$
+
+    where $ V_k $ is the set of points in the $ k $-th voxel.
+
+3. **Downsampled Point Cloud:**
+
+    The downsampled point cloud $ P' $ is the set of centroids of all non-empty voxels:
+
+    $$ P' = \{ p_{\text{centroid}_1}, p_{\text{centroid}_2}, \ldots, p_{\text{centroid}_M} \} $$
+
+#### 2.3.4. Inverse Planar-Aware Downsampling <a name="234-inverse-planar"></a>
+Inverse planar-aware downsampling reduces the density of points in planar regions while preserving the density in non-planar regions, thus aiming to maintain complex features while hollowing out planar regions. In this way it can retain more relevant information about a point cloud with a lower amount of points, making it more effective in terms of computational cost. 
+
+This method uses clustering and Principal Component Analysis (PCA) to identify planar areas and adjust the downsampling rate accordingly. It ensures that important structural details are preserved by selectively retaining points based on their spatial characteristics.
+
+1. **Clustering:**
+
+    Apply DBSCAN to identify clusters of points in the point cloud based on the $plane\_threshold$.
+
+    $$
+    \text{clustering} = \text{DBSCAN}(\epsilon = \text{plane\_threshold}, \text{min\_samples} = 10).fit(P)
+    $$
+
+
+2. **Iterative Downsampling:**
+
+    For each cluster (excluding noise):
+
+**PCA Analysis:**
+
+  Apply PCA to the points in the cluster to identify planar regions.
+
+
+
+
 
 ### 2.4. Experiments <a name="24-Experiments"></a>
 
