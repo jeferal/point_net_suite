@@ -161,15 +161,15 @@ The process can be described as:
 
 1. **Random Selection:**
 
-    Generate a random sample of indices $ S $ of size $ M$ from the set $ (1, 2, \ldots, N) $ without replacement.
+    Generate a random sample of indices $ S $ of size $ M$ from the set $(1, 2, \ldots, N)$ without replacement.
     
-    $$ S = \{i_1, i_2, \ldots, i_M\} \quad \text{where} \quad i_j \in \{1, 2, \ldots, N\} \quad \text{and} \quad |S| = M $$
+    $$S = \{i_1, i_2, \ldots, i_M\} \quad \text{where} \quad i_j \in \{1, 2, \ldots, N\} \quad \text{and} \quad |S| = M$$
 
 2. **Downsampled Point Cloud:**
 
-    Construct the downsampled point cloud $ P' $ using the indices $ S $.
+    Construct the downsampled point cloud $P'$ using the indices $S$.
     
-    $$ P' = \{p_{i_1}, p_{i_2}, \ldots, p_{i_M}\} $$
+    $$P' = \{p_{i_1}, p_{i_2}, \ldots, p_{i_M}\}$$
 
 
 #### 2.3.3. Voxel Grid Downsampling <a name="233-voxel grid"></a>
