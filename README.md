@@ -277,7 +277,7 @@ $$Neighborhood(p)={q∈P∣∥p−q∥≤ϵ}Neighborhood(p)={q∈P∣∥p−q∥
 
 2. **Principal Component Analysis on Clusters**
 
-For each cluster identified by DBSCAN (excluding noise points, label=−1label=−1), PCA is applied to determine the planarity of the points. PCA decomposes the points in the cluster into orthogonal components, ordered by the amount of variance they explain:
+For each cluster identified by DBSCAN (excluding noise points, ``label=−1``), PCA is applied to determine the planarity of the points. PCA decomposes the points in the cluster into orthogonal components, ordered by the amount of variance they explain:
 
 Given a set of points in a cluster $X∈Rn×3X∈Rn×3$, PCA finds the principal components $V$ and the corresponding eigenvalues $λ$:
 
