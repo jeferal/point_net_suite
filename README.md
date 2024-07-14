@@ -185,6 +185,8 @@ The process can be described as:
 
 Voxel grid downsampling divides the point cloud into a 3D grid of small cubes, also called voxels. Within each voxel, points are averaged to create a single representative point. The voxel size can be modified in order to adjust the density in the output point cloud. This method reduces the number of points while preserving to some extent the spatial structure of the data, it also helps in reducing noise and computational complexity.
 
+The voxel size is a critical parameter in this process, as it directly influences the level of detail and accuracy of the downsampled point cloud. A larger voxel size results in greater reduction of data, which can speed up computations and reduce storage requirements but may lead to loss of important details and structures. Similarly, a smaller voxel size retains more details but offers less reduction in the number of points, maintaining higher computational complexity and storage demands.
+
 Given a point cloud and a voxel size $v$:
 
 1. **Voxelization:**
@@ -208,6 +210,28 @@ Given a point cloud and a voxel size $v$:
 
     $$P' = \{ p_{\text{centroid}_1}, p_{\text{centroid}_2}, \ldots, p_{\text{centroid}_M} \}$$
 
+To illustrate the impact of voxel size on the point cloud, consider the following visualizations:
+
+- No Sampling: The original point cloud with all data points intact.
+<p align="center">
+  <img src="assets/no sampling.gif">
+  <br>
+  <em>Figure <number>: DALES dataset point cloud with no sampling performed.</em>
+</p>
+
+- Voxel Size of 20: A coarse downsampling with significant reduction in points, possibly losing fine details.
+- Voxel Size of 10: Moderate downsampling, balancing detail and reduction.
+
+<p align="center">
+  <img src="assets/10 and 20 voxel size.gif">
+  <br>
+  <em>Figure <number>: DALES dataset point cloud with voxel size 20 (left) and voxel size 10 (right).</em>
+</p>
+- Voxel Size of 5: Finer downsampling, retaining more details while still reducing points.
+- Voxel Size of 2: Very fine downsampling, closely resembling the original point cloud with minimal reduction.
+
+These visualizations demonstrate how adjusting the voxel size can help achieve the desired balance between data reduction and detail preservation.
+
 #### 2.3.4. Inverse Planar-Aware Downsampling <a name="234-inverse-planar"></a>
 Inverse planar-aware downsampling reduces the density of points in planar regions while preserving the density in non-planar regions, thus aiming to maintain complex features while hollowing out planar regions. In this way it can retain more relevant information about a point cloud with a lower amount of points, making it more effective in terms of computational cost. 
 
@@ -217,9 +241,7 @@ This method uses clustering and Principal Component Analysis (PCA) to identify p
 
     Apply DBSCAN to identify clusters of points in the point cloud based on the $plane\_threshold$.
 
-    $$
-    \text{clustering} = \text{DBSCAN}(\epsilon = \text{plane\_threshold}, \text{min\_samples} = 10).fit(P)
-    $$
+    $$clustering = \text{DBSCAN}(\epsilon = \text{plane threshold}, \text{min samples} = 10).fit(P)$$
 
 
 2. **Iterative Downsampling:**
