@@ -318,7 +318,7 @@ $$\text{DiceLoss} = 1 - \frac{2 \cdot (\text{top} + \epsilon)}{\text{bot} + \eps
 - Weighted loss:
 The weight applied to each class depends on the number of samples we have of that class. The idea is to penalize more the minority classes so that the model learns to classify them better. We have implemented the weights firstly using the method of Sklearn **compute_class_weights**, which by default computes the weights as follow:
 
-$$\text{class\_weight} = \frac{\text{n\_samples}}{\text{n\_classes} \times \text{n\_samples\_per\_class}}$$
+$$\text{classWeight} = \frac{\text{n\_samples}}{\text{n\_classes} \times \text{n\_samplesPerClass}}$$
 
 Once the weight per class is computed, the weighted loss is computed as follows:
 
