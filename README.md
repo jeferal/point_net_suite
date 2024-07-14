@@ -285,9 +285,8 @@ $$
 
 As for losses we have used the following:
 1. Classification loss: CrossEntropyLoss with label smoothing, focal loss and regularization.
-$$
-\text{loss} = \left(1 - p_n\right)^\gamma \cdot \text{ce\_loss}
-$$
+$$ \text{loss} = \left(1 - p_n\right)^\gamma \cdot \text{ce\_loss} $$
+
 - CrossEntropyLoss:
 $$
 \text{ce\_loss} = -\sum_{i=1}^{C} y_i \log(p_i)
