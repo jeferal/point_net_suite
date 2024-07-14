@@ -1,7 +1,14 @@
 # AIDL24: Towards improving minority classes accuracy for Aerial Lidar Datasets
-TBC With Mariona!!!
 
 **Abstract here**
+In this project we implement deep learning models for point cloud classification and
+segmentation tasks. We have started with simple objects datasets such as ModelNet and moved
+towards more complex scenarios with large scale datasets such as S3DIS and DALES, where
+preprocessing steps are required. These datasets are highly unbalanced and this project also 
+aims to improve the accuracy of the minority classes by exploring different techniques such as 
+weighted loss, effective number of samples, label smoothing and different sampling methods among 
+others. We  have implemented the PointNet and PointNet++ models from scratch and performed 
+experiments which are shown in this report.
 
 ### About
 Final project of the Postgraduate Course in Artificial Intelligence with Deep Learning. Authors:
@@ -35,14 +42,47 @@ Supervisor:
 - [6. Acknowledgements](#6-Acknowledgements)
 
 ## 1. Introduction <a name="1-intro"></a>
+3D point clouds are sets of data points in a 3D coordinate system. Unlike images, Point Clouds
+are not ordered. This means that a point cloud is equal even if the elements are permuted. For
+this reason, deep learning models have to be carefully designed to deal with this kind of data
+and properties.
+
+There are a few sensors that can capture point clouds such as LIDAR, RGB-D cameras, etc. In
+particular a 3D LIDAR sensor performs laser scanning to capture directly the geometry of the
+surroundings. Therefore, point clouds are widely used in applications where understanding the
+geometry of the space in real time is important, this could be autonomous driving, robotics, etc.
+
+One of the first milestones in academia in processing point clouds was the PointNet model. This
+model is a neural network that directly processes raw Point Clouds. It learns boht global and 
+local point features. After that, the PointNet++ model was introduced. PointNet++ hierarchically 
+applies PointNet in local regions to capture fine geometric details. 
 
 ### 1.1. Motivation <a name="11-motivation"></a>
+Aerial LiDAR offers extremely precise topographic information which is crucial for developing 
+detailed maps, planning infrastructure, and managing resources. This technology enables 
+efficient and accurate data collection over vast areas.
+
+The Dales Objects dataset is a Large Scale Benchmark Dataset for Segmentation of Aerial Lidar
+data, however, similar to many real-world datasets of Point Clouds, it is highly unbalanced.
+Many algorithms fail to classify minority classes accurately due to the class imbalance. In this
+project, we aim to tackle this issue by exploring different techniques.
+
+We will start by implementing the PointNet and PointNet++ models from scratch and then we will
+train them from simple datasets such as ModelNet to more complex scenarios such as S3DIS and
+DALES and propose methods to preprocess the data given our computational constrains.
 
 ### 1.2. Milestones <a name="12-milestones"></a>
+* Rewrite PointNet and PointNet++: Implement both models from scratch
+* PointNet++ Training for Classification and Segmentation: Focus on training procedures that enhance both classification and segmentation
+* Enhance Segmentation Results: data augmentation, smart sampling, and preprocessing methods to achieve better segmentation outcomes.
+* Improve Data Preprocessing: Develop advanced techniques for data cleaning, normalization to improve the input quality
 
 ## 2. Implementation <a name="2-Implementation"></a>
+We have implemented the models with PyTorch, control the source code with git and gitHub
+and used Mlflow to log the experiments as shown in the following sections.
 
 ### 2.1. Data Preprocessing and Datasets <a name="21-data-preprocessing"></a>
+In this section, we will discuss the datasets used in this project and the preprocessing steps.
 
 ### 2.1.1. ModelNet <a name="211-modelnet-dataset"></a>
 The ModelNet dataset is a widely-used dataset for 3D object classification and recognition. It is similar to the MNIST of pointcloud object classification. It includes a comprehensive collection of 3D CAD models, featuring 662 object categories ranging from everyday items like chairs, guns and tables to complex structures like airplanes and cars. The dataset is divided into two main subsets: ModelNet10 and ModelNet40. ModelNet10 includes 10 categories with around 5,000 models, while ModelNet40 comprises 40 categories with approximately 12,000 models. Each model is consistently scaled and oriented, ensuring a standardized basis for algorithm comparison which is paramount for speeding up the learning process in pointcloud classification.
@@ -1047,5 +1087,6 @@ python3 -m unittest discover -s test -p 'test_*.py' -v
 ```
 
 ## 5. Conclusions <a name="5-conclusions"></a>
+
 
 ## 6. Acknowledgements <a name="6-Acknowledgements"></a>
