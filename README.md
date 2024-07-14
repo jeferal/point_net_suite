@@ -33,11 +33,15 @@ Supervisor:
     - [2.3. Sampling](#223-sampling)
     - [2.4. Experiments](#24-experiments)
 
-- [3. Final application](#3-Final-application)
-- [4. How to run the code](#4-How-to-run-the-code)
-- [5. Conclusion](#5-conclusions)
+- [3. How to run the code](#3-How-to-run-the-code)
+    - [3.1. Installation](#31-installation)
+    - [3.2. Download and process datasets](#32-download-and-process-datasets)
+    - [3.3. How to run the scripts](#33-how-to-run-the-scripts)
+    - [3.4. Testing](#34-testing)
 
-- [6. Acknowledgements](#6-Acknowledgements)
+- [4. Conclusion](#4-conclusions)
+
+- [5. Bibliography](#5-Bibliography)
 
 ## 1. Introduction <a name="1-intro"></a>
 3D point clouds are sets of data points in a 3D coordinate system. Unlike images, Point Clouds
@@ -912,12 +916,9 @@ in this experiment and would like to confirm it.
 as it was expected. PointNet might be reasonably good for small objects without so much noise,
 but PointNet++ is much better for large scenes.
 
-## 3. Final application <a name="3-Final-application"></a>
-The Graphical User Interface
+## 3. How to run the code <a name="3-How-to-run-the-code"></a>
 
-## 4. How to run the code <a name="4-How-to-run-the-code"></a>
-
-### 4.1. Installation
+### 3.1. Installation <a name="31-installation"></a>
 1. **Clone the Repository:**
 ```bash
 git clone https://github.com/jeferal/point_net_suite.git
@@ -945,7 +946,7 @@ conda env create -f conda_env_backup.yaml
 conda activate pointnet_thesis
 ```
 
-### 4.2. Download and process datasets
+### 3.2. Download and process datasets <a name="32-download-and-process-datasets"></a>
 * Dataset [ModelNet](https://shapenet.cs.stanford.edu/media/modelnet40_normal_resampled.zip):
 ```bash
 wget https://shapenet.cs.stanford.edu/media/modelnet40_normal_resampled.zip --no-check-certificate
@@ -977,7 +978,7 @@ python3 scripts/visualize_dales.py data/DALESObjects <split_name> <index> --part
 <img src="./assets/dales_tile_example_1.png" alt="Alt text" style="width:50%;">
 <img src="./assets/dales_tile_example_2.png" alt="Alt text" style="width:50%;">
 
-### 4.3. How to run the scripts
+### 3.3. How to run the scripts <a name="#33-how-to-run-the-scripts"></a>
 We have added an argument parser to any script that we have created. The first thing to understand
 how to run any script is asking for help to the parser by executing:
 ```bash
@@ -1071,7 +1072,7 @@ python3 visualize_dataset.py <dataset_name> <path_to_the_dataset> <split_name> <
 --r_prob <r_prob>
 ```
 
-### 4.3. Testing
+### 3.4. Testing <a name="34-testing"></a>
 We have implemented tests to check the functionality of the processing of the Dales dataset.
 Implementing tests help us to make sure that the code is working as expected and also
 to help the development of new features without breaking the old functionality.
@@ -1080,7 +1081,17 @@ The tests are located in the test folder. All the tests can be run with the foll
 python3 -m unittest discover -s test -p 'test_*.py' -v
 ```
 
-## 5. Conclusions <a name="5-conclusions"></a>
+## 4. Conclusions <a name="4-conclusions"></a>
+After working with Point Cloud data, we have got the followign insights:
+* Downsampling techniques are crucial for managing large datasets while preserving essential features. Many of the points of DALES for example were actually the ground, if we are able to
+downsample the data in a way that it highlights the objects of interest, the performance of the
+model could improve.
+* Geometry-based information gathering is vital for maintaining structural relationships in point cloud data.
 
+Also, after attempting to improve the performance of PointNet and PointNet++ in heavily unbalanced datasets, we have got the following insights:
+* Addressing class imbalance is challenging but essential for robust model performance. Without
+any technique to deal with the imbalance, we have seen that the models do not learn at all the
+minority classes. After adding label smoothing, weighted loss, and effective number of samples,
+we were able to notice a significant improvement in the model's ability to learn the minority classes.
 
-## 6. Acknowledgements <a name="6-Acknowledgements"></a>
+## 5. Bibliography <a name="5-Bibliography"></a>
