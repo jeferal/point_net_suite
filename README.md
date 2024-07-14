@@ -61,9 +61,9 @@ After working with the ModelNet dataset, we've learned that not all points in a 
 The importance of critical points becomes even more apparent in the context of downsampling techniques. Downsampling helps on reducing the computational load by decreasing the number of points in a point cloud while retaining the most informative ones. This process is paramount when feeding very large point clouds to networks like PointNet++ for training, as it ensures that the network focuses on the most relevant features, leading to more efficient and accurate learning and relevant feature extraction.
 
 <p align="center">
-  <img src="assets/pointnet_examples.gif">
+  <img src="assets/modelnet examples p.gif">
   <br>
-  <em>Figure 1: ModelNet examples and PointNet application. Critical points are represented with Red.</em>
+  <em>Figure: ModelNet examples and PointNet application. Critical points are represented with Red.</em>
 </p>
 
 ### 2.1.2. Stanford indoors 3D <a name="212-3dindoors-dataset"></a>
@@ -85,9 +85,9 @@ The S3DIS dataset has also highlighted the importance of handling large scale da
  We have seen that effective segmentation must account for various object types, densities, and occlusions common in indoor scenes. Working with this dataset has driven a deeper understanding towards developing models that not only consider point-wise features but also capture the broader context and relationships within the scene.
 
  <p align="center">
-  <img src="https://raw.githubusercontent.com/jeferal/point_net_suite/adding_sergio_stuff_readme/assets/MUST UPDATE">
+  <img src="assets/s3d.gif">
   <br>
-  <em>Figure 1: ModelNet examples and PointNet application. Critical points are represented with Red.</em>
+  <em>Figure: Stanford Indoors 3D examples. Critical points are represented with Red.</em>
  </p>
  
 This is the train distribution of the data, which shows that there are classes with many more points than others:
@@ -128,6 +128,22 @@ chunks so that each core of the CPU can process a chunk in parallel and store th
 
 The partitioning is part of the class Dataset, where if the dataset with a certain partition parameter and overlap is not found in 
 disk, then it will create it and store it in disk. Every time the client calls the method getitem, then the dataset will load from disk the file of the particular partition for the given index and will return the points and the labels.
+
+**Inference Results**
+
+Some inference results are displayed below which demonstrate excellent performance.
+
+<p align="center">
+  <img src="assets/inference dales.gif">
+  <br>
+  <em>Figure <number>: DALES dataset inference on 3 x 3 partitions. Tile measurements, roughly 200 units.</em>
+</p>
+
+<p align="center">
+  <img src="assets/inference dales 2.gif">
+  <br>
+  <em>Figure <number>: DALES dataset inference on 20 x 20 partitions. Tile measurements, roughly 30 units.</em>
+</p>
 
 #### Images of the partitions
 
