@@ -26,6 +26,8 @@ Supervisor:
 
 - [2. Implementation](#2-Implementation)
     - [2.1. Data Preprocessing and Datasets](#21-data-preprocessing)
+        - [2.1.1. ModelNet](#211-modelnet-dataset)
+        - [2.1.2. Stanford indoors 3D](#212-3dindoors-dataset)
         - [2.1.3. Dales Dataset](#213-dales-dataset)
     - [2.2. Models](#22-models)
         - [2.2.1. PointNet](#221-pointnet)
