@@ -6,13 +6,14 @@ from models.PointNetV2.point_net_v2_utils import sample_and_group, sample_and_gr
 
 
 class PointNetSetAbstractionSingleScaleGrouping(nn.Module):
-    def __init__(self, npoint, radius, nsample, in_channel, mlp_layers, group_all):
+    def __init__(self, npoint, radius, nsample, in_channel, mlp_layers, group_all, useDensityFps):
 
         super(PointNetSetAbstractionSingleScaleGrouping, self).__init__()
 
         self.npoint = npoint
         self.radius = radius
         self.nsample = nsample
+        self.useDensityFps = useDensityFps
         self.mlp_convs = nn.ModuleList()
         self.mlp_bns = nn.ModuleList()
         last_dimension = in_channel
@@ -40,7 +41,7 @@ class PointNetSetAbstractionSingleScaleGrouping(nn.Module):
         if self.group_all:
             new_xyz, new_features = sample_and_group_all(xyz, features)
         else:
-            new_xyz, new_features = sample_and_group(self.npoint, self.radius, self.nsample, xyz, features)
+            new_xyz, new_features = sample_and_group(self.npoint, self.radius, self.nsample, xyz, features, self.useDensityFps)
         # new_xyz: sampled points positional data, [B, npoint, C]
         # new_features: sampled points features data, [B, npoint, nsample, C+D]
         new_features = new_features.permute(0, 3, 2, 1) # [B, C+D, nsample, npoint]

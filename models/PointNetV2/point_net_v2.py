@@ -13,7 +13,7 @@ from models.PointNetV2.point_net_feature_propagation import PointNetFeaturePropa
 # ================================================================================================
 class PointNetV2FeatureLearnerClassificationSingleScaleGrouping(nn.Module):
     ''' PointNet++ Feature Learner for classification module using single - scale grouping '''
-    def __init__(self, input_dim=3, extra_feat_dropout=0.0):
+    def __init__(self, input_dim=3, extra_feat_dropout=0.0, useDensityFps = False):
         """
         :param input_dim: number of dimensions of the input, the first 3 ones should be xyz while the rest can be extra features as normals or rgb data
         :param extra_feat_dropout: amount of dropout to apply to the extra features so that the model does not learn only from them
@@ -22,15 +22,16 @@ class PointNetV2FeatureLearnerClassificationSingleScaleGrouping(nn.Module):
 
         self.input_dim = input_dim
         self.extra_feat_dropout = extra_feat_dropout
+        self.useDensityFps = useDensityFps
 
         # 3 layers of PointNet Set Abstractions:
         # From PointNet++ paper: SA(512, 0.2, [64, 64, 128]) --> SA(128, 0.4, [128, 128, 256]) --> SA([256, 512, 1024])
         self.sa1 = PointNetSetAbstractionSingleScaleGrouping(npoint=512, radius=0.2, nsample=32, in_channel=input_dim,
-                                                             mlp_layers=[64, 64, 128], group_all=False)
+                                                             mlp_layers=[64, 64, 128], group_all=False, useDensityFps=useDensityFps)
         self.sa2 = PointNetSetAbstractionSingleScaleGrouping(npoint=128, radius=0.4, nsample=64, in_channel=128 + 3,
-                                                             mlp_layers=[128, 128, 256], group_all=False)
+                                                             mlp_layers=[128, 128, 256], group_all=False, useDensityFps=useDensityFps)
         self.sa3 = PointNetSetAbstractionSingleScaleGrouping(npoint=None, radius=None, nsample=None, in_channel=256 + 3,
-                                                             mlp_layers=[256, 512, 1024], group_all=True)
+                                                             mlp_layers=[256, 512, 1024], group_all=True, useDensityFps=useDensityFps)
 
     def forward(self, x):
         batchsize, xDimension, _ = x.shape
@@ -66,7 +67,7 @@ class PointNetV2FeatureLearnerClassificationSingleScaleGrouping(nn.Module):
 # ================================================================================================
 class PointNetV2FeatureLearnerClassificationMultiScaleGrouping(nn.Module):
     ''' PointNet++ Feature Learner for classification module using multi - scale grouping '''
-    def __init__(self, input_dim=3, extra_feat_dropout=0.0):
+    def __init__(self, input_dim=3, extra_feat_dropout=0.0, useDensityFps = False):
         """
         :param input_dim: number of dimensions of the input, the first 3 ones should be xyz while the rest can be extra features as normals or rgb data
         :param extra_feat_dropout: amount of dropout to apply to the extra features so that the model does not learn only from them
@@ -75,6 +76,7 @@ class PointNetV2FeatureLearnerClassificationMultiScaleGrouping(nn.Module):
 
         self.input_dim = input_dim
         self.extra_feat_dropout = extra_feat_dropout
+        self.useDensityFps = useDensityFps
 
         # 2 layers of PointNet MultiScaleGrouping Set Abstractions:
         # From PointNet++ paper: SA(512, [0.1, 0.2, 0.4], [[32, 32, 64], [64, 64, 128], [64, 96, 128]]) -->
@@ -86,7 +88,7 @@ class PointNetV2FeatureLearnerClassificationMultiScaleGrouping(nn.Module):
         # 1 layer of PointNet SingleScaleGrouping Set Abstractions:
         # From PointNet++ paper: SA([256, 512, 1024])
         self.sa3 = PointNetSetAbstractionSingleScaleGrouping(npoint=None, radius=None, nsample=None, in_channel=640 + 3,    #640 = 128 + 256 + 256
-                                                             mlp_layers=[256, 512, 1024], group_all=True)
+                                                             mlp_layers=[256, 512, 1024], group_all=True, useDensityFps=useDensityFps)
 
     def forward(self, x):
         batchsize, xDimension, _ = x.shape
@@ -101,7 +103,7 @@ class PointNetV2FeatureLearnerClassificationMultiScaleGrouping(nn.Module):
             # We can also implement some dropout so that the model does not learn to decide based on these extra features
             # (for example, decide a class based on color with rgb extra info). This is done in other models like KPCOnv.
             if self.extra_feat_dropout > 0.0 and np.random.uniform(0, 1) < self.extra_feat_dropout:
-                extra_features[:, :, :] = 0.0
+                extra_features = torch.zeros_like(extra_features)
         
         else:
             extra_features = None
@@ -121,7 +123,7 @@ class PointNetV2FeatureLearnerClassificationMultiScaleGrouping(nn.Module):
 # ================================================================================================
 class PointNetV2Classification(nn.Module):
     ''' PointNet++ Classification module that obtains the object class '''
-    def __init__(self, k=2, dropout=0.5, input_dim=3, extra_feat_dropout=0.0, single_scale_grouping=False):
+    def __init__(self, k=2, dropout=0.5, input_dim=3, extra_feat_dropout=0.0, single_scale_grouping=False, useDensityFps = False):
         """
         :param num_points: number of points in the point cloud
         :param k: number of object classes available
@@ -132,7 +134,7 @@ class PointNetV2Classification(nn.Module):
         super(PointNetV2Classification, self).__init__()
 
         if single_scale_grouping:
-            self.feature_learner = PointNetV2FeatureLearnerClassificationSingleScaleGrouping(input_dim=input_dim, extra_feat_dropout=extra_feat_dropout)
+            self.feature_learner = PointNetV2FeatureLearnerClassificationSingleScaleGrouping(input_dim=input_dim, extra_feat_dropout=extra_feat_dropout, useDensityFps=useDensityFps)
         else:
             self.feature_learner = PointNetV2FeatureLearnerClassificationMultiScaleGrouping(input_dim=input_dim, extra_feat_dropout=extra_feat_dropout)
 
@@ -168,7 +170,7 @@ class PointNetV2Classification(nn.Module):
 # ================================================================================================
 class PointNetV2FeatureLearnerSemanticSegSingleScaleGrouping(nn.Module):
     ''' PointNet++ Feature Learner for semantic segmentation module using single - scale grouping '''
-    def __init__(self, input_dim=3, extra_feat_dropout=0.0):
+    def __init__(self, input_dim=3, extra_feat_dropout=0.0, useDensityFps = False):
         """
         :param input_dim: number of dimensions of the input, the first 3 ones should be xyz while the rest can be extra features as normals or rgb data
         :param extra_feat_dropout: amount of dropout to apply to the extra features so that the model does not learn only from them
@@ -177,18 +179,19 @@ class PointNetV2FeatureLearnerSemanticSegSingleScaleGrouping(nn.Module):
 
         self.input_dim = input_dim
         self.extra_feat_dropout = extra_feat_dropout
+        self.useDensityFps = useDensityFps
 
         # 4 layers of PointNet Set Abstractions:
         # From PointNet++ paper: SA(1024, 0.1, [32, 32, 64]) --> SA(256, 0.2, [64, 64, 128]) -->
         #                        SA(64, 0.4, [128, 128, 256]) --> SA(16, 0.8, [256, 256, 512])
         self.sa1 = PointNetSetAbstractionSingleScaleGrouping(npoint=1024, radius=0.1, nsample=32, in_channel=input_dim,
-                                                             mlp_layers=[32, 32, 64], group_all=False)
+                                                             mlp_layers=[32, 32, 64], group_all=False, useDensityFps=useDensityFps)
         self.sa2 = PointNetSetAbstractionSingleScaleGrouping(npoint=256, radius=0.2, nsample=32, in_channel=64 + 3,
-                                                             mlp_layers=[64, 64, 128], group_all=False)
+                                                             mlp_layers=[64, 64, 128], group_all=False, useDensityFps=useDensityFps)
         self.sa3 = PointNetSetAbstractionSingleScaleGrouping(npoint=64, radius=0.4, nsample=32, in_channel=128 + 3,
-                                                             mlp_layers=[128, 128, 256], group_all=False)
+                                                             mlp_layers=[128, 128, 256], group_all=False, useDensityFps=useDensityFps)
         self.sa4 = PointNetSetAbstractionSingleScaleGrouping(npoint=16, radius=0.8, nsample=32, in_channel=256 + 3,
-                                                             mlp_layers=[256, 256, 512], group_all=False)
+                                                             mlp_layers=[256, 256, 512], group_all=False, useDensityFps=useDensityFps)
 
     def forward(self, x, extra_features):
         # Pass through all the PointNet Set Abstractions
@@ -241,7 +244,7 @@ class PointNetV2FeatureLearnerSemanticSegMultiScaleGrouping(nn.Module):
 # ================================================================================================
 class PointNetV2SemanticSegmentation(nn.Module):
     ''' PointNet++ Semantic Segmentation module that obtains every point class in a scene '''
-    def __init__(self, k=2, dropout=0.5, input_dim=3, extra_feat_dropout=0.0, single_scale_grouping=False):
+    def __init__(self, k=2, dropout=0.5, input_dim=3, extra_feat_dropout=0.0, single_scale_grouping=False, useDensityFps=False):
         """
         :param num_points: number of points in the point cloud
         :param k: number of object classes available
@@ -254,7 +257,7 @@ class PointNetV2SemanticSegmentation(nn.Module):
         self.extra_feat_dropout = extra_feat_dropout
 
         if single_scale_grouping:
-            self.feature_learner = PointNetV2FeatureLearnerSemanticSegSingleScaleGrouping(input_dim=input_dim, extra_feat_dropout=extra_feat_dropout)
+            self.feature_learner = PointNetV2FeatureLearnerSemanticSegSingleScaleGrouping(input_dim=input_dim, extra_feat_dropout=extra_feat_dropout, useDensityFps=useDensityFps)
             input_channels_feature_prop = [768, 384, 320, 128 + (input_dim - 3)] #[512+256, 256+128, 256+64, 128+(input_dim-3)] # Set abstraction output + last layer output
         else:
             self.feature_learner = PointNetV2FeatureLearnerSemanticSegMultiScaleGrouping(input_dim=input_dim, extra_feat_dropout=extra_feat_dropout)

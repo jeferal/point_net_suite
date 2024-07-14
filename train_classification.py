@@ -35,7 +35,7 @@ hparams_for_args_to_evaluate = {
     'num_point': 1024,          #1024, 2048
     # one run with --use_extra_features
     # one run with --use_fps
-    'batch_size': 16,           #12, 24, 48, 96 
+    'batch_size': 24,           #12, 24, 48, 96 
     'dropout': 0.5,                #0.0, 0.2, 0.5
     'extra_feat_dropout': 0.2,  #0.0, 0.2, 0.5
     'label_smoothing': 0.1,     #0.0, 0.1, 0.2
@@ -58,6 +58,7 @@ def parse_args():
     parser.add_argument('--num_point', type=int, default=hparams_for_args_to_evaluate['num_point'], help='Point Number')
     parser.add_argument('--use_extra_features', action='store_true', default=False, help='use extra features as RGB info or more')
     parser.add_argument('--use_fps', action='store_true', default=False, help='use further point sampiling')
+    parser.add_argument('--use_density_fps', action='store_true', default=False, help='use density further point sampiling (only pointnetv2 ssg)')
     parser.add_argument('--no_data_preprocess', action='store_true', default=False, help='preprocess the data or process it during the getitem call')
     # Model selection
     parser.add_argument('--model', default='pointnet_cls', help='model name [default: pointnet_cls]')
@@ -126,7 +127,8 @@ def main(args):
     num_class = args.num_category
     model = importlib.import_module(models_modules_dict[args.model])
 
-    classifier = model.get_model(num_points=args.num_point, k=num_class, dropout=args.dropout, input_dim=input_dimension, extra_feat_dropout=args.extra_feat_dropout)
+    classifier = model.get_model(num_points=args.num_point, k=num_class, dropout=args.dropout, input_dim=input_dimension,
+                                 extra_feat_dropout=args.extra_feat_dropout, useDensityFps=args.use_density_fps)
     criterion = model.get_loss(label_smoothing=args.label_smoothing)
 
     if not args.use_cpu:

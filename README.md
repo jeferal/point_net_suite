@@ -1,7 +1,12 @@
 # AIDL24: Towards improving minority classes accuracy for Aerial Lidar Datasets
-TBC With Mariona!!!
-
-**Abstract here**
+In this project we implement deep learning models for point cloud classification and
+segmentation tasks. We have started with simple objects datasets such as ModelNet and moved
+towards more complex scenarios with large scale datasets such as S3DIS and DALES, where
+preprocessing steps are required. These datasets are highly unbalanced and this project also 
+aims to improve the accuracy of the minority classes by exploring different techniques such as 
+weighted loss, effective number of samples, label smoothing and different sampling methods among 
+others. We  have implemented the PointNet and PointNet++ models from scratch and performed 
+experiments which are shown in this report.
 
 ### About
 Final project of the Postgraduate Course in Artificial Intelligence with Deep Learning. Authors:
@@ -23,26 +28,63 @@ Supervisor:
     - [2.1. Data Preprocessing and Datasets](#21-data-preprocessing)
         - [2.1.3. Dales Dataset](#213-dales-dataset)
     - [2.2. Models](#22-models)
-        - [2.2.3. PointNet](#223-pointnet)
-        - [2.2.4. PointNet++](#224-pointnetpp)
-    - [2.3. Sampling](#223-sampling)
+        - [2.2.1. PointNet](#221-pointnet)
+        - [2.2.2. PointNet++](#222-pointnetpp)
+    - [2.3. Sampling](#23-sampling)
     - [2.4. Experiments](#24-experiments)
 
-- [3. Final application](#3-Final-application)
-- [4. How to run the code](#4-How-to-run-the-code)
-- [5. Conclusion](#5-conclusions)
+- [3. How to run the code](#3-How-to-run-the-code)
+    - [3.1. Installation](#31-installation)
+    - [3.2. Download and process datasets](#32-download-and-process-datasets)
+    - [3.3. How to run the scripts](#33-how-to-run-the-scripts)
+    - [3.4. Testing](#34-testing)
 
-- [6. Acknowledgements](#6-Acknowledgements)
+- [4. Conclusion](#4-conclusions)
+
+- [5. Bibliography](#5-Bibliography)
 
 ## 1. Introduction <a name="1-intro"></a>
+3D point clouds are sets of data points in a 3D coordinate system. Unlike images, Point Clouds
+are not ordered. This means that a point cloud is equal even if the elements are permuted. For
+this reason, deep learning models have to be carefully designed to deal with this kind of data
+and properties.
+
+There are a few sensors that can capture point clouds such as LIDAR, RGB-D cameras, etc. In
+particular a 3D LIDAR sensor performs laser scanning to capture directly the geometry of the
+surroundings. Therefore, point clouds are widely used in applications where understanding the
+geometry of the space in real time is important, this could be autonomous driving, robotics, etc.
+
+One of the first milestones in academia in processing point clouds was the PointNet model. This
+model is a neural network that directly processes raw Point Clouds. It learns boht global and 
+local point features. After that, the PointNet++ model was introduced. PointNet++ hierarchically 
+applies PointNet in local regions to capture fine geometric details. 
 
 ### 1.1. Motivation <a name="11-motivation"></a>
+Aerial LiDAR offers extremely precise topographic information which is crucial for developing 
+detailed maps, planning infrastructure, and managing resources. This technology enables 
+efficient and accurate data collection over vast areas.
+
+The Dales Objects dataset is a Large Scale Benchmark Dataset for Segmentation of Aerial Lidar
+data, however, similar to many real-world datasets of Point Clouds, it is highly unbalanced.
+Many algorithms fail to classify minority classes accurately due to the class imbalance. In this
+project, we aim to tackle this issue by exploring different techniques.
+
+We will start by implementing the PointNet and PointNet++ models from scratch and then we will
+train them from simple datasets such as ModelNet to more complex scenarios such as S3DIS and
+DALES and propose methods to preprocess the data given our computational constrains.
 
 ### 1.2. Milestones <a name="12-milestones"></a>
+* Rewrite PointNet and PointNet++: Implement both models from scratch
+* PointNet++ Training for Classification and Segmentation: Focus on training procedures that enhance both classification and segmentation
+* Enhance Segmentation Results: data augmentation, smart sampling, and preprocessing methods to achieve better segmentation outcomes.
+* Improve Data Preprocessing: Develop advanced techniques for data cleaning, normalization to improve the input quality
 
 ## 2. Implementation <a name="2-Implementation"></a>
+We have implemented the models with PyTorch, control the source code with git and gitHub
+and used Mlflow to log the experiments as shown in the following sections.
 
 ### 2.1. Data Preprocessing and Datasets <a name="21-data-preprocessing"></a>
+In this section, we will discuss the datasets used in this project and the preprocessing steps.
 
 ### 2.1.1. ModelNet <a name="211-modelnet-dataset"></a>
 The ModelNet dataset is a widely-used dataset for 3D object classification and recognition. It is similar to the MNIST of pointcloud object classification. It includes a comprehensive collection of 3D CAD models, featuring 662 object categories ranging from everyday items like chairs, guns and tables to complex structures like airplanes and cars. The dataset is divided into two main subsets: ModelNet10 and ModelNet40. ModelNet10 includes 10 categories with around 5,000 models, while ModelNet40 comprises 40 categories with approximately 12,000 models. Each model is consistently scaled and oriented, ensuring a standardized basis for algorithm comparison which is paramount for speeding up the learning process in pointcloud classification.
@@ -87,14 +129,14 @@ The S3DIS dataset has also highlighted the importance of handling large scale da
  <p align="center">
   <img src="assets/s3d.gif">
   <br>
-  <em>Figure: Stanford Indoors 3D examples. Critical points are represented with Red.</em>
+  <em>Stanford Indoors 3D examples. Critical points are represented with Red.</em>
  </p>
  
 This is the train distribution of the data, which shows that there are classes with many more points than others:
 <p align="center">
   <img src="assets/s3dis_train_distribution.jpeg">
   <br>
-  <em>Figure <number>: S3DIS Dataset train distribution.</em>
+  <em>S3DIS Dataset train distribution.</em>
 </p>
 
 ### 2.1.3. Dales Dataset <a name="213-dales-dataset"></a>
@@ -149,20 +191,20 @@ Some inference results are displayed below which demonstrate excellent performan
 
 ### 2.2. Models <a name="22-models"></a>
 
-#### 2.2.3. PointNet <a name="223-pointnet"></a>
+#### 2.2.1. PointNet <a name="221-pointnet"></a>
 
 <p align="center">
   <img src="assets/pointnet.png">
   <br>
-  <em>Figure <number>: PointNet architecture.</em>
+  <em>PointNet architecture.</em>
 </p>
 
-#### 2.2.4. PointNet++ <a name="224-pointnetpp"></a>
+#### 2.2.2. PointNet++ <a name="222-pointnetpp"></a>
 
 <p align="center">
   <img src="assets/pointnetpp.png">
   <br>
-  <em>Figure <number>: PointNet++ architecture.</em>
+  <em>PointNet++ architecture.</em>
 </p>
 
 ### 2.3. Sampling <a name="23-sampling"></a>
@@ -287,6 +329,7 @@ This method uses clustering and Principal Component Analysis (PCA) to identify p
     - $min samples$: The minimum number of points to form a dense region.
 
 Mathematically, for a point $p$ in the dataset $P$:
+    $$clustering = \text{DBSCAN}(\epsilon = \text{plane\_threshold}, \text{min\_samples} = 10).fit(P)$$
 
 $$Neighborhood(p)={q∈P∣∥p−q∥≤ϵ}Neighborhood(p)={q∈P∣∥p−q∥≤ϵ}$$
 
@@ -296,7 +339,6 @@ $$Neighborhood(p)={q∈P∣∥p−q∥≤ϵ}Neighborhood(p)={q∈P∣∥p−q∥
 For each cluster identified by DBSCAN (excluding noise points, ``label=−1``), PCA is applied to determine the planarity of the points. PCA decomposes the points in the cluster into orthogonal components, ordered by the amount of variance they explain:
 
 Given a set of points in a cluster $X∈Rn×3X∈Rn×3$, PCA finds the principal components $V$ and the corresponding eigenvalues $λ$:
-
 
 $$X⊤XV=VΛ$$
 
@@ -384,7 +426,7 @@ The combined downsampling algorithm effectively reduces redundant points and ret
 
 ### 2.4. Experiments <a name="24-Experiments"></a>
 
-#### 2.4.1. Experiment logging <a name="241-experiment-logging"></a>
+#### 2.4.1. Experiment metrics and logging <a name="241-experiment-logging"></a>
 We have conducted different experiments using different models and hyperparameters. We decided to log the metrics of every 
 experiment in Mlflow because it is a widely used open source application that can help us keep track of the experiments, understand
 the results and better choose the hyperparameters.
@@ -400,7 +442,7 @@ To access from any other machine via http, we have to change the firewall rules 
 <p align="center">
   <img src="assets/mlflow.png">
   <br>
-  <em>Figure <number>: Mlflow server.</em>
+  <em>Mlflow server.</em>
 </p>
 
 For this experiment we have logged the following metrics:
@@ -420,6 +462,67 @@ For this experiment we have logged the following metrics:
 - eval_accuracy
 - train_per_class_iou
 - eval_per_class_iou
+
+The accuracy is computed as follow:
+
+$$\text{Accuracy}=\frac{\sum_{i=1}^{N} \mathbb{I}(y_i = \hat{y}_i)}{N}=\frac{\text{Number of correct predictions}}{\text{Total number of predictions}}
+$$
+
+The per class IoU is computed as follow:
+
+$$\text{IoU} = \frac{\text{True Positives}}{\text{True Positives} + \text{False Positives} + \text{False Negatives}}
+$$
+
+As for losses we have used the following:
+1. Classification loss: CrossEntropyLoss with label smoothing, focal loss and regularization.
+
+$$\text{loss} = \left(1 - p_n\right)^\gamma \cdot \text{ceLoss}$$
+
+- CrossEntropyLoss:
+
+$$\text{ceLoss} = -\sum_{i=1}^{C} y_i \log(p_i)$$
+- Label Smoothing:
+
+$$y_i' = (1 - \epsilon) y_i + \frac{\epsilon}{C}$$
+
+<p align="center">
+  <img src="assets/label_smoothing.png">
+  <br>
+  <em>Label smoothing.</em>
+</p>
+
+- Focal loss:
+The intuition behind focal loss is to reduce the loss contribution of well-classified examples. So that the model focuses on the hard examples:
+
+$$\text{loss} = (1 - p_n)^\gamma \cdot \text{ceLoss}$$
+
+- Regularization term:
+
+$$\text{reg} = \frac{\text{regularizationWeight}}{N} \cdot \| I - F F^\top \|_F$$
+
+2. The segmentation loss is also Cross Entropy Loss of the points with label smoothing,
+focal loss adding also a Dice loss term. The Dice loss is computed as follows:
+This is a loss term used for semantic segmentation in datasets that are highly unbalanced. The
+dice coefficient enlarges the weight of overlap both in the denominator and numerator.
+
+$$\text{DiceLoss} = 1 - \frac{2 \cdot (\text{top} + \epsilon)}{\text{bot} + \epsilon}$$
+
+- Weighted loss:
+The weight applied to each class depends on the number of samples we have of that class. The idea is to penalize more the minority classes so that the model learns to classify them better. We have implemented the weights firstly using the method of Sklearn **compute_class_weights**, which by default computes the weights as follow:
+
+$$\text{classWeight} = \frac{\text{nSamples}}{\text{nClasses} \times \text{nSamplesPerClass}}$$
+
+Once the weight per class is computed, the weighted loss is computed as follows:
+
+$$\text{WeightedLoss} = \frac{1}{N} \sum_{i=1}^{N} w_i \cdot \text{Loss}(y_i, \hat{y}_i)$$
+
+- Effective number of samples weighted loss:
+This is a weighted loss where the weight applied to each class based on its
+frequency depends on a particular formula:
+
+$$\text{effectiveNum} = \frac{1.0 - \beta^{counts}}{1.0 - \beta}$$
+
+$$\text{labelWeights} = \frac{1}{\text{effectiveNum}}$$
 
 We have also logged **system metrics** which some of them are:
 - System memory usage
@@ -443,7 +546,7 @@ And other information that is helpful for us:
 <p align="center">
   <img src="assets/experiments_s3dis/s3dis_experiment_1_no_wloss.jpeg" width=70%>
   <br>
-  <em>Figure <number>: IoU by Class.</em>
+  <em>IoU by Class without weighted loss.</em>
 </p>
 
 **Conclusions:**
@@ -459,7 +562,7 @@ learns to classify them better.
 <p align="center">
   <img src="assets/experiments_s3dis/s3dis_experiment_2_wloss.jpeg" width=70%>
   <br>
-  <em>Figure <number>: IoU by Class.</em>
+  <em>IoU by Class with weighted loss.</em>
 </p>
 
 **Conclusions:**
@@ -508,14 +611,14 @@ understand if the model is overfitting or not and how good it is performing with
     <p align="center">
       <img src="assets/experiment_dales_1/3fb3c811994643fcbb435d886be7074d_loss.png">
       <br>
-      <em>Figure <number>: Loss.</em>
+      <em>Loss.</em>
     </p>
   </div>
   <div style="flex: 50%; padding: 10px;">
     <p align="center">
       <img src="assets/experiment_dales_1/3fb3c811994643fcbb435d886be7074d_accuracy.png">
       <br>
-      <em>Figure <number>: Accuracy.</em>
+      <em>Accuracy.</em>
     </p>
   </div>
 </div>
@@ -523,7 +626,7 @@ understand if the model is overfitting or not and how good it is performing with
 <p align="center">
   <img src="assets/experiment_dales_1/3fb3c811994643fcbb435d886be7074d_iou.png" width="60%">
   <br>
-  <em>Figure <number>: IoU.</em>
+  <em>IoU.</em>
 </p>
 
 **Conclusions:**
@@ -560,14 +663,14 @@ to change between SSG and MSG it is just changing a parameter.
     <p align="center">
       <img src="assets/experiment_dales_2/caa5682dd5a5462a8426d207c01b6be8_loss.png">
       <br>
-      <em>Figure <number>: Loss.</em>
+      <em>Loss.</em>
     </p>
   </div>
   <div style="flex: 50%; padding: 10px;">
     <p align="center">
       <img src="assets/experiment_dales_2/caa5682dd5a5462a8426d207c01b6be8_accuracy.png">
       <br>
-      <em>Figure <number>: Accuracy.</em>
+      <em>Accuracy.</em>
     </p>
   </div>
 </div>
@@ -575,7 +678,7 @@ to change between SSG and MSG it is just changing a parameter.
 <p align="center">
   <img src="assets/experiment_dales_2/caa5682dd5a5462a8426d207c01b6be8_iou.png" width="60%">
   <br>
-  <em>Figure <number>: IoU.</em>
+  <em>IoU.</em>
 </p>
 
 **Conclusions:**
@@ -611,14 +714,14 @@ downsample is done with random sampling.
     <p align="center">
       <img src="assets/experiment_dales_3/e6befa89190c4d268413bfc58df4caef_loss.png">
       <br>
-      <em>Figure <number>: Loss.</em>
+      <em>Loss.</em>
     </p>
   </div>
   <div style="flex: 50%; padding: 10px;">
     <p align="center">
       <img src="assets/experiment_dales_3/e6befa89190c4d268413bfc58df4caef_accuracy.png">
       <br>
-      <em>Figure <number>: Accuracy.</em>
+      <em>Accuracy.</em>
     </p>
   </div>
 </div>
@@ -626,7 +729,7 @@ downsample is done with random sampling.
 <p align="center">
   <img src="assets/experiment_dales_3/e6befa89190c4d268413bfc58df4caef_iou.png" width="60%">
   <br>
-  <em>Figure <number>: IoU.</em>
+  <em>IoU.</em>
 </p>
 
 **Conclusions:**
@@ -661,14 +764,14 @@ with the Dales dataset and PointNet++.
     <p align="center">
       <img src="assets/experiment_dales_4/0954e43dbed74719aaf3557c031f2725_loss.png">
       <br>
-      <em>Figure <number>: Loss.</em>
+      <em>Loss.</em>
     </p>
   </div>
   <div style="flex: 50%; padding: 10px;">
     <p align="center">
       <img src="assets/experiment_dales_4/0954e43dbed74719aaf3557c031f2725_accuracy.png">
       <br>
-      <em>Figure <number>: Accuracy.</em>
+      <em>Accuracy.</em>
     </p>
   </div>
 </div>
@@ -676,7 +779,7 @@ with the Dales dataset and PointNet++.
 <p align="center">
   <img src="assets/experiment_dales_4/0954e43dbed74719aaf3557c031f2725_iou.png" width="60%">
   <br>
-  <em>Figure <number>: IoU.</em>
+  <em>IoU.</em>
 </p>
 
 **Conclusions:**
@@ -710,14 +813,14 @@ to pay more attention to the minority classes.
     <p align="center">
       <img src="assets/experiment_dales_5/ae440146c8e8450e8b5d08381de36d1b_loss.png">
       <br>
-      <em>Figure <number>: Loss.</em>
+      <em>Loss.</em>
     </p>
   </div>
   <div style="flex: 50%; padding: 10px;">
     <p align="center">
       <img src="assets/experiment_dales_5/ae440146c8e8450e8b5d08381de36d1b_accuracy.png">
       <br>
-      <em>Figure <number>: Accuracy.</em>
+      <em>Accuracy.</em>
     </p>
   </div>
 </div>
@@ -725,7 +828,7 @@ to pay more attention to the minority classes.
 <p align="center">
   <img src="assets/experiment_dales_5/ae440146c8e8450e8b5d08381de36d1b_iou.png" width="60%">
   <br>
-  <em>Figure <number>: IoU.</em>
+  <em>IoU.</em>
 </p>
 
 **Conclusions:**
@@ -758,14 +861,14 @@ PointNet++ is trained with the Dales dataset.
     <p align="center">
       <img src="assets/experiment_dales_6/d703527719d04997ade2633e9dc4da68_loss.png">
       <br>
-      <em>Figure <number>: Loss.</em>
+      <em>Loss.</em>
     </p>
   </div>
   <div style="flex: 50%; padding: 10px;">
     <p align="center">
       <img src="assets/experiment_dales_6/d703527719d04997ade2633e9dc4da68_accuracy.png">
       <br>
-      <em>Figure <number>: Accuracy.</em>
+      <em>Accuracy.</em>
     </p>
   </div>
 </div>
@@ -773,7 +876,7 @@ PointNet++ is trained with the Dales dataset.
 <p align="center">
   <img src="assets/experiment_dales_6/d703527719d04997ade2633e9dc4da68_iou.png" width="60%">
   <br>
-  <em>Figure <number>: IoU.</em>
+  <em>IoU.</em>
 </p>
 
 **Conclusions**
@@ -803,14 +906,14 @@ Sampling Algorithm: We will replace the traditional farthest point sampling (FPS
     <p align="center">
       <img src="assets/experiment_dales_7/41420aa1515b480ea782325192904eca_loss.png">
       <br>
-      <em>Figure <number>: Loss.</em>
+      <em>Loss.</em>
     </p>
   </div>
   <div style="flex: 50%; padding: 10px;">
     <p align="center">
       <img src="assets/experiment_dales_7/41420aa1515b480ea782325192904eca_accuracy.png">
       <br>
-      <em>Figure <number>: Accuracy.</em>
+      <em>Accuracy.</em>
     </p>
   </div>
 </div>
@@ -818,7 +921,7 @@ Sampling Algorithm: We will replace the traditional farthest point sampling (FPS
 <p align="center">
   <img src="assets/experiment_dales_7/41420aa1515b480ea782325192904eca_iou.png" width="60%">
   <br>
-  <em>Figure <number>: IoU.</em>
+  <em>IoU.</em>
 </p>
 
 **Conclusions**
@@ -848,14 +951,14 @@ add more information to the model, it should be able to learn better.
     <p align="center">
       <img src="assets/experiment_dales_8/0b26dfaa0264411c8f994ef70c74fdd0_loss.png">
       <br>
-      <em>Figure <number>: Loss.</em>
+      <em>Loss.</em>
     </p>
   </div>
   <div style="flex: 50%; padding: 10px;">
     <p align="center">
       <img src="assets/experiment_dales_8/0b26dfaa0264411c8f994ef70c74fdd0_accuracy.png">
       <br>
-      <em>Figure <number>: Accuracy.</em>
+      <em>Accuracy.</em>
     </p>
   </div>
 </div>
@@ -863,7 +966,7 @@ add more information to the model, it should be able to learn better.
 <p align="center">
   <img src="assets/experiment_dales_8/0b26dfaa0264411c8f994ef70c74fdd0_iou.png" width="60%">
   <br>
-  <em>Figure <number>: IoU.</em>
+  <em>IoU.</em>
 </p>
 
 **Conclusions**
@@ -896,14 +999,14 @@ The extra features in this case is the intensity signal that the Dales dataset p
     <p align="center">
       <img src="assets/experiment_dales_9/fe091c7ee5e44adca90d100aab9f0330_loss.png">
       <br>
-      <em>Figure <number>: Loss.</em>
+      <em>Loss.</em>
     </p>
   </div>
   <div style="flex: 50%; padding: 10px;">
     <p align="center">
       <img src="assets/experiment_dales_9/fe091c7ee5e44adca90d100aab9f0330_accuracy.png">
       <br>
-      <em>Figure <number>: Accuracy.</em>
+      <em>Accuracy.</em>
     </p>
   </div>
 </div>
@@ -911,7 +1014,7 @@ The extra features in this case is the intensity signal that the Dales dataset p
 <p align="center">
   <img src="assets/experiment_dales_9/fe091c7ee5e44adca90d100aab9f0330_iou.png" width="60%">
   <br>
-  <em>Figure <number>: IoU.</em>
+  <em>IoU.</em>
 </p>
 
 **Conclusions**
@@ -944,14 +1047,14 @@ in this experiment and would like to confirm it.
     <p align="center">
       <img src="assets/experiment_dales_10/ba33398dc8a649fdb13207f16dce7fd3_loss.png">
       <br>
-      <em>Figure <number>: Loss.</em>
+      <em>Loss.</em>
     </p>
   </div>
   <div style="flex: 50%; padding: 10px;">
     <p align="center">
       <img src="assets/experiment_dales_10/ba33398dc8a649fdb13207f16dce7fd3_accuracy.png">
       <br>
-      <em>Figure <number>: Accuracy.</em>
+      <em>Accuracy.</em>
     </p>
   </div>
 </div>
@@ -959,7 +1062,7 @@ in this experiment and would like to confirm it.
 <p align="center">
   <img src="assets/experiment_dales_10/ba33398dc8a649fdb13207f16dce7fd3_iou.png" width="60%">
   <br>
-  <em>Figure <number>: IoU.</em>
+  <em>IoU.</em>
 </p>
 
 **Conclusions**
@@ -967,12 +1070,9 @@ in this experiment and would like to confirm it.
 as it was expected. PointNet might be reasonably good for small objects without so much noise,
 but PointNet++ is much better for large scenes.
 
-## 3. Final application <a name="3-Final-application"></a>
-The Graphical User Interface
+## 3. How to run the code <a name="3-How-to-run-the-code"></a>
 
-## 4. How to run the code <a name="4-How-to-run-the-code"></a>
-
-### 4.1. Installation
+### 3.1. Installation <a name="31-installation"></a>
 1. **Clone the Repository:**
 ```bash
 git clone https://github.com/jeferal/point_net_suite.git
@@ -1000,7 +1100,7 @@ conda env create -f conda_env_backup.yaml
 conda activate pointnet_thesis
 ```
 
-### 4.2. Download and process datasets
+### 3.2. Download and process datasets <a name="32-download-and-process-datasets"></a>
 * Dataset [ModelNet](https://shapenet.cs.stanford.edu/media/modelnet40_normal_resampled.zip):
 ```bash
 wget https://shapenet.cs.stanford.edu/media/modelnet40_normal_resampled.zip --no-check-certificate
@@ -1032,7 +1132,7 @@ python3 scripts/visualize_dales.py data/DALESObjects <split_name> <index> --part
 <img src="./assets/dales_tile_example_1.png" alt="Alt text" style="width:50%;">
 <img src="./assets/dales_tile_example_2.png" alt="Alt text" style="width:50%;">
 
-### 4.3. How to run the scripts
+### 3.3. How to run the scripts <a name="33-how-to-run-the-scripts"></a>
 We have added an argument parser to any script that we have created. The first thing to understand
 how to run any script is asking for help to the parser by executing:
 ```bash
@@ -1126,7 +1226,7 @@ python3 visualize_dataset.py <dataset_name> <path_to_the_dataset> <split_name> <
 --r_prob <r_prob>
 ```
 
-### 4.3. Testing
+### 3.4. Testing <a name="34-testing"></a>
 We have implemented tests to check the functionality of the processing of the Dales dataset.
 Implementing tests help us to make sure that the code is working as expected and also
 to help the development of new features without breaking the old functionality.
@@ -1135,6 +1235,17 @@ The tests are located in the test folder. All the tests can be run with the foll
 python3 -m unittest discover -s test -p 'test_*.py' -v
 ```
 
-## 5. Conclusions <a name="5-conclusions"></a>
+## 4. Conclusions <a name="4-conclusions"></a>
+After working with Point Cloud data, we have got the followign insights:
+* Downsampling techniques are crucial for managing large datasets while preserving essential features. Many of the points of DALES for example were actually the ground, if we are able to
+downsample the data in a way that it highlights the objects of interest, the performance of the
+model could improve.
+* Geometry-based information gathering is vital for maintaining structural relationships in point cloud data.
 
-## 6. Acknowledgements <a name="6-Acknowledgements"></a>
+Also, after attempting to improve the performance of PointNet and PointNet++ in heavily unbalanced datasets, we have got the following insights:
+* Addressing class imbalance is challenging but essential for robust model performance. Without
+any technique to deal with the imbalance, we have seen that the models do not learn at all the
+minority classes. After adding label smoothing, weighted loss, and effective number of samples,
+we were able to notice a significant improvement in the model's ability to learn the minority classes.
+
+## 5. Bibliography <a name="5-Bibliography"></a>

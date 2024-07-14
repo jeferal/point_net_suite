@@ -4,7 +4,7 @@ from models.PointNet.point_net import PointNetSemanticSegmentation, PointNetLoss
 
 
 class get_model(nn.Module):
-    def __init__(self, num_points=1024, m=2, dropout=0.4, input_dim=3, extra_feat_dropout=0.0):
+    def __init__(self, num_points=1024, m=2, dropout=0.4, input_dim=3, extra_feat_dropout=0.0, useDensityFps=False):
         super(get_model, self).__init__()
         self.classificator = PointNetSemanticSegmentation(num_points, m, dropout=dropout, input_dim=input_dim, extra_feat_dropout=extra_feat_dropout) #Maybe add dropout to the last layer?
 
