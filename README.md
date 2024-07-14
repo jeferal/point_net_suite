@@ -312,32 +312,32 @@ For planar points, the downsampling rate is adjusted based on the third principa
 
 $$Planar Downsampling Rate=lower downsamplerate×EV3​$$
 
-Non-Planar Downsampling Rate:
-        For non-planar points, the downsampling rate is adjusted based on the inverse of the third principal component's explained variance:
+For non-planar points, the downsampling rate is adjusted based on the inverse of the third principal component's explained variance:
 
-Non-Planar Downsampling Rate=higher_downsample_rate×(1−EV3)Non-Planar Downsampling Rate=higher_downsample_rate×(1−EV3​)
-5. Sampling Points
+$$Non-Planar Downsampling Rate=higherdownsamplerate×(1−EV3)$$
+5. **Sampling Points**
 
-    Planar Points:
-        Number of points to sample from planar regions:
+Planar Points:
+Number of points to sample from planar regions:
 
-nplanar=max⁡(1,⌊Nplanar×Planar Downsampling Rate⌋)nplanar​=max(1,⌊Nplanar​×Planar Downsampling Rate⌋)
+$$nplanar=max⁡(1,⌊Nplanar×Planar Downsampling Rate⌋)$$
 
-Where NplanarNplanar​ is the number of planar points in the cluster.
+Where $Nplanar$​ is the number of planar points in the cluster.
 
-    Non-Planar Points:
-        Number of points to sample from non-planar regions:
+Non-Planar Points:
+Number of points to sample from non-planar regions:
 
-nnon_planar=max⁡(1,⌊Nnon_planar×Non-Planar Downsampling Rate⌋)nnon_planar​=max(1,⌊Nnon_planar​×Non-Planar Downsampling Rate⌋)
+$$nonplanar=max⁡(1,⌊nonplanar×Non-Planar Downsampling Rate⌋)$$
 
-Where Nnon_planarNnon_planar​ is the number of non-planar points in the cluster.
-6. Handling Noise Points
+Where $nonplanar​$ is the number of non-planar points in the cluster.
 
-Noise points, those not belonging to any cluster (label=−1label=−1), are sampled separately with a higher downsample rate:
+6. **Handling Noise Points**
 
-nnoise=max⁡(1,⌊Nnoise×higher_downsample_rate⌋)nnoise​=max(1,⌊Nnoise​×higher_downsample_rate⌋)
+Noise points, those not belonging to any cluster ``(label=−1)``, are sampled separately with a higher downsample rate:
 
-Where NnoiseNnoise​ is the number of noise points.
+$$noise=max⁡(1,⌊Nnoise×higher_downsample_rate⌋)$$
+
+Where $Nnoise$​ is the number of noise points.
 
 
 
