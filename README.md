@@ -1081,6 +1081,16 @@ python3 -m unittest discover -s test -p 'test_*.py' -v
 ```
 
 ## 5. Conclusions <a name="5-conclusions"></a>
+After working with Point Cloud data, we have got the followign insights:
+* Downsampling techniques are crucial for managing large datasets while preserving essential features. Many of the points of DALES for example were actually the ground, if we are able to
+downsample the data in a way that it highlights the objects of interest, the performance of the
+model could improve.
+* Geometry-based information gathering is vital for maintaining structural relationships in point cloud data.
 
+Also, after attempting to improve the performance of PointNet and PointNet++ in heavily unbalanced datasets, we have got the following insights:
+* Addressing class imbalance is challenging but essential for robust model performance. Without
+any technique to deal with the imbalance, we have seen that the models do not learn at all the
+minority classes. After adding label smoothing, weighted loss, and effective number of samples,
+we were able to notice a significant improvement in the model's ability to learn the minority classes.
 
 ## 6. Acknowledgements <a name="6-Acknowledgements"></a>
