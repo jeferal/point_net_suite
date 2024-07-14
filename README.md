@@ -312,7 +312,7 @@ $$
 - Regularization term:
 
 $$
-\text{reg} = \frac{\text{regularization\_weight}}{N} \cdot \| I - F F^\top \|_F
+\text{reg} = \frac{\text{regularizationWeight}}{N} \cdot \| I - F F^\top \|_F
 $$
 
 2. The segmentation loss is also Cross Entropy Loss of the points with label smoothing,
