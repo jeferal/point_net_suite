@@ -1,5 +1,4 @@
 import os
-import time
 
 from plyfile import PlyData
 
@@ -18,7 +17,7 @@ from torch.utils.data import Dataset
 
 from sklearn.utils import compute_class_weight
 
-from data_utils.point_cloud_utils import normalize_points, downsample
+from data_utils.point_cloud_utils import *
 from data_utils.metrics import compute_class_distribution
 
 
@@ -51,6 +50,7 @@ class DalesDataset(Dataset):
         # Get the beta parameter
         beta = kwargs.get('beta', 0.999)
         weight_type = kwargs.get('weight_type', None)
+        self._downsampling_method = kwargs.get('downsampling_method', 'uniform')
 
         # Create the data directory
         self._data_dir = os.path.join(self._root, self._split)
@@ -115,7 +115,7 @@ class DalesDataset(Dataset):
             with open(class_distribution_file, 'w') as f:
                 json.dump(class_distribution_dict, f)
         else:
-            with open(class_distribution_file, 'r') as f:
+            with open(os.path.join(self._root, f"class_distribution.json"), 'r') as f:
                 class_distribution_dict = json.load(f)
                 self._class_distribution = (np.array(class_distribution_dict["unique"]), np.array(class_distribution_dict["counts"]), np.array(class_distribution_dict["labels"]))
 
@@ -162,11 +162,30 @@ class DalesDataset(Dataset):
             points = normalize_points(points)
         # Extract the labels, which is the 5th column
         targets = data[:, 4]
-        # down sample point cloud
-        if self._npoints:
-            points, targets = downsample(points, targets, npoints=self._npoints)
 
+        # Downsample point cloud
+        if self._npoints:
+            print(f"Downsampling point cloud to {self._npoints} points with method {self._downsampling_method}...")
+            if self._downsampling_method == 'planar_aware':
+                points, targets = downsample_inverse_planar_aware(points, targets, npoints=self._npoints)
+            elif self._downsampling_method == 'uniform':
+                points, targets = downsample(points, targets, npoints=self._npoints)
+            elif self._downsampling_method == 'feature_based':
+                points, targets = downsample_feature_based(points, targets, npoints=self._npoints)
+            elif self._downsampling_method == 'biometric':
+                points, targets = downsample_biometric(points, targets, npoints=self._npoints)
+            elif self._downsampling_method == 'combined':
+                points, targets = downsample_combined(points, targets, npoints=self._npoints)
+            elif self._downsampling_method =='curvature':
+                points, targets = downsample_curvature_based(points, targets, npoints=self._npoints)
+            elif self._downsampling_method == 'test':
+                points, targets = downsample_test(points, targets, npoints=self._npoints)
+            elif self._downsampling_method == 'parallel_combined':
+                points, targets = downsample_parallel_combined(points, targets, npoints=self._npoints)
+            else:
+                raise ValueError(f"Unknown downsampling method {self._downsampling_method}")
         # Convert to tensor
+        print(f"The shape of points is {points.shape} and labels is {targets.shape}")
         points = torch.tensor(points, dtype=torch.float32)
         targets = torch.tensor(targets, dtype=torch.long)
 
@@ -174,6 +193,8 @@ class DalesDataset(Dataset):
         targets -= 1
 
         return points, targets
+
+
 
     def get_categories(self):
         return self.CATEGORIES
@@ -339,24 +360,6 @@ def get_tile(x : float, y : float, x_min : float, y_min : float, x_interval : fl
 
     return valid_tiles
 
-def rotate_around_z(ctr, angle_deg):
-    angle_rad = np.deg2rad(angle_deg)
-    R = np.array([[np.cos(angle_rad), -np.sin(angle_rad), 0, 0],
-                  [np.sin(angle_rad),  np.cos(angle_rad), 0, 0],
-                  [0,                 0,                  1, 0],
-                  [0,                 0,                  0, 1]])
-    
-    # Get the current view matrix
-    view_matrix = np.asarray(ctr.convert_to_pinhole_camera_parameters().extrinsic)
-    
-    # Apply the z-axis rotation
-    view_matrix = np.dot(R, view_matrix)
-    
-    # Set the updated view matrix back
-    params = ctr.convert_to_pinhole_camera_parameters()
-    params.extrinsic = view_matrix
-    ctr.convert_from_pinhole_camera_parameters(params)
-
 def visualize_pointcloud(point_cloud, labels, window_name : str = "DALES point cloud"):
 
     # Extract the data
@@ -374,7 +377,7 @@ def visualize_pointcloud(point_cloud, labels, window_name : str = "DALES point c
 
     # Example color palette for semantic classes
     color_palette = np.array([
-        [1, 3, 117],    # Class 0: Unknown
+        #[1, 3, 117],    # Class 0: Unknown
         [1, 79, 156],   # Class 1: Blue: Ground
         [1, 114, 3],    # Class 2: Green: Vegetation
         [222, 47, 225], # Class 3: Pink: Cars
@@ -434,23 +437,5 @@ def visualize_pointcloud(point_cloud, labels, window_name : str = "DALES point c
 
 
     # Visualize the point cloud
-    # Visualization with rotation
-    vis = o3d.visualization.Visualizer()
-    vis.create_window(window_name=window_name)
-    vis.add_geometry(o3d_point_cloud)
-
-    # Rotate the view
-    ctr = vis.get_view_control()
-    # Set the initial tilt angle
-    ctr.rotate(0.0, 60.0)
-
-    # Rotate around the z-axis
-    for _ in range(360):
-        rotate_around_z(ctr, 1)
-        vis.update_geometry(o3d_point_cloud)
-        vis.poll_events()
-        vis.update_renderer()
-        time.sleep(0.1)  # Pause for 0.1 seconds to slow down the rotation
-
-    vis.run()
-    vis.destroy_window()
+    o3d.visualization.draw_geometries([o3d_point_cloud],
+                                       window_name=window_name)

@@ -29,16 +29,24 @@ if __name__ == "__main__":
     parser.add_argument('--num_points', type=int, default=None, help='Number of points to downsample the point cloud')
     # Rprob
     parser.add_argument('--r_prob', type=float, default=0.25, help='Probability of random rotation')
+    # Sampling method, uniform by default
+    parser.add_argument('--downsampling_method', type=str, default='uniform', help='Sampling method [uniform, planar_aware, planar_aware, feature_based, biometric, combined, parallel_combined]')
+    # Normalize the pointcloud, True by default
+    parser.add_argument('--no_normalize', dest='normalize', action='store_false', help='Do not normalize the point cloud')
+
+    # Set default normalization to True
+    #parser.set_defaults(normalize=True)
 
     # Parse the arguments
     args = parser.parse_args()
+
 
     if args.dataset == 's3dis':
         print("Loading S3DIS dataset")
         dataset = S3DIS(args.data_path, area_nums=args.areas, split=args.split, npoints=args.num_points, r_prob=args.r_prob, include_rgb=False)
     elif args.dataset == 'dales':
         print("Loading DALES dataset")
-        dataset = DalesDataset(args.data_path, args.split, partitions=args.partitions, intensity=args.intensity, overlap=args.overlap, npoints=args.num_points, normalize=True)
+        dataset = DalesDataset(args.data_path, args.split, partitions=args.partitions, intensity=args.intensity, overlap=args.overlap, npoints=args.num_points, normalize=args.normalize)
     else:
         raise ValueError(f"Invalid dataset {args.dataset}")
 
