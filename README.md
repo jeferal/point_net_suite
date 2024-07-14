@@ -277,22 +277,17 @@ $$\text{Accuracy}=\frac{\sum_{i=1}^{N} \mathbb{I}(y_i = \hat{y}_i)}{N}=\frac{\te
 $$
 
 The per class IoU is computed as follow:
-$$
-\text{IoU} = \frac{\text{True Positives}}{\text{True Positives} + \text{False Positives} + \text{False Negatives}}
+$$\text{IoU} = \frac{\text{True Positives}}{\text{True Positives} + \text{False Positives} + \text{False Negatives}}
 $$
 
 As for losses we have used the following:
 1. Classification loss: CrossEntropyLoss with label smoothing, focal loss and regularization.
-$$ \text{loss} = \left(1 - p_n\right)^\gamma \cdot \text{ce\_loss} $$
+$$\text{loss} = \left(1 - p_n\right)^\gamma \cdot \text{ce\_loss}$$
 
 - CrossEntropyLoss:
-$$
-\text{ce\_loss} = -\sum_{i=1}^{C} y_i \log(p_i)
-$$
+$$\text{ce\_loss} = -\sum_{i=1}^{C} y_i \log(p_i)$$
 - Label Smoothing:
-$$
-y_i' = (1 - \epsilon) y_i + \frac{\epsilon}{C}
-$$
+$$y_i' = (1 - \epsilon) y_i + \frac{\epsilon}{C}$$
 
 <p align="center">
   <img src="assets/label_smoothing.png">
@@ -303,49 +298,35 @@ $$
 - Focal loss:
 The intuition behind focal loss is to reduce the loss contribution of well-classified examples. So that the model focuses on the hard examples:
 
-$$
-\text{loss} = (1 - p_n)^\gamma \cdot \text{ce\_loss}
-$$
+$$\text{loss} = (1 - p_n)^\gamma \cdot \text{ce\_loss}$$
 
 - Regularization term:
 
-$$
-\text{reg} = \frac{\text{regularizationWeight}}{N} \cdot \| I - F F^\top \|_F
-$$
+$$\text{reg} = \frac{\text{regularizationWeight}}{N} \cdot \| I - F F^\top \|_F$$
 
 2. The segmentation loss is also Cross Entropy Loss of the points with label smoothing,
 focal loss adding also a Dice loss term. The Dice loss is computed as follows:
 This is a loss term used for semantic segmentation in datasets that are highly unbalanced. The
 dice coefficient enlarges the weight of overlap both in the denominator and numerator.
 
-$$
-\text{Dice Loss} = 1 - \frac{2 \cdot (\text{top} + \epsilon)}{\text{bot} + \epsilon}
-$$
+$$\text{Dice Loss} = 1 - \frac{2 \cdot (\text{top} + \epsilon)}{\text{bot} + \epsilon}$$
 
 - Weighted loss:
 The weight applied to each class depends on the number of samples we have of that class. The idea is to penalize more the minority classes so that the model learns to classify them better. We have implemented the weights firstly using the method of Sklearn **compute_class_weights**, which by default computes the weights as follow:
 
-$$
-\text{class\_weight} = \frac{\text{n\_samples}}{\text{n\_classes} \times \text{n\_samples\_per\_class}}
-$$
+$$\text{class\_weight} = \frac{\text{n\_samples}}{\text{n\_classes} \times \text{n\_samples\_per\_class}}$$
 
 Once the weight per class is computed, the weighted loss is computed as follows:
 
-$$
-  \text{Weighted Loss} = \frac{1}{N} \sum_{i=1}^{N} w_i \cdot \text{Loss}(y_i, \hat{y}_i)
-$$
+$$\text{Weighted Loss} = \frac{1}{N} \sum_{i=1}^{N} w_i \cdot \text{Loss}(y_i, \hat{y}_i)$$
 
 - Effective number of samples weighted loss:
 This is a weighted loss where the weight applied to each class based on its
 frequency depends on a particular formula:
 
-$$
-  \text{effective\_num} = \frac{1.0 - \beta^{counts}}{1.0 - \beta}
-$$
+$$\text{effective\_num} = \frac{1.0 - \beta^{counts}}{1.0 - \beta}$$
 
-$$
-  \text{label\_weights} = \frac{1}{\text{effective\_num}}
-$$
+$$\text{label\_weights} = \frac{1}{\text{effective\_num}}$$
 
 We have also logged **system metrics** which some of them are:
 - System memory usage
