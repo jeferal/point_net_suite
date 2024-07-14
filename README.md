@@ -103,9 +103,9 @@ After working with the ModelNet dataset, we've learned that not all points in a 
 The importance of critical points becomes even more apparent in the context of downsampling techniques. Downsampling helps on reducing the computational load by decreasing the number of points in a point cloud while retaining the most informative ones. This process is paramount when feeding very large point clouds to networks like PointNet++ for training, as it ensures that the network focuses on the most relevant features, leading to more efficient and accurate learning and relevant feature extraction.
 
 <p align="center">
-  <img src="assets/pointnet_examples.gif">
+  <img src="assets/modelnet examples p.gif">
   <br>
-  <em>Figure 1: ModelNet examples and PointNet application. Critical points are represented with Red.</em>
+  <em>Figure: ModelNet examples and PointNet application. Critical points are represented with Red.</em>
 </p>
 
 ### 2.1.2. Stanford indoors 3D <a name="212-3dindoors-dataset"></a>
@@ -127,9 +127,9 @@ The S3DIS dataset has also highlighted the importance of handling large scale da
  We have seen that effective segmentation must account for various object types, densities, and occlusions common in indoor scenes. Working with this dataset has driven a deeper understanding towards developing models that not only consider point-wise features but also capture the broader context and relationships within the scene.
 
  <p align="center">
-  <img src="https://raw.githubusercontent.com/jeferal/point_net_suite/adding_sergio_stuff_readme/assets/MUST UPDATE">
+  <img src="assets/s3d.gif">
   <br>
-  <em>ModelNet examples and PointNet application. Critical points are represented with Red.</em>
+  <em>Stanford Indoors 3D examples. Critical points are represented with Red.</em>
  </p>
  
 This is the train distribution of the data, which shows that there are classes with many more points than others:
@@ -171,6 +171,22 @@ chunks so that each core of the CPU can process a chunk in parallel and store th
 The partitioning is part of the class Dataset, where if the dataset with a certain partition parameter and overlap is not found in 
 disk, then it will create it and store it in disk. Every time the client calls the method getitem, then the dataset will load from disk the file of the particular partition for the given index and will return the points and the labels.
 
+**Inference Results**
+
+Some inference results are displayed below which demonstrate excellent performance.
+
+<p align="center">
+  <img src="assets/inference dales.gif">
+  <br>
+  <em>Figure <number>: DALES dataset inference on 3 x 3 partitions. Tile measurements, roughly 200 units.</em>
+</p>
+
+<p align="center">
+  <img src="assets/inference dales 2.gif">
+  <br>
+  <em>Figure <number>: DALES dataset inference on 20 x 20 partitions. Tile measurements, roughly 30 units.</em>
+</p>
+
 #### Images of the partitions
 
 ### 2.2. Models <a name="22-models"></a>
@@ -197,6 +213,12 @@ disk, then it will create it and store it in disk. Every time the client calls t
 
 Normalization is often the first step in processing point cloud data. It involves adjusting the values of the points so that they fall within a specific range, typically between 0 and 1. This is done using min/max normalization, which scales the points based on the minimum and maximum values along each axis.
 
+<p align="center">
+  <img src="assets/normalized vs not normalized.gif">
+  <br>
+  <em>Figure <number>: Comparison between a point cloud not normalized (left) and normalized (right).</em>
+</p>
+
 #### 2.3.2. Random Downsampling <a name="232-normalization"></a>
 
 Random downsampling is the most straightforward technique. It involves randomly selecting a subset of points from the original point cloud. This method is all about speed and simplicity.
@@ -221,11 +243,20 @@ The process can be described as:
     $$P' = \{p_{i_1}, p_{i_2}, \ldots, p_{i_M}\}$$
 
 
+<p align="center">
+  <img src="assets/uniform sampling.gif">
+  <br>
+  <em>Figure <number>: Comparison between different random sampling rates.</em>
+</p>
+
+
 #### 2.3.3. Voxel Grid Downsampling <a name="233-voxel grid"></a>
 
 ### Voxel Grid Downsampling
 
 Voxel grid downsampling divides the point cloud into a 3D grid of small cubes, also called voxels. Within each voxel, points are averaged to create a single representative point. The voxel size can be modified in order to adjust the density in the output point cloud. This method reduces the number of points while preserving to some extent the spatial structure of the data, it also helps in reducing noise and computational complexity.
+
+The voxel size is a critical parameter in this process, as it directly influences the level of detail and accuracy of the downsampled point cloud. A larger voxel size results in greater reduction of data, which can speed up computations and reduce storage requirements but may lead to loss of important details and structures. Similarly, a smaller voxel size retains more details but offers less reduction in the number of points, maintaining higher computational complexity and storage demands.
 
 Given a point cloud and a voxel size $v$:
 
@@ -248,7 +279,38 @@ Given a point cloud and a voxel size $v$:
 
     The downsampled point cloud $P'$ is the set of centroids of all non-empty voxels:
 
-    $$P' = \{ p_{\text{centroid}_1}, p_{\text{centroid}_2}, \ldots, p_{\text{centroid}_M} \}$$
+    $$P' ={p_{\text{centroid}1}, p_{\text{centroid}_2}, \ldots, p_{\text{centroid}_M}}$$
+
+To illustrate the impact of voxel size on the point cloud, consider the following visualizations:
+
+- No Sampling: The original point cloud with all data points intact.
+<p align="center">
+  <img src="assets/no sampling.gif">
+  <br>
+  <em>Figure <number>: DALES dataset point cloud with no sampling performed.</em>
+</p>
+
+- Voxel Size of 20: A coarse downsampling with significant reduction in points, possibly losing fine details.
+- Voxel Size of 10: Moderate downsampling, balancing detail and reduction.
+
+<p align="center">
+  <img src="assets/10 and 20 voxel size.gif">
+  <br>
+  <em>Figure <number>: DALES dataset point cloud with voxel size 20 (left) and voxel size 10 (right).</em>
+</p>
+
+- Voxel Size of 5: Smaller downsampling, retaining more details while still reducing points.
+- Voxel Size of 2: Very fine downsampling, closely resembling the original point cloud with minimal reduction.
+
+<p align="center">
+  <img src="assets/5 and 2 voxel size.gif">
+  <br>
+  <em>Figure <number>: DALES dataset point cloud with voxel size 5 (left) and voxel size 2 (right).</em>
+</p>
+
+These visualizations demonstrate how adjusting the voxel size can help achieve the desired balance between data reduction and detail preservation.
+
+It is important to note that this point cloud was not normalized and had a square longitude of around 60 units. The voxel sizes used in the visualizations are therefore relative to this specific scale. When training a model, the voxel size parameter must be carefully selected. One approach is to experiment with different voxel sizes during visualization and adjust accordingly to match the normalized point cloud, this is the method that we have followed on our project. Alternatively, a better approach could be to adjust the voxel size, perform the downsampling, and then normalize the point cloud before training.
 
 #### 2.3.4. Inverse Planar-Aware Downsampling <a name="234-inverse-planar"></a>
 Inverse planar-aware downsampling reduces the density of points in planar regions while preserving the density in non-planar regions, thus aiming to maintain complex features while hollowing out planar regions. In this way it can retain more relevant information about a point cloud with a lower amount of points, making it more effective in terms of computational cost. 
@@ -257,18 +319,110 @@ This method uses clustering and Principal Component Analysis (PCA) to identify p
 
 1. **Clustering:**
 
-    Apply DBSCAN to identify clusters of points in the point cloud based on the $plane\_threshold$.
+    apply DBSCAN clustering to the point cloud. DBSCAN (Density-Based Spatial Clustering of Applications with Noise) is a density-based clustering algorithm that groups together points that are closely packed together, and it marks points that are in low-density regions as outliers.
 
+    $$clustering = \text{DBSCAN}(\epsilon = \text{plane threshold}, \text{min samples} = 10).fit(P)$$
+
+    DBSCAN Parameters:
+
+    - $ϵ$ : The maximum distance between two points to be considered as neighbors.
+    - $min samples$: The minimum number of points to form a dense region.
+
+Mathematically, for a point $p$ in the dataset $P$:
     $$clustering = \text{DBSCAN}(\epsilon = \text{plane\_threshold}, \text{min\_samples} = 10).fit(P)$$
 
+$$Neighborhood(p)={q∈P∣∥p−q∥≤ϵ}Neighborhood(p)={q∈P∣∥p−q∥≤ϵ}$$
 
-2. **Iterative Downsampling:**
 
-    For each cluster (excluding noise):
+2. **Principal Component Analysis on Clusters**
 
-**PCA Analysis:**
+For each cluster identified by DBSCAN (excluding noise points, ``label=−1``), PCA is applied to determine the planarity of the points. PCA decomposes the points in the cluster into orthogonal components, ordered by the amount of variance they explain:
 
-  Apply PCA to the points in the cluster to identify planar regions.
+Given a set of points in a cluster $X∈Rn×3X∈Rn×3$, PCA finds the principal components $V$ and the corresponding eigenvalues $λ$:
+
+$$X⊤XV=VΛ$$
+
+Where $Λ=diag(λ1,λ2,λ3)$
+
+The explained variance ratio is:
+
+$$Explained Variance Ratio=(λ1∑λ,λ2∑λ,λ3∑λ)$$
+
+
+3. **Identifying Planar Points**
+
+To determine if a point is in a planar region, we look at its distance from the principal plane, which is the plane formed by the first two principal components.
+
+
+The distance $di$​ of a point $xi$​ from the principal plane (third principal component) is:
+
+$$di=∣xi⋅v3∣$$
+
+Where $v3$​ is the third principal component vector.
+
+Points with distances below a certain threshold are considered planar. This threshold is determined by a percentile (a value between 0 and 1), in our case we used 0.95.
+
+4. **Downsampling Based on Planarity**
+
+Once planar and non-planar points are identified within each cluster, different downsampling rates are applied.
+
+For planar points, the downsampling rate is adjusted based on the third principal component's explained variance $EV3$​:
+
+$$Planar Downsampling Rate=lower downsamplerate×EV3​$$
+
+For non-planar points, the downsampling rate is adjusted based on the inverse of the third principal component's explained variance:
+
+$$Non-Planar Downsampling Rate=higherdownsamplerate×(1−EV3)$$
+5. **Sampling Points**
+
+Planar Points:
+Number of points to sample from planar regions:
+
+$$nplanar=max⁡(1,⌊Nplanar×Planar Downsampling Rate⌋)$$
+
+Where $Nplanar$​ is the number of planar points in the cluster.
+
+Non-Planar Points:
+Number of points to sample from non-planar regions:
+
+$$nonplanar=max⁡(1,⌊nonplanar×Non-Planar Downsampling Rate⌋)$$
+
+Where $nonplanar​$ is the number of non-planar points in the cluster.
+
+6. **Handling Noise Points**
+
+Noise points, those not belonging to any cluster ``(label=−1)``, are sampled separately with a higher downsample rate:
+
+$$noise=max⁡(1,⌊Nnoise×higherdownsamplerate⌋)$$
+
+Where $Nnoise$​ is the number of noise points.
+
+#### 2.3.5. Combined Downsampling <a name="235-combined"></a>
+
+The combined downsampling algorithm integrates both, voxel grid and planar aware  downsampling algorithms to achieve a balanced reduction of a point cloud, preserving critical geometric details and addressing class imbalances. The methods used include voxel grid downsampling, inverse planar-aware downsampling. This approach ensures that irrelevant points are removed while important features and minority classes are retained.
+
+1. **Overall Benefits of Combined Downsampling**
+
+Voxel grid downsampling effectively reduces the number of redundant points in large, uniform regions.Inverse planar-aware downsampling further reduces points in planar areas while preserving non-planar details effectively hollowing out planar surfaces which account for roughly 60 to 80% of all points in each partition.
+
+2. **Addressing Class Imbalance**
+
+The combined approach helps maintain a better balance by ensuring that minority classes (e.g. poles, electric lines, cars) are better represented.
+Planar regions like ground and buildings, which form the majority of points, are aggressively downsampled, reducing their dominance in the point cloud.
+
+<p align="center">
+  <img src="assets/combined comparison.gif">
+  <br>
+  <em>Figure <number>: Comparison of the combined downsampling algorithm vs no sampling.</em>
+</p>
+
+The combined downsampling algorithm effectively reduces redundant points and retains important geometric features in point clouds. By adjusting plane threshold and voxel size, it balances the representation of majority (e.g., ground, buildings) and minority classes (e.g., poles, cars). The left image (plane threshold: 20, voxel size: 5) preserves finer details, while the right image (plane threshold: 40, voxel size: 10) more aggressively reduces planar regions. 
+
+<p align="center">
+  <img src="assets/combined plane 20 and 40 and voxel size.gif">
+  <br>
+  <em>Figure <number>: Comparison of the combined downsampling algorithm with different parameters.</em>
+</p>
 
 ### 2.4. Experiments <a name="24-Experiments"></a>
 
