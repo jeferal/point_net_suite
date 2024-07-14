@@ -28,9 +28,9 @@ Supervisor:
     - [2.1. Data Preprocessing and Datasets](#21-data-preprocessing)
         - [2.1.3. Dales Dataset](#213-dales-dataset)
     - [2.2. Models](#22-models)
-        - [2.2.3. PointNet](#223-pointnet)
-        - [2.2.4. PointNet++](#224-pointnetpp)
-    - [2.3. Sampling](#223-sampling)
+        - [2.2.1. PointNet](#221-pointnet)
+        - [2.2.2. PointNet++](#222-pointnetpp)
+    - [2.3. Sampling](#23-sampling)
     - [2.4. Experiments](#24-experiments)
 
 - [3. How to run the code](#3-How-to-run-the-code)
@@ -175,7 +175,7 @@ disk, then it will create it and store it in disk. Every time the client calls t
 
 ### 2.2. Models <a name="22-models"></a>
 
-#### 2.2.3. PointNet <a name="223-pointnet"></a>
+#### 2.2.1. PointNet <a name="221-pointnet"></a>
 
 <p align="center">
   <img src="assets/pointnet.png">
@@ -183,7 +183,7 @@ disk, then it will create it and store it in disk. Every time the client calls t
   <em>PointNet architecture.</em>
 </p>
 
-#### 2.2.4. PointNet++ <a name="224-pointnetpp"></a>
+#### 2.2.2. PointNet++ <a name="222-pointnetpp"></a>
 
 <p align="center">
   <img src="assets/pointnetpp.png">
@@ -978,7 +978,7 @@ python3 scripts/visualize_dales.py data/DALESObjects <split_name> <index> --part
 <img src="./assets/dales_tile_example_1.png" alt="Alt text" style="width:50%;">
 <img src="./assets/dales_tile_example_2.png" alt="Alt text" style="width:50%;">
 
-### 3.3. How to run the scripts <a name="#33-how-to-run-the-scripts"></a>
+### 3.3. How to run the scripts <a name="33-how-to-run-the-scripts"></a>
 We have added an argument parser to any script that we have created. The first thing to understand
 how to run any script is asking for help to the parser by executing:
 ```bash
