@@ -39,7 +39,7 @@ def get_point_cloud_limits(points: torch.Tensor) -> tuple:
     max_values = points.max(dim=0)[0]
     return min_values, max_values
 
-def downsample_voxel_grid(points: np.ndarray, targets: np.ndarray, voxel_size=0.027) -> tuple:
+def downsample_voxel_grid(points: np.ndarray, targets: np.ndarray, npoints: int = 2000, voxel_size=20) -> tuple:
     """
     Downsample the point cloud using a voxel grid approach.
     """
@@ -84,7 +84,7 @@ def downsample_voxel_grid(points: np.ndarray, targets: np.ndarray, voxel_size=0.
     sampled_targets = np.array(sampled_targets)
     return sampled_points, sampled_targets
 
-def downsample_inverse_planar_aware(points: np.ndarray, targets: np.ndarray, npoints: int = 2000, plane_threshold=40, lower_downsample_rate=0.4, higher_downsample_rate=0.9) -> tuple:
+def downsample_inverse_planar_aware(points: np.ndarray, targets: np.ndarray, npoints: int = 2000, plane_threshold=1, lower_downsample_rate=0.9, higher_downsample_rate=0.9) -> tuple:
     """
     Increasing plane_threshold will identify larger planar regions 
     Increasing lower_downsample_rate will retain more points in planar regions

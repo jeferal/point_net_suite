@@ -180,6 +180,8 @@ class DalesDataset(Dataset):
                 points, targets = downsample_curvature_based(points, targets, npoints=self._npoints)
             elif self._downsampling_method == 'test':
                 points, targets = downsample_test(points, targets, npoints=self._npoints)
+            elif self._downsampling_method == 'voxel':
+                points, targets = downsample_voxel_grid(points, targets, npoints=self._npoints)
             elif self._downsampling_method == 'parallel_combined':
                 points, targets = downsample_parallel_combined(points, targets, npoints=self._npoints)
             else:

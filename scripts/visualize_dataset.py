@@ -30,7 +30,7 @@ if __name__ == "__main__":
     # Rprob
     parser.add_argument('--r_prob', type=float, default=0.25, help='Probability of random rotation')
     # Sampling method, uniform by default
-    parser.add_argument('--downsampling_method', type=str, default='uniform', help='Sampling method [uniform, planar_aware, planar_aware, feature_based, biometric, combined, parallel_combined]')
+    parser.add_argument('--downsampling_method', type=str, default='uniform', help='Sampling method [uniform, voxel, planar_aware, feature_based, biometric, combined, parallel_combined]')
     # Normalize the pointcloud, True by default
     parser.add_argument('--no_normalize', dest='normalize', action='store_false', help='Do not normalize the point cloud')
 
@@ -46,7 +46,7 @@ if __name__ == "__main__":
         dataset = S3DIS(args.data_path, area_nums=args.areas, split=args.split, npoints=args.num_points, r_prob=args.r_prob, include_rgb=False)
     elif args.dataset == 'dales':
         print("Loading DALES dataset")
-        dataset = DalesDataset(args.data_path, args.split, partitions=args.partitions, intensity=args.intensity, overlap=args.overlap, npoints=args.num_points, normalize=args.normalize)
+        dataset = DalesDataset(args.data_path, args.split, partitions=args.partitions, intensity=args.intensity, overlap=args.overlap, npoints=args.num_points, normalize=args.normalize, downsampling_method=args.downsampling_method)
     else:
         raise ValueError(f"Invalid dataset {args.dataset}")
 
