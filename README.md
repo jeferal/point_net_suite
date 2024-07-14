@@ -277,6 +277,7 @@ $$\text{Accuracy}=\frac{\sum_{i=1}^{N} \mathbb{I}(y_i = \hat{y}_i)}{N}=\frac{\te
 $$
 
 The per class IoU is computed as follow:
+
 $$\text{IoU} = \frac{\text{True Positives}}{\text{True Positives} + \text{False Positives} + \text{False Negatives}}
 $$
 
@@ -285,8 +286,10 @@ As for losses we have used the following:
 $$\text{loss} = \left(1 - p_n\right)^\gamma \cdot \text{ce\_loss}$$
 
 - CrossEntropyLoss:
+
 $$\text{ce\_loss} = -\sum_{i=1}^{C} y_i \log(p_i)$$
 - Label Smoothing:
+
 $$y_i' = (1 - \epsilon) y_i + \frac{\epsilon}{C}$$
 
 <p align="center">
