@@ -272,8 +272,8 @@ For this experiment we have logged the following metrics:
 - eval_per_class_iou
 
 The accuracy is computed as follow:
-$$
-\text{Accuracy} = \frac{\sum_{i=1}^{N} \mathbb{I}(y_i = \hat{y}_i)}{N} = \frac{\text{Number of correct predictions}}{\text{Total number of predictions}}
+
+$$\text{Accuracy} = \frac{\sum_{i=1}^{N} \mathbb{I}(y_i = \hat{y}_i)}{N} = \frac{\text{Number of correct predictions}}{\text{Total number of predictions}}
 $$
 
 The per class IoU is computed as follow:
