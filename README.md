@@ -221,7 +221,7 @@ Given a point cloud and a voxel size $v$:
 
     The downsampled point cloud $P'$ is the set of centroids of all non-empty voxels:
 
-    $$P' = \{ p_{\text{centroid}_1}, p_{\text{centroid}_2}, \ldots, p_{\text{centroid}_M} \}$$
+    $$P' ={p_{\text{centroid}1}, p_{\text{centroid}_2}, \ldots, p_{\text{centroid}_M}}$$
 
 To illustrate the impact of voxel size on the point cloud, consider the following visualizations:
 
@@ -335,12 +335,36 @@ Where $nonplanar​$ is the number of non-planar points in the cluster.
 
 Noise points, those not belonging to any cluster ``(label=−1)``, are sampled separately with a higher downsample rate:
 
-$$noise=max⁡(1,⌊Nnoise×higher_downsample_rate⌋)$$
+$$noise=max⁡(1,⌊Nnoise×higherdownsamplerate⌋)$$
 
 Where $Nnoise$​ is the number of noise points.
 
+#### 2.3.5. Combined Downsampling <a name="235-combined"></a>
 
+The combined downsampling algorithm integrates both, voxel grid and planar aware  downsampling algorithms to achieve a balanced reduction of a point cloud, preserving critical geometric details and addressing class imbalances. The methods used include voxel grid downsampling, inverse planar-aware downsampling. This approach ensures that irrelevant points are removed while important features and minority classes are retained.
 
+1. **Overall Benefits of Combined Downsampling**
+
+Voxel grid downsampling effectively reduces the number of redundant points in large, uniform regions.Inverse planar-aware downsampling further reduces points in planar areas while preserving non-planar details effectively hollowing out planar surfaces which account for roughly 60 to 80% of all points in each partition.
+
+2. **Addressing Class Imbalance**
+
+The combined approach helps maintain a better balance by ensuring that minority classes (e.g. poles, electric lines, cars) are better represented.
+Planar regions like ground and buildings, which form the majority of points, are aggressively downsampled, reducing their dominance in the point cloud.
+
+<p align="center">
+  <img src="assets/combined comparison.gif">
+  <br>
+  <em>Figure <number>: Comparison of the combined downsampling algorithm vs no sampling.</em>
+</p>
+
+The combined downsampling algorithm effectively reduces redundant points and retains important geometric features in point clouds. By adjusting plane threshold and voxel size, it balances the representation of majority (e.g., ground, buildings) and minority classes (e.g., poles, cars). The left image (plane threshold: 20, voxel size: 5) preserves finer details, while the right image (plane threshold: 40, voxel size: 10) more aggressively reduces planar regions. 
+
+<p align="center">
+  <img src="assets/combined plane 20 and 40 and voxel size.gif">
+  <br>
+  <em>Figure <number>: Comparison of the combined downsampling algorithm with different parameters.</em>
+</p>
 
 ### 2.4. Experiments <a name="24-Experiments"></a>
 

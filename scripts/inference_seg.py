@@ -63,18 +63,18 @@ def main(args):
 
     # Create a color map for the classes
     colors = np.zeros((points.shape[0], 3))
-    if args.show_critical_only:
-        # Highlight critical points with a distinct color
-        crit_colors = np.array([1, 0, 0])  # Red color for critical points
-        critical_points = points[crit_idxs[0]]
-        critical_colors = np.tile(crit_colors, (critical_points.shape[0], 1))
-        point_cloud.points = o3d.utility.Vector3dVector(critical_points)
-        point_cloud.colors = o3d.utility.Vector3dVector(critical_colors)
-    else:
-        for i in range(NUM_CLASSES):
-            colors[pred[0] == i] = np.array([random.random(), random.random(), random.random()])
-        crit_colors = np.array([1, 0, 0])  # Red color for critical points
-        colors[crit_idxs[0]] = crit_colors
+    #if args.show_critical_only:
+    #    # Highlight critical points with a distinct color
+    #    crit_colors = np.array([1, 0, 0])  # Red color for critical points
+    #    critical_points = points[crit_idxs[0]]
+    #    critical_colors = np.tile(crit_colors, (critical_points.shape[0], 1))
+    #    point_cloud.points = o3d.utility.Vector3dVector(critical_points)
+    #    point_cloud.colors = o3d.utility.Vector3dVector(critical_colors)
+    #else:
+    for i in range(NUM_CLASSES):
+        colors[pred[0] == i] = np.array([random.random(), random.random(), random.random()])
+        #crit_colors = np.array([1, 0, 0])  # Red color for critical points
+        #colors[crit_idxs[0]] = crit_colors
         point_cloud.colors = o3d.utility.Vector3dVector(colors)
 
     # Visualization

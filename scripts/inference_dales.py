@@ -48,7 +48,7 @@ def main(args):
         intensity=intensity, npoints=args.num_points)
 
     # Get a random idx from test dataset
-    idx = random.randint(0, len(test_dataset))
+    idx = 69
     points, _ = test_dataset[idx]
     print(points.shape)
     """
