@@ -217,9 +217,7 @@ This method uses clustering and Principal Component Analysis (PCA) to identify p
 
     Apply DBSCAN to identify clusters of points in the point cloud based on the $plane\_threshold$.
 
-    $$
-    \text{clustering} = \text{DBSCAN}(\epsilon = \text{plane\_threshold}, \text{min\_samples} = 10).fit(P)
-    $$
+    $$clustering = \text{DBSCAN}(\epsilon = \text{plane\_threshold}, \text{min\_samples} = 10).fit(P)$$
 
 
 2. **Iterative Downsampling:**
