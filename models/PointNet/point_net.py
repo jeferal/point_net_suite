@@ -72,7 +72,7 @@ class PointNetEncoder(nn.Module):
             if xDimension > 3:
                 # Extra features dropout
                 if self.extra_feat_dropout > 0.0 and np.random.uniform(0, 1) < self.extra_feat_dropout:
-                    extra_features[:, :, :] = 0.0
+                    extra_features = torch.zeros_like(extra_features)
                 x = torch.cat([x, extra_features], dim=1)
 
             # Pass through the first shared MLP

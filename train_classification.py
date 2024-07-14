@@ -35,7 +35,7 @@ hparams_for_args_to_evaluate = {
     'num_point': 1024,          #1024, 2048
     # one run with --use_extra_features
     # one run with --use_fps
-    'batch_size': 16,           #12, 24, 48, 96 
+    'batch_size': 24,           #12, 24, 48, 96 
     'dropout': 0.5,                #0.0, 0.2, 0.5
     'extra_feat_dropout': 0.2,  #0.0, 0.2, 0.5
     'label_smoothing': 0.1,     #0.0, 0.1, 0.2

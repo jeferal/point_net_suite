@@ -101,7 +101,7 @@ class PointNetV2FeatureLearnerClassificationMultiScaleGrouping(nn.Module):
             # We can also implement some dropout so that the model does not learn to decide based on these extra features
             # (for example, decide a class based on color with rgb extra info). This is done in other models like KPCOnv.
             if self.extra_feat_dropout > 0.0 and np.random.uniform(0, 1) < self.extra_feat_dropout:
-                extra_features[:, :, :] = 0.0
+                extra_features = torch.zeros_like(extra_features)
         
         else:
             extra_features = None
