@@ -5,7 +5,7 @@ from models.PointNet.point_net import PointNetClassification, PointNetLossForCla
 
 
 class get_model(nn.Module):
-    def __init__(self, num_points=1024, k=40, dropout=0.4, input_dim=3, extra_feat_dropout=0.0):
+    def __init__(self, num_points=1024, k=40, dropout=0.4, input_dim=3, extra_feat_dropout=0.0, useDensityFps=False):
         super(get_model, self).__init__()
         self.classificator = PointNetClassification(num_points, k, dropout, input_dim=input_dim, extra_feat_dropout=extra_feat_dropout)
 

@@ -78,6 +78,30 @@ def density_related_farthest_point_sample(xyz, npoint):
     return centroids
 
 
+def farthest_point_sample(xyz, npoint):
+    """
+    Input:
+        xyz: pointcloud data, [B, N, 3]
+        npoint: number of samples
+    Return:
+        centroids: sampled pointcloud index, [B, npoint]
+    """
+    device = xyz.device
+    B, N, C = xyz.shape
+    centroids = torch.zeros(B, npoint, dtype=torch.long).to(device)
+    distance = torch.ones(B, N).to(device) * 1e10
+    farthest = torch.randint(0, N, (B,), dtype=torch.long).to(device)
+    batch_indices = torch.arange(B, dtype=torch.long).to(device)
+    for i in range(npoint):
+        centroids[:, i] = farthest
+        centroid = xyz[batch_indices, farthest, :].view(B, 1, 3)
+        dist = torch.sum((xyz - centroid) ** 2, -1)
+        mask = dist < distance
+        distance[mask] = dist[mask]
+        farthest = torch.max(distance, -1)[1]
+    return centroids
+
+
 def query_ball_point(radius, nsample, xyz, new_xyz):
     """
     Input:
@@ -101,7 +125,7 @@ def query_ball_point(radius, nsample, xyz, new_xyz):
     return group_idx
 
 
-def sample_and_group(npoint, radius, nsample, xyz, features, returnfps=False):
+def sample_and_group(npoint, radius, nsample, xyz, features, useDensityFps=False, returnfps=False):
     """
     Input:
         npoint:
@@ -115,7 +139,10 @@ def sample_and_group(npoint, radius, nsample, xyz, features, returnfps=False):
     """
     B, N, C = xyz.shape
     S = npoint
-    fps_idx = density_related_farthest_point_sample(xyz, npoint, k) # [B, npoint]
+    if useDensityFps:
+        fps_idx = density_related_farthest_point_sample(xyz, npoint) # [B, npoint]
+    else:
+        fps_idx = farthest_point_sample(xyz, npoint) # [B, npoint]
     new_xyz = index_points(xyz, fps_idx)
     idx = query_ball_point(radius, nsample, xyz, new_xyz)
     grouped_xyz = index_points(xyz, idx) # [B, npoint, nsample, C]
