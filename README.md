@@ -631,7 +631,7 @@ PointNet++ is trained with the Dales dataset.
 **Conclusions**
 - This training stopped too early to reach a conclusion. However, comparing the first 10 epochs of this experiment with previous ones, the evaluation loss is much more unstable.
 
-**Experiment Densesity-Related Farthest Point Sampling**
+**Experiment Density-Related Farthest Point Sampling**
 | Learning Rate | Optimizer | Batch Size | Num Points | Grouping Method | Dropout | Scheduler | Label Smoothing | Extra Feature Dropout |
 |---------------|-----------|------------|------------|-----------------|---------|-----------|------------------|-----------------------|
 | 0.001         | AdamW     | 16          | 8192       | MSG             | 0.5     | Cosine    | 0.1              | 0.2                   |
