@@ -155,6 +155,12 @@ disk, then it will create it and store it in disk. Every time the client calls t
 
 Normalization is often the first step in processing point cloud data. It involves adjusting the values of the points so that they fall within a specific range, typically between 0 and 1. This is done using min/max normalization, which scales the points based on the minimum and maximum values along each axis.
 
+<p align="center">
+  <img src="assets/normalized vs not normalized.gif">
+  <br>
+  <em>Figure <number>: Comparison between a point cloud not normalized (left) and normalized (right).</em>
+</p>
+
 #### 2.3.2. Random Downsampling <a name="232-normalization"></a>
 
 Random downsampling is the most straightforward technique. It involves randomly selecting a subset of points from the original point cloud. This method is all about speed and simplicity.
@@ -177,6 +183,13 @@ The process can be described as:
     Construct the downsampled point cloud $P'$ using the indices $S$.
     
     $$P' = \{p_{i_1}, p_{i_2}, \ldots, p_{i_M}\}$$
+
+
+<p align="center">
+  <img src="assets/uniform sampling.gif">
+  <br>
+  <em>Figure <number>: Comparison between different random sampling rates.</em>
+</p>
 
 
 #### 2.3.3. Voxel Grid Downsampling <a name="233-voxel grid"></a>
@@ -227,10 +240,19 @@ To illustrate the impact of voxel size on the point cloud, consider the followin
   <br>
   <em>Figure <number>: DALES dataset point cloud with voxel size 20 (left) and voxel size 10 (right).</em>
 </p>
-- Voxel Size of 5: Finer downsampling, retaining more details while still reducing points.
+
+- Voxel Size of 5: Smaller downsampling, retaining more details while still reducing points.
 - Voxel Size of 2: Very fine downsampling, closely resembling the original point cloud with minimal reduction.
 
+<p align="center">
+  <img src="assets/5 and 2 voxel size.gif">
+  <br>
+  <em>Figure <number>: DALES dataset point cloud with voxel size 5 (left) and voxel size 2 (right).</em>
+</p>
+
 These visualizations demonstrate how adjusting the voxel size can help achieve the desired balance between data reduction and detail preservation.
+
+It is important to note that this point cloud was not normalized and had a square longitude of around 60 units. The voxel sizes used in the visualizations are therefore relative to this specific scale. When training a model, the voxel size parameter must be carefully selected. One approach is to experiment with different voxel sizes during visualization and adjust accordingly to match the normalized point cloud, this is the method that we have followed on our project. Alternatively, a better approach could be to adjust the voxel size, perform the downsampling, and then normalize the point cloud before training.
 
 #### 2.3.4. Inverse Planar-Aware Downsampling <a name="234-inverse-planar"></a>
 Inverse planar-aware downsampling reduces the density of points in planar regions while preserving the density in non-planar regions, thus aiming to maintain complex features while hollowing out planar regions. In this way it can retain more relevant information about a point cloud with a lower amount of points, making it more effective in terms of computational cost. 
@@ -239,19 +261,83 @@ This method uses clustering and Principal Component Analysis (PCA) to identify p
 
 1. **Clustering:**
 
-    Apply DBSCAN to identify clusters of points in the point cloud based on the $plane\_threshold$.
+    apply DBSCAN clustering to the point cloud. DBSCAN (Density-Based Spatial Clustering of Applications with Noise) is a density-based clustering algorithm that groups together points that are closely packed together, and it marks points that are in low-density regions as outliers.
 
     $$clustering = \text{DBSCAN}(\epsilon = \text{plane threshold}, \text{min samples} = 10).fit(P)$$
 
+    DBSCAN Parameters:
 
-2. **Iterative Downsampling:**
+    - $ϵ$ : The maximum distance between two points to be considered as neighbors.
+    - $min samples$: The minimum number of points to form a dense region.
 
-    For each cluster (excluding noise):
+Mathematically, for a point $p$ in the dataset $P$:
 
-**PCA Analysis:**
+$$Neighborhood(p)={q∈P∣∥p−q∥≤ϵ}Neighborhood(p)={q∈P∣∥p−q∥≤ϵ}$$
 
-  Apply PCA to the points in the cluster to identify planar regions.
 
+2. **Principal Component Analysis on Clusters**
+
+For each cluster identified by DBSCAN (excluding noise points, label=−1label=−1), PCA is applied to determine the planarity of the points. PCA decomposes the points in the cluster into orthogonal components, ordered by the amount of variance they explain:
+
+Given a set of points in a cluster $X∈Rn×3X∈Rn×3$, PCA finds the principal components $V$ and the corresponding eigenvalues $λ$:
+
+
+$$X⊤XV=VΛ$$
+
+Where $Λ=diag(λ1,λ2,λ3)$
+
+The explained variance ratio is:
+
+$$Explained Variance Ratio=(λ1∑λ,λ2∑λ,λ3∑λ)$$
+
+
+3. **Identifying Planar Points**
+
+To determine if a point is in a planar region, we look at its distance from the principal plane, which is the plane formed by the first two principal components.
+
+
+The distance $di$​ of a point $xi$​ from the principal plane (third principal component) is:
+
+$$di=∣xi⋅v3∣$$
+
+Where $v3$​ is the third principal component vector.
+
+Points with distances below a certain threshold are considered planar. This threshold is determined by a percentile (a value between 0 and 1), in our case we used 0.95.
+
+4. **Downsampling Based on Planarity**
+
+Once planar and non-planar points are identified within each cluster, different downsampling rates are applied.
+
+For planar points, the downsampling rate is adjusted based on the third principal component's explained variance $EV3$​:
+
+$$Planar Downsampling Rate=lower downsamplerate×EV3​$$
+
+Non-Planar Downsampling Rate:
+        For non-planar points, the downsampling rate is adjusted based on the inverse of the third principal component's explained variance:
+
+Non-Planar Downsampling Rate=higher_downsample_rate×(1−EV3)Non-Planar Downsampling Rate=higher_downsample_rate×(1−EV3​)
+5. Sampling Points
+
+    Planar Points:
+        Number of points to sample from planar regions:
+
+nplanar=max⁡(1,⌊Nplanar×Planar Downsampling Rate⌋)nplanar​=max(1,⌊Nplanar​×Planar Downsampling Rate⌋)
+
+Where NplanarNplanar​ is the number of planar points in the cluster.
+
+    Non-Planar Points:
+        Number of points to sample from non-planar regions:
+
+nnon_planar=max⁡(1,⌊Nnon_planar×Non-Planar Downsampling Rate⌋)nnon_planar​=max(1,⌊Nnon_planar​×Non-Planar Downsampling Rate⌋)
+
+Where Nnon_planarNnon_planar​ is the number of non-planar points in the cluster.
+6. Handling Noise Points
+
+Noise points, those not belonging to any cluster (label=−1label=−1), are sampled separately with a higher downsample rate:
+
+nnoise=max⁡(1,⌊Nnoise×higher_downsample_rate⌋)nnoise​=max(1,⌊Nnoise​×higher_downsample_rate⌋)
+
+Where NnoiseNnoise​ is the number of noise points.
 
 
 
