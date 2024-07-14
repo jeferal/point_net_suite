@@ -1,6 +1,4 @@
 # AIDL24: Towards improving minority classes accuracy for Aerial Lidar Datasets
-
-**Abstract here**
 In this project we implement deep learning models for point cloud classification and
 segmentation tasks. We have started with simple objects datasets such as ModelNet and moved
 towards more complex scenarios with large scale datasets such as S3DIS and DALES, where
