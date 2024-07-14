@@ -328,9 +328,9 @@ $$\text{WeightedLoss} = \frac{1}{N} \sum_{i=1}^{N} w_i \cdot \text{Loss}(y_i, \h
 This is a weighted loss where the weight applied to each class based on its
 frequency depends on a particular formula:
 
-$$\text{effective\_num} = \frac{1.0 - \beta^{counts}}{1.0 - \beta}$$
+$$\text{effectiveNum} = \frac{1.0 - \beta^{counts}}{1.0 - \beta}$$
 
-$$\text{label\_weights} = \frac{1}{\text{effective\_num}}$$
+$$\text{labelWeights} = \frac{1}{\text{effective\_num}}$$
 
 We have also logged **system metrics** which some of them are:
 - System memory usage
