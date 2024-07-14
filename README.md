@@ -125,14 +125,14 @@ The S3DIS dataset has also highlighted the importance of handling large scale da
  <p align="center">
   <img src="https://raw.githubusercontent.com/jeferal/point_net_suite/adding_sergio_stuff_readme/assets/MUST UPDATE">
   <br>
-  <em>Figure 1: ModelNet examples and PointNet application. Critical points are represented with Red.</em>
+  <em>ModelNet examples and PointNet application. Critical points are represented with Red.</em>
  </p>
  
 This is the train distribution of the data, which shows that there are classes with many more points than others:
 <p align="center">
   <img src="assets/s3dis_train_distribution.jpeg">
   <br>
-  <em>Figure <number>: S3DIS Dataset train distribution.</em>
+  <em>S3DIS Dataset train distribution.</em>
 </p>
 
 ### 2.1.3. Dales Dataset <a name="213-dales-dataset"></a>
@@ -176,7 +176,7 @@ disk, then it will create it and store it in disk. Every time the client calls t
 <p align="center">
   <img src="assets/pointnet.png">
   <br>
-  <em>Figure <number>: PointNet architecture.</em>
+  <em>PointNet architecture.</em>
 </p>
 
 #### 2.2.4. PointNet++ <a name="224-pointnetpp"></a>
@@ -184,7 +184,7 @@ disk, then it will create it and store it in disk. Every time the client calls t
 <p align="center">
   <img src="assets/pointnetpp.png">
   <br>
-  <em>Figure <number>: PointNet++ architecture.</em>
+  <em>PointNet++ architecture.</em>
 </p>
 
 ### 2.3. Sampling <a name="23-sampling"></a>
@@ -266,10 +266,6 @@ This method uses clustering and Principal Component Analysis (PCA) to identify p
 
   Apply PCA to the points in the cluster to identify planar regions.
 
-
-
-
-
 ### 2.4. Experiments <a name="24-Experiments"></a>
 
 #### 2.4.1. Experiment metrics and logging <a name="241-experiment-logging"></a>
@@ -288,7 +284,7 @@ To access from any other machine via http, we have to change the firewall rules 
 <p align="center">
   <img src="assets/mlflow.png">
   <br>
-  <em>Figure <number>: Mlflow server.</em>
+  <em>Mlflow server.</em>
 </p>
 
 For this experiment we have logged the following metrics:
@@ -334,7 +330,7 @@ $$y_i' = (1 - \epsilon) y_i + \frac{\epsilon}{C}$$
 <p align="center">
   <img src="assets/label_smoothing.png">
   <br>
-  <em>Figure <number>: Label smoothing.</em>
+  <em>Label smoothing.</em>
 </p>
 
 - Focal loss:
@@ -392,7 +388,7 @@ And other information that is helpful for us:
 <p align="center">
   <img src="assets/experiments_s3dis/s3dis_experiment_1_no_wloss.jpeg" width=70%>
   <br>
-  <em>Figure <number>: IoU by Class.</em>
+  <em>IoU by Class without weighted loss.</em>
 </p>
 
 **Conclusions:**
@@ -408,7 +404,7 @@ learns to classify them better.
 <p align="center">
   <img src="assets/experiments_s3dis/s3dis_experiment_2_wloss.jpeg" width=70%>
   <br>
-  <em>Figure <number>: IoU by Class.</em>
+  <em>IoU by Class with weighted loss.</em>
 </p>
 
 **Conclusions:**
@@ -457,14 +453,14 @@ understand if the model is overfitting or not and how good it is performing with
     <p align="center">
       <img src="assets/experiment_dales_1/3fb3c811994643fcbb435d886be7074d_loss.png">
       <br>
-      <em>Figure <number>: Loss.</em>
+      <em>Loss.</em>
     </p>
   </div>
   <div style="flex: 50%; padding: 10px;">
     <p align="center">
       <img src="assets/experiment_dales_1/3fb3c811994643fcbb435d886be7074d_accuracy.png">
       <br>
-      <em>Figure <number>: Accuracy.</em>
+      <em>Accuracy.</em>
     </p>
   </div>
 </div>
@@ -472,7 +468,7 @@ understand if the model is overfitting or not and how good it is performing with
 <p align="center">
   <img src="assets/experiment_dales_1/3fb3c811994643fcbb435d886be7074d_iou.png" width="60%">
   <br>
-  <em>Figure <number>: IoU.</em>
+  <em>IoU.</em>
 </p>
 
 **Conclusions:**
@@ -509,14 +505,14 @@ to change between SSG and MSG it is just changing a parameter.
     <p align="center">
       <img src="assets/experiment_dales_2/caa5682dd5a5462a8426d207c01b6be8_loss.png">
       <br>
-      <em>Figure <number>: Loss.</em>
+      <em>Loss.</em>
     </p>
   </div>
   <div style="flex: 50%; padding: 10px;">
     <p align="center">
       <img src="assets/experiment_dales_2/caa5682dd5a5462a8426d207c01b6be8_accuracy.png">
       <br>
-      <em>Figure <number>: Accuracy.</em>
+      <em>Accuracy.</em>
     </p>
   </div>
 </div>
@@ -524,7 +520,7 @@ to change between SSG and MSG it is just changing a parameter.
 <p align="center">
   <img src="assets/experiment_dales_2/caa5682dd5a5462a8426d207c01b6be8_iou.png" width="60%">
   <br>
-  <em>Figure <number>: IoU.</em>
+  <em>IoU.</em>
 </p>
 
 **Conclusions:**
@@ -560,14 +556,14 @@ downsample is done with random sampling.
     <p align="center">
       <img src="assets/experiment_dales_3/e6befa89190c4d268413bfc58df4caef_loss.png">
       <br>
-      <em>Figure <number>: Loss.</em>
+      <em>Loss.</em>
     </p>
   </div>
   <div style="flex: 50%; padding: 10px;">
     <p align="center">
       <img src="assets/experiment_dales_3/e6befa89190c4d268413bfc58df4caef_accuracy.png">
       <br>
-      <em>Figure <number>: Accuracy.</em>
+      <em>Accuracy.</em>
     </p>
   </div>
 </div>
@@ -575,7 +571,7 @@ downsample is done with random sampling.
 <p align="center">
   <img src="assets/experiment_dales_3/e6befa89190c4d268413bfc58df4caef_iou.png" width="60%">
   <br>
-  <em>Figure <number>: IoU.</em>
+  <em>IoU.</em>
 </p>
 
 **Conclusions:**
@@ -610,14 +606,14 @@ with the Dales dataset and PointNet++.
     <p align="center">
       <img src="assets/experiment_dales_4/0954e43dbed74719aaf3557c031f2725_loss.png">
       <br>
-      <em>Figure <number>: Loss.</em>
+      <em>Loss.</em>
     </p>
   </div>
   <div style="flex: 50%; padding: 10px;">
     <p align="center">
       <img src="assets/experiment_dales_4/0954e43dbed74719aaf3557c031f2725_accuracy.png">
       <br>
-      <em>Figure <number>: Accuracy.</em>
+      <em>Accuracy.</em>
     </p>
   </div>
 </div>
@@ -625,7 +621,7 @@ with the Dales dataset and PointNet++.
 <p align="center">
   <img src="assets/experiment_dales_4/0954e43dbed74719aaf3557c031f2725_iou.png" width="60%">
   <br>
-  <em>Figure <number>: IoU.</em>
+  <em>IoU.</em>
 </p>
 
 **Conclusions:**
@@ -659,14 +655,14 @@ to pay more attention to the minority classes.
     <p align="center">
       <img src="assets/experiment_dales_5/ae440146c8e8450e8b5d08381de36d1b_loss.png">
       <br>
-      <em>Figure <number>: Loss.</em>
+      <em>Loss.</em>
     </p>
   </div>
   <div style="flex: 50%; padding: 10px;">
     <p align="center">
       <img src="assets/experiment_dales_5/ae440146c8e8450e8b5d08381de36d1b_accuracy.png">
       <br>
-      <em>Figure <number>: Accuracy.</em>
+      <em>Accuracy.</em>
     </p>
   </div>
 </div>
@@ -674,7 +670,7 @@ to pay more attention to the minority classes.
 <p align="center">
   <img src="assets/experiment_dales_5/ae440146c8e8450e8b5d08381de36d1b_iou.png" width="60%">
   <br>
-  <em>Figure <number>: IoU.</em>
+  <em>IoU.</em>
 </p>
 
 **Conclusions:**
@@ -707,14 +703,14 @@ PointNet++ is trained with the Dales dataset.
     <p align="center">
       <img src="assets/experiment_dales_6/d703527719d04997ade2633e9dc4da68_loss.png">
       <br>
-      <em>Figure <number>: Loss.</em>
+      <em>Loss.</em>
     </p>
   </div>
   <div style="flex: 50%; padding: 10px;">
     <p align="center">
       <img src="assets/experiment_dales_6/d703527719d04997ade2633e9dc4da68_accuracy.png">
       <br>
-      <em>Figure <number>: Accuracy.</em>
+      <em>Accuracy.</em>
     </p>
   </div>
 </div>
@@ -722,7 +718,7 @@ PointNet++ is trained with the Dales dataset.
 <p align="center">
   <img src="assets/experiment_dales_6/d703527719d04997ade2633e9dc4da68_iou.png" width="60%">
   <br>
-  <em>Figure <number>: IoU.</em>
+  <em>IoU.</em>
 </p>
 
 **Conclusions**
@@ -752,14 +748,14 @@ Sampling Algorithm: We will replace the traditional farthest point sampling (FPS
     <p align="center">
       <img src="assets/experiment_dales_7/41420aa1515b480ea782325192904eca_loss.png">
       <br>
-      <em>Figure <number>: Loss.</em>
+      <em>Loss.</em>
     </p>
   </div>
   <div style="flex: 50%; padding: 10px;">
     <p align="center">
       <img src="assets/experiment_dales_7/41420aa1515b480ea782325192904eca_accuracy.png">
       <br>
-      <em>Figure <number>: Accuracy.</em>
+      <em>Accuracy.</em>
     </p>
   </div>
 </div>
@@ -767,7 +763,7 @@ Sampling Algorithm: We will replace the traditional farthest point sampling (FPS
 <p align="center">
   <img src="assets/experiment_dales_7/41420aa1515b480ea782325192904eca_iou.png" width="60%">
   <br>
-  <em>Figure <number>: IoU.</em>
+  <em>IoU.</em>
 </p>
 
 **Conclusions**
@@ -797,14 +793,14 @@ add more information to the model, it should be able to learn better.
     <p align="center">
       <img src="assets/experiment_dales_8/0b26dfaa0264411c8f994ef70c74fdd0_loss.png">
       <br>
-      <em>Figure <number>: Loss.</em>
+      <em>Loss.</em>
     </p>
   </div>
   <div style="flex: 50%; padding: 10px;">
     <p align="center">
       <img src="assets/experiment_dales_8/0b26dfaa0264411c8f994ef70c74fdd0_accuracy.png">
       <br>
-      <em>Figure <number>: Accuracy.</em>
+      <em>Accuracy.</em>
     </p>
   </div>
 </div>
@@ -812,7 +808,7 @@ add more information to the model, it should be able to learn better.
 <p align="center">
   <img src="assets/experiment_dales_8/0b26dfaa0264411c8f994ef70c74fdd0_iou.png" width="60%">
   <br>
-  <em>Figure <number>: IoU.</em>
+  <em>IoU.</em>
 </p>
 
 **Conclusions**
@@ -845,14 +841,14 @@ The extra features in this case is the intensity signal that the Dales dataset p
     <p align="center">
       <img src="assets/experiment_dales_9/fe091c7ee5e44adca90d100aab9f0330_loss.png">
       <br>
-      <em>Figure <number>: Loss.</em>
+      <em>Loss.</em>
     </p>
   </div>
   <div style="flex: 50%; padding: 10px;">
     <p align="center">
       <img src="assets/experiment_dales_9/fe091c7ee5e44adca90d100aab9f0330_accuracy.png">
       <br>
-      <em>Figure <number>: Accuracy.</em>
+      <em>Accuracy.</em>
     </p>
   </div>
 </div>
@@ -860,7 +856,7 @@ The extra features in this case is the intensity signal that the Dales dataset p
 <p align="center">
   <img src="assets/experiment_dales_9/fe091c7ee5e44adca90d100aab9f0330_iou.png" width="60%">
   <br>
-  <em>Figure <number>: IoU.</em>
+  <em>IoU.</em>
 </p>
 
 **Conclusions**
@@ -893,14 +889,14 @@ in this experiment and would like to confirm it.
     <p align="center">
       <img src="assets/experiment_dales_10/ba33398dc8a649fdb13207f16dce7fd3_loss.png">
       <br>
-      <em>Figure <number>: Loss.</em>
+      <em>Loss.</em>
     </p>
   </div>
   <div style="flex: 50%; padding: 10px;">
     <p align="center">
       <img src="assets/experiment_dales_10/ba33398dc8a649fdb13207f16dce7fd3_accuracy.png">
       <br>
-      <em>Figure <number>: Accuracy.</em>
+      <em>Accuracy.</em>
     </p>
   </div>
 </div>
@@ -908,7 +904,7 @@ in this experiment and would like to confirm it.
 <p align="center">
   <img src="assets/experiment_dales_10/ba33398dc8a649fdb13207f16dce7fd3_iou.png" width="60%">
   <br>
-  <em>Figure <number>: IoU.</em>
+  <em>IoU.</em>
 </p>
 
 **Conclusions**
