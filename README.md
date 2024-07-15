@@ -299,7 +299,6 @@ This method uses clustering and Principal Component Analysis (PCA) to identify p
     - $min samples$: The minimum number of points to form a dense region.
 
 Mathematically, for a point $p$ in the dataset $P$:
-    $$clustering = \text{DBSCAN}(\epsilon = \text{plane\_threshold}, \text{min\_samples} = 10).fit(P)$$
 
 $$Neighborhood(p)={q∈P∣∥p−q∥≤ϵ}Neighborhood(p)={q∈P∣∥p−q∥≤ϵ}$$
 
