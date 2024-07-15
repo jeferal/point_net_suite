@@ -426,7 +426,7 @@ The combined downsampling algorithm effectively reduces redundant points and ret
   <em>Figure <number>: Comparison of the combined downsampling algorithm with different parameters.</em>
 </p>
 
-### 2.4. Experiments <a name="24-Experiments"></a>
+### 2.4. Experiments <a name="24-experiments"></a>
 
 #### 2.4.1. Experiment metrics and logging <a name="241-experiment-logging"></a>
 We have conducted different experiments using different models and hyperparameters. We decided to log the metrics of every 
