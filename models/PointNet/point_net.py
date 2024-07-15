@@ -246,14 +246,19 @@ class PointNetLossForClassification(nn.Module):
     
 
 class PointNetLossForSemanticSegmentation(nn.Module):
-    def __init__(self, ce_label_smoothing=0.0, gamma = 1, dice=True, dice_eps=1):
+    def __init__(self, ce_label_smoothing=0.0, weights=None, gamma = 1, dice=True, dice_eps=1):
         super(PointNetLossForSemanticSegmentation, self).__init__()
 
         self.gamma = gamma
         self.dice = dice
         self.dice_eps = dice_eps
 
-        self.cross_entropy_loss = nn.CrossEntropyLoss(label_smoothing=ce_label_smoothing)
+        if weights is None:
+            self.cross_entropy_loss = nn.CrossEntropyLoss(label_smoothing=ce_label_smoothing)
+        else:
+            print("Loss will be calculated using weights:", end=" ")
+            print(weights)
+            self.cross_entropy_loss = nn.CrossEntropyLoss(weight=weights)
 
     def forward(self, predictions, targets, pred_choice):
         batchsize = predictions.shape[0]

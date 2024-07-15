@@ -326,7 +326,6 @@ class PointNetV2LossForSemanticSegmentation(nn.Module):
     def __init__(self, ce_label_smoothing=0.0, weights=None):
         super(PointNetV2LossForSemanticSegmentation, self).__init__()
 
-        #self.cross_entropy_loss = nn.CrossEntropyLoss(label_smoothing=ce_label_smoothing)
         if weights is None:
             self.cross_entropy_loss = nn.CrossEntropyLoss(label_smoothing=ce_label_smoothing)
         else:
