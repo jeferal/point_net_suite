@@ -465,15 +465,14 @@ $$\text{loss} = (1 - p_n)^\gamma \cdot \text{ceLoss}$$
 
 $$\text{reg} = \frac{\text{regularizationWeight}}{N} \cdot \| I - F F^\top \|_F$$
 
-2. The segmentation loss is also Cross Entropy Loss of the points with label smoothing,
-focal loss adding also a Dice loss term. The Dice loss is computed as follows:
-This is a loss term used for semantic segmentation in datasets that are highly unbalanced. The
-dice coefficient enlarges the weight of overlap both in the denominator and numerator.
+2. The segmentation loss also uses Focal Loss with Cross Entropy Loss of the points with label smoothing. A Dice loss term is also optional. The Dice loss is computed as follows:
+This is a loss term used for semantic segmentation in datasets that are highly unbalanced. The dice coefficient enlarges the weight of overlap both in the denominator and numerator.
 
 $$\text{DiceLoss} = 1 - \frac{2 \cdot (\text{top} + \epsilon)}{\text{bot} + \epsilon}$$
 
-  - Weighted loss:
-The weight applied to each class depends on the number of samples we have of that class. The idea is to penalize more the minority classes so that the model learns to classify them better. We have implemented the weights firstly using the method of Sklearn **compute_class_weights**, which by default computes the weights as follow:
+  - We also added the option to use **weighted loss**, which replaces the use of label smoothing during the Cross Entropy Loss calculation. The weight applied to each class depends on the number of samples we have of that class. The idea is to penalize more the minority classes so that the model learns to classify them better. This is very useful when the dataset is unbalanced. We have implemented the weights in several ways.
+  
+The first one is the method of Sklearn **compute_class_weights**, which by default computes the weights as follow:
 
 $$\text{classWeight} = \frac{\text{nSamples}}{\text{nClasses} \times \text{nSamplesPerClass}}$$
 
@@ -481,9 +480,7 @@ Once the weight per class is computed, the weighted loss is computed as follows:
 
 $$\text{WeightedLoss} = \frac{1}{N} \sum_{i=1}^{N} w_i \cdot \text{Loss}(y_i, \hat{y}_i)$$
 
-  - Effective number of samples weighted loss:
-This is a weighted loss where the weight applied to each class based on its
-frequency depends on a particular formula:
+The second method we have implemented is Effective number of samples weighted loss. This is a weighted loss where the weight applied to each class based on its frequency depends on a particular formula:
 
 $$\text{effectiveNum} = \frac{1.0 - \beta^{counts}}{1.0 - \beta}$$
 
@@ -500,13 +497,13 @@ And other information that is helpful for us:
 - The command the script was run
 - The arguments the train was created with for reproducibility 
 
-#### 2.4.2. Experiments with S3Dis PointNet semantic segmentation <a name="242-experiments-s3dis-pointnet"></a>
+#### 2.4.2. Experiments with S3Dis PointNet++ semantic segmentation <a name="242-experiments-s3dis-pointnet"></a>
 
-**Experiment PointNet with base hyper parameters:**
+**Experiment PointNet++ with base hyper parameters:**
 **Hypothesis:**
 - The model should be able to learn the classes of the S3DIS dataset with the base parameters.
 **Experiment Setup:**
-- PointNet is trained in the S3Dis dataset.
+- PointNet++ is trained in the S3Dis dataset.
 **Results:**
 <p align="center">
   <img src="assets/experiments_s3dis/s3dis_experiment_1_no_wloss.jpeg" width=70%>
@@ -515,14 +512,11 @@ And other information that is helpful for us:
 </p>
 
 **Conclusions:**
-- The model is able to learn the classes that have the higher number of points. PointNet struggles
-to classify points of classes with a low number of points such as class 4, 5, 9, etc. This figure and
-the figure that shows the data distribution of the train data shows a correlation.
+- The model is able to learn the classes that have the higher number of points. PointNet++ struggles to classify points of classes with a low number of points such as class 4, 5, 9, etc. This figure and the figure that shows the data distribution of the train data shows a correlation.
 
-**Experiment PointNet with Weighted Loss:**
+**Experiment PointNet++ with Weighted Loss:**
 **Hypothesis:**
-- The idea behing the weighted loss is to penalize more the minority classes so that the model
-learns to classify them better.
+- The idea being the weighted loss is to penalize more the minority classes so that the model learns to classify them better.
 **Results:**
 <p align="center">
   <img src="assets/experiments_s3dis/s3dis_experiment_2_wloss.jpeg" width=70%>
@@ -531,22 +525,9 @@ learns to classify them better.
 </p>
 
 **Conclusions:**
-- With weighted loss, the plot shows that PointNet is actually learning to classify minority classes.
-This is a huge improvement over the previous experiment.
+- With weighted loss, the plot shows that PointNet++ is actually learning to classify minority classes. This is a huge improvement over the previous experiment.
 
 #### 2.4.3. Experiments with Dales PointNet++ semantic segmentation <a name="243-experiments-dales-pointnetpp"></a>
-
-Experiment template
-**Experiment Name:**
-- Params table
-**Hypothesis:**
-- Describe the hypothesis here.
-**Experiment Setup:**
-- Describe the experiment setup here.
-**Results:**
-- Describe the results here.
-**Conclusions:**
-- Describe the conclusions here.
 
 **Experiment Base Hyper Parameters:**
 | Learning Rate | Optimizer | Batch Size | Num Points | Grouping Method | Dropout | Scheduler | Label Smoothing | Extra Feature Dropout |
@@ -600,7 +581,7 @@ until the steabilize. Finally, we can see that there are certain classes that th
 is not able to classify well, like class 3, 5 and 6. These classes are the ones with the
 least number of points in the dataset.
 
-**Experiment Increased Batch size and used SSG:**
+**Experiment Increased Batch size and using SSG:**
 
 | Learning Rate | Optimizer | Batch Size | Num Points | Grouping Method | Dropout | Scheduler | Label Smoothing | Extra Feature Dropout |
 |---------------|-----------|------------|------------|-----------------|---------|-----------|------------------|-----------------------|
@@ -1203,14 +1184,23 @@ python3 -m unittest discover -s test -p 'test_*.py' -v
 ## 4. Conclusions <a name="4-conclusions"></a>
 After working with Point Cloud data, we have got the followign insights:
 * Downsampling techniques are crucial for managing large datasets while preserving essential features. Many of the points of DALES for example were actually the ground, if we are able to
-downsample the data in a way that it highlights the objects of interest, the performance of the
-model could improve.
+downsample the data in a way that it highlights the objects of interest, the performance of the model could improve.
 * Geometry-based information gathering is vital for maintaining structural relationships in point cloud data.
 
 Also, after attempting to improve the performance of PointNet and PointNet++ in heavily unbalanced datasets, we have got the following insights:
-* Addressing class imbalance is challenging but essential for robust model performance. Without
-any technique to deal with the imbalance, we have seen that the models do not learn at all the
-minority classes. After adding label smoothing, weighted loss, and effective number of samples,
-we were able to notice a significant improvement in the model's ability to learn the minority classes.
+* Addressing class imbalance is challenging but essential for robust model performance. Without any technique to deal with the imbalance, we have seen that the models do not learn at all the minority classes. After adding label smoothing and weighted loss (using several weights calculations, such as the provided method of sklearn and the effective number of samples), we were able to notice a significant improvement in the model's ability to learn the minority classes. We have learnt that label smoothing helps to reduce overfitting and improve model generalization, which improves a bit in the classification task. In the other hand, weighted loss is most helpful when dealing with imbalanced datasets, like the ones we use for semantic segmentation.
 
 ## 5. Bibliography <a name="5-Bibliography"></a>
+
+
+Experiment template
+**Experiment Name:**
+- Params table
+**Hypothesis:**
+- Describe the hypothesis here.
+**Experiment Setup:**
+- Describe the experiment setup here.
+**Results:**
+- Describe the results here.
+**Conclusions:**
+- Describe the conclusions here.
