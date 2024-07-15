@@ -412,19 +412,20 @@ For this experiment we have logged the following metrics:
 
 **Classification task**:
 - train_loss
+- train_accuracy
 - eval_loss
-- train_mean_accuracy
-- eval_mean_accuracy
-- train_per_class_loss
-- eval_per_class_loss
+- eval_accuracy
+- eval_mean_class_accuracy
+- optim_learning_rate
 
 **Segmentation task**:
 - train_loss
-- eval_loss
 - train_accuracy
-- eval_accuracy
 - train_per_class_iou
+- eval_loss
+- eval_accuracy
 - eval_per_class_iou
+- optim_learning_rate
 
 The accuracy is computed as follow:
 
@@ -441,10 +442,11 @@ As for losses we have used the following:
 
 $$\text{loss} = \left(1 - p_n\right)^\gamma \cdot \text{ceLoss}$$
 
-- CrossEntropyLoss:
+  - CrossEntropyLoss:
 
 $$\text{ceLoss} = -\sum_{i=1}^{C} y_i \log(p_i)$$
-- Label Smoothing:
+
+  - Label Smoothing:
 
 $$y_i' = (1 - \epsilon) y_i + \frac{\epsilon}{C}$$
 
@@ -454,12 +456,12 @@ $$y_i' = (1 - \epsilon) y_i + \frac{\epsilon}{C}$$
   <em>Label smoothing.</em>
 </p>
 
-- Focal loss:
+  - Focal loss:
 The intuition behind focal loss is to reduce the loss contribution of well-classified examples. So that the model focuses on the hard examples:
 
 $$\text{loss} = (1 - p_n)^\gamma \cdot \text{ceLoss}$$
 
-- Regularization term:
+  - Regularization term:
 
 $$\text{reg} = \frac{\text{regularizationWeight}}{N} \cdot \| I - F F^\top \|_F$$
 
@@ -470,7 +472,7 @@ dice coefficient enlarges the weight of overlap both in the denominator and nume
 
 $$\text{DiceLoss} = 1 - \frac{2 \cdot (\text{top} + \epsilon)}{\text{bot} + \epsilon}$$
 
-- Weighted loss:
+  - Weighted loss:
 The weight applied to each class depends on the number of samples we have of that class. The idea is to penalize more the minority classes so that the model learns to classify them better. We have implemented the weights firstly using the method of Sklearn **compute_class_weights**, which by default computes the weights as follow:
 
 $$\text{classWeight} = \frac{\text{nSamples}}{\text{nClasses} \times \text{nSamplesPerClass}}$$
@@ -479,7 +481,7 @@ Once the weight per class is computed, the weighted loss is computed as follows:
 
 $$\text{WeightedLoss} = \frac{1}{N} \sum_{i=1}^{N} w_i \cdot \text{Loss}(y_i, \hat{y}_i)$$
 
-- Effective number of samples weighted loss:
+  - Effective number of samples weighted loss:
 This is a weighted loss where the weight applied to each class based on its
 frequency depends on a particular formula:
 
