@@ -1190,16 +1190,14 @@ Also, after attempting to improve the performance of PointNet and PointNet++ in 
 * Addressing class imbalance is challenging but essential for robust model performance. Without any technique to deal with the imbalance, we have seen that the models do not learn at all the minority classes. After adding label smoothing and weighted loss (using several weights calculations, such as the provided method of sklearn and the effective number of samples), we were able to notice a significant improvement in the model's ability to learn the minority classes. We have learnt that label smoothing helps to reduce overfitting and improve model generalization, which improves a bit in the classification task. In the other hand, weighted loss is most helpful when dealing with imbalanced datasets, like the ones we use for semantic segmentation.
 
 ## 5. Bibliography <a name="5-Bibliography"></a>
-
-
-Experiment template
-**Experiment Name:**
-- Params table
-**Hypothesis:**
-- Describe the hypothesis here.
-**Experiment Setup:**
-- Describe the experiment setup here.
-**Results:**
-- Describe the results here.
-**Conclusions:**
-- Describe the conclusions here.
+- C. R. Qi, H. Su, K. Mo, and L. J. Guibas. (2016). *Pointnet: Deep learning on point sets for 3d classification and segmentation.* arXiv preprint arXiv:1612.00593v2.
+- Charles R Qi, Li Yi, Hao Su, and Leonidas J Guibas. (2017). *Pointnet++: Deep hierarchical feature learning on point sets in a metric space.*  arXiv preprint arXiv:1706.02413v1.
+- Zhang, B., Huang, S., Shen, W., & Wei, Z. (2019). *Explaining the PointNet: What Has Been Learned Inside the PointNet?* In *Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition Workshops* (CVPRW). Retrieved from https://openaccess.thecvf.com/content_CVPRW_2019/papers/Explainable%20AI/Zhang_Explaining_the_PointNet_What_Has_Been_Learned_Inside_the_PointNet_CVPRW_2019_paper.pdf
+- Qian, G., Li, Y., Peng, H., Mai, J., Hammoud, H. A. A. K., Elhoseiny, M., & Ghanem, B. (2022). *PointNeXt: Revisiting PointNet++ with Improved Training and Scaling Strategies.* arXiv preprint arXiv:2206.04670v2.
+- Thomas, H., Qi, C. R., Deschaud, J.-E., Marcotegui, B., Goulette, F., & Guibas, L. J. (2019). *KPConv: Flexible and Deformable Convolution for Point Clouds.* arXiv preprint arXiv:1904.08889v2.
+- Berrios, I. (2022, December 11). *Point Net from Scratch.* Medium. https://medium.com/@itberrios6/point-net-from-scratch-78935690e496 
+- Tantai, H. (2023, February 27). *Use weighted loss function to solve imbalanced data classification problems.* Medium. Retrieved from https://medium.com/@zergtant/use-weighted-loss-function-to-solve-imbalanced-data-classification-problems-749237f38b75
+- yanx27. (2021, March 27). *Pointnet_Pointnet2_pytorch* [Source code]. GitHub. Retrieved from https://github.com/yanx27/Pointnet_Pointnet2_pytorch/tree/master
+- kentechx. (2023, August 7). *pointnext* [Source code]. GitHub. Retrieved from https://github.com/kentechx/pointnext/tree/main
+- Qian, G. (2023, December 1). *Openpoints* [Source code]. GitHub. Retrieved from https://github.com/guochengqian/openpoints
+- Qian, G. *PointNeXt*. Retrieved from https://guochengqian.github.io/PointNeXt/
