@@ -1,7 +1,7 @@
 ''' Dataset for The aligned, reduced, partitioned S3DIS dataset 
     Provides functionality for train/test on partitioned sets as well 
     as testing on entire spaces via get_random_partitioned_space()
-    '''
+'''
 
 import os
 import random

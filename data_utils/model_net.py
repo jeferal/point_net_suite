@@ -1,7 +1,5 @@
 '''
-@author: Xu Yan
-@file: ModelNet.py
-@time: 2021/3/19 15:51
+Code modified from Pointnet_Pointnet2_pytorch by Xu Yan. GitHub. Retrieved from https://github.com/yanx27/Pointnet_Pointnet2_pytorch/tree/master
 '''
 import os
 

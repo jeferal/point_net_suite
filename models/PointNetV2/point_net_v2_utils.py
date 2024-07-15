@@ -1,5 +1,8 @@
-import torch
+'''
+Code modified from Pointnet_Pointnet2_pytorch by Xu Yan. GitHub. Retrieved from https://github.com/yanx27/Pointnet_Pointnet2_pytorch/tree/master
+'''
 
+import torch
 
 def square_distance(src, dst):
     """

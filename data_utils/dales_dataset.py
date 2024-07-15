@@ -1,7 +1,5 @@
 import os
-
 from plyfile import PlyData
-
 import json
 
 import numpy as np
