@@ -250,7 +250,7 @@ Given a point cloud and a voxel size $v$:
 3. **Downsampled Point Cloud:**
     The downsampled point cloud $P'$ is the set of centroids of all non-empty voxels:
 
-    $$P' ={p_{\text{centroid}1}, p_{\text{centroid}_2}, \ldots, p_{\text{centroid}_M}}$$
+    $$P' = \{p_{centroid1}, p_{centroid2}, \ldots, p_{centroidM}\}$$
 
 To illustrate the impact of voxel size on the point cloud, consider the following visualizations:
 
