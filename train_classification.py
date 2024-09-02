@@ -35,8 +35,8 @@ hparams_for_args_to_evaluate = {
     'num_point': 1024,          #1024, 2048
     # one run with --use_extra_features
     # one run with --use_fps
-    'batch_size': 24,           #12, 24, 48, 96 
-    'dropout': 0.5,                #0.0, 0.2, 0.5
+    'batch_size': 16,           #12, 24, 48, 96 
+    'dropout': 0.5,             #0.0, 0.2, 0.5
     'extra_feat_dropout': 0.2,  #0.0, 0.2, 0.5
     'label_smoothing': 0.1,     #0.0, 0.1, 0.2
     'optimizer': 'AdamW',       #AdamW, Adam, SGD
@@ -61,7 +61,7 @@ def parse_args():
     parser.add_argument('--use_density_fps', action='store_true', default=False, help='use density further point sampiling (only pointnetv2 ssg)')
     parser.add_argument('--no_data_preprocess', action='store_true', default=False, help='preprocess the data or process it during the getitem call')
     # Model selection
-    parser.add_argument('--model', default='pointnet_cls', help='model name [default: pointnet_cls]')
+    parser.add_argument('--model', default='pointnet_v2_cls_msg', help='model name [default: pointnet_cls | options: pointnet_cls, pointnet_v2_cls_ssg, pointnet_v2_cls_msg]')
     # Model parameters
     parser.add_argument('--epoch', default=100, type=int, help='number of epoch in training')
     parser.add_argument('--batch_size', type=int, default=hparams_for_args_to_evaluate['batch_size'], help='batch size in training')

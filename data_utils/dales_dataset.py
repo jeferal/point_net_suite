@@ -113,7 +113,7 @@ class DalesDataset(Dataset):
             with open(class_distribution_file, 'w') as f:
                 json.dump(class_distribution_dict, f)
         else:
-            with open(os.path.join(self._root, f"class_distribution.json"), 'r') as f:
+            with open(class_distribution_file, 'r') as f:
                 class_distribution_dict = json.load(f)
                 self._class_distribution = (np.array(class_distribution_dict["unique"]), np.array(class_distribution_dict["counts"]), np.array(class_distribution_dict["labels"]))
 
@@ -125,11 +125,13 @@ class DalesDataset(Dataset):
                 self.labelweights = np.float32(compute_class_weight(class_weight="balanced", classes=unique_labels, y=all_labels))
             else:
                 self.labelweights = None
-        if weight_type == 'EffectiveNumSamples':
+        elif weight_type == 'EffectiveNumSamples':
             if self._split != 'test':
                 unique_labels, counts, _ = self._class_distribution
                 effective_num = (1.0 - np.power(beta, counts)) / (1.0 - beta)
-                self.labelweights = 1 / effective_num
+                #self.labelweights = 1 / effective_num
+                class_weights = np.sum(effective_num) / len(counts) * effective_num
+                self.labelweights = class_weights
             else:
                 self.labelweights = None
 
@@ -163,7 +165,7 @@ class DalesDataset(Dataset):
 
         # Downsample point cloud
         if self._npoints:
-            print(f"Downsampling point cloud to {self._npoints} points with method {self._downsampling_method}...")
+            #print(f"Downsampling point cloud to {self._npoints} points with method {self._downsampling_method}...")
             if self._downsampling_method == 'planar_aware':
                 points, targets = downsample_inverse_planar_aware(points, targets, npoints=self._npoints)
             elif self._downsampling_method == 'uniform':
@@ -185,7 +187,7 @@ class DalesDataset(Dataset):
             else:
                 raise ValueError(f"Unknown downsampling method {self._downsampling_method}")
         # Convert to tensor
-        print(f"The shape of points is {points.shape} and labels is {targets.shape}")
+        #print(f"The shape of points is {points.shape} and labels is {targets.shape}")
         points = torch.tensor(points, dtype=torch.float32)
         targets = torch.tensor(targets, dtype=torch.long)
 

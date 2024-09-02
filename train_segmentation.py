@@ -77,7 +77,7 @@ def parse_args():
     parser.add_argument('--partitions', type=int, default=20, help='Number of partitions to split the data')
     parser.add_argument('--overlap', type=float, default=0.1, help='Overlap between partitions')
     # Model selection
-    parser.add_argument('--model', default='pointnet_sem_seg', help='model name [default: pointnet_v2_sem_seg_ssg]')
+    parser.add_argument('--model', default='pointnet_v2_sem_seg_msg', help='model name [default: pointnet_v2_sem_seg_ssg | options: pointnet_sem_seg, pointnet_v2_sem_seg_ssg, pointnet_v2_sem_seg_msg]')
     # Model parameters
     parser.add_argument('--epoch', default=100, type=int, help='number of epoch in training')
     parser.add_argument('--batch_size', type=int, default=hparams_for_args_to_evaluate['batch_size'], help='batch size in training')
@@ -85,7 +85,7 @@ def parse_args():
     parser.add_argument('--extra_feat_dropout', type=float, default=hparams_for_args_to_evaluate['extra_feat_dropout'], help='Extra Features Dropout to avoid the classifier rely on them')
     parser.add_argument('--label_smoothing', type=float, default=hparams_for_args_to_evaluate['label_smoothing'], help='Loss label smoothing used for the cross entropy')
     parser.add_argument('--weight_type', type=str, default=hparams_for_args_to_evaluate['weight_type'], help='Weights used for the cross entropy [Sklearn, Custom, EffectiveNumSamples, None]')
-    parser.add_argument('--ens_beta', type=float, default=0.999, help='Beta parameter of effective number of samples weighted loss')
+    parser.add_argument('--ens_beta', type=float, default=0.9999995, help='Beta parameter of effective number of samples weighted loss')
     parser.add_argument('--use_density_fps', action='store_true', default=False, help='use density further point sampiling (only pointnetv2 ssg)')
     # Optimizer parameters
     parser.add_argument('--optimizer', type=str, default=hparams_for_args_to_evaluate['optimizer'], help='optimizer for training [AdamW, Adam, SGD]')
